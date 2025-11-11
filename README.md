@@ -36,8 +36,9 @@ git push -u origin main
 ```
 
 3. GitHub Pages deployment
-   - Option A (recommended): Use the `/docs` folder as Pages source. In GitHub repo Settings → Pages, select `main` branch `/docs` folder.
-   - Option B: Use the `gh-pages` branch. This repo includes a GitHub Actions workflow that publishes `/docs` to `gh-pages` automatically on pushes to `main`.
+   - Option A (recommended): Use the `/docs` folder as Pages source. In GitHub repo Settings → Pages, select `Branch: main` and `Folder: /docs`.
+     This repository is configured to use the `main/docs` approach (no `gh-pages` branch required).
+   - Note: the workflow was modified to a docs-check only; publishing is handled by Pages using `main/docs` (you must set the Pages source in the repo Settings).
 
 Notes & next steps
 - If you want the site to be served at the repo root via GitHub Pages without actions, move files into `docs/` or root.

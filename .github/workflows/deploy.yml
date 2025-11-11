@@ -1,18 +1,17 @@
-name: Deploy docs to GitHub Pages
+name: Docs check (no gh-pages publish)
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  deploy:
+  docs-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to GitHub Pages (publish `docs/`)
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./docs
+      - name: Validate docs folder exists
+        run: |
+          if [ ! -d "./docs" ]; then echo "docs/ not found"; exit 1; fi
+          echo "docs/ exists. No publishing configured (Pages will use main/docs)."
