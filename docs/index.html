@@ -21,16 +21,30 @@
     </div>
 
     <div class="row">
-      <div class="col s12 m6">
+      <div class="col s12 m4">
         <div id="app">
-          <div id="boss-grid" class="boss-grid"></div>
+          <section class="card" style="padding:12px;margin-bottom:12px">
+            <h5>選擇 Boss</h5>
+            <p style="margin:0 0 8px 0;color:#666">可在下方下拉選單或搜尋快速過濾 Boss 名稱</p>
+            <div id="boss-select-root">
+              <input id="search" type="text" placeholder="搜尋 Boss 名稱或復活時間">
+              <select id="boss-dropdown" style="width:100%;margin-top:8px"></select>
+            </div>
+          </section>
+          <section class="card" style="padding:12px;">
+            <h6 style="margin-top:0">精簡 Boss 列表</h6>
+            <div id="boss-list-compact" style="max-height:300px;overflow:auto"></div>
+          </section>
         </div>
       </div>
-      <div class="col s12 m6">
-        <section class="card" style="padding:16px">
-          <h5>復活時間計算器</h5>
-          <div id="calculator"></div>
-          <div id="calc-result" style="margin-top:12px;color:#1f2937"></div>
+      <div class="col s12 m8">
+        <section class="card" style="padding:16px;margin-bottom:12px">
+          <h5>擊殺紀錄（快速新增）</h5>
+          <div id="record-form-root"></div>
+        </section>
+        <section class="card" style="padding:16px;margin-top:12px">
+          <h5>紀錄清單</h5>
+          <div id="records-root"></div>
         </section>
       </div>
     </div>
