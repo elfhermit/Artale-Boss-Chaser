@@ -20,6 +20,14 @@
       </div>
     </div>
 
+    <div class="row" style="margin-bottom:12px">
+      <div class="col s12">
+        <button id="export-btn" class="btn">匯出 JSON</button>
+        <button id="import-btn" class="btn grey" style="margin-left:8px">匯入 JSON</button>
+        <input id="import-file" type="file" accept="application/json" style="display:none" />
+      </div>
+    </div>
+
     <div class="row">
       <div class="col s12 m4">
         <div id="app">
@@ -27,7 +35,6 @@
             <h5>選擇 Boss</h5>
             <p style="margin:0 0 8px 0;color:#666">可在下方下拉選單或搜尋快速過濾 Boss 名稱</p>
             <div id="boss-select-root">
-              <input id="search" type="text" placeholder="搜尋 Boss 名稱或復活時間">
               <select id="boss-dropdown" style="width:100%;margin-top:8px"></select>
             </div>
           </section>
@@ -44,11 +51,14 @@
         </section>
         <section class="card" style="padding:16px;margin-top:12px">
           <h5>紀錄清單</h5>
+          <div id="filters-root" style="margin-bottom:12px"></div>
           <div id="records-root"></div>
         </section>
       </div>
     </div>
   </div>
+  <script src="js/storage.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

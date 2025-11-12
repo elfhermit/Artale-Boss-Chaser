@@ -222,6 +222,74 @@ python -m http.server 8000
 - 加入自動化測試（jest 或 browser-based），覆蓋 LocalStorage helper 與復活計算器。
 - 加入匯出/匯入 UI，方便備份大量紀錄以避免 LocalStorage 爆掉。
 
+## Code review：摘要、差異與建議
+
+摘要：我已根據 `docs/dev/boss-record-guide.md`（使用者面優先需求）與本檔 `Dev_doc_v3.md` / `SPEC.md` 進行比對。整體上三份文件方向一致：皆為純前端、LocalStorage 儲存、復活計算器與表單驗證。以下為發現的重要差異、風險與建議（優先遵循 `boss-record-guide.md` 的規則）。
+
+主要發現
+- 一致性：data model（schema v1）、API 名稱（addRecord/updateRecord/getRecords 等）、復活計算邏輯（fixed/range/hourly）在三份文件中一致，這很好。
+- 不一致 / 需要澄清：
+  1) 保留策略措辭混淆：`Dev_doc_v3.md` 首段提到「預設 per-boss 每日保留上限為 300 筆」，但 SPEC 與其他段落使用的是「per-boss（總計）300 筆」。請明確為「per-boss 最多 300 筆（全時範圍）」，而非每天 300 筆。boss-record-guide 同樣以 per-boss 300 為優先。此為高優先需決定項目。
+  2) LocalStorage key 與分割策略：文件中同時提到 single-key (`abt_records_v1`) 與 per-boss key 兩種策略（在 SPEC 有一句提到 "已採用 per-day-per-boss"，看似存在文件遺留）。請統一一種策略（推薦：single-key 結構但 records array 用 bossId 索引或 map，或若資料量很大則採 per-boss key）。
+  3) Boss 規則結構：建議在 `docs/bosses/bosses.json` 補上 `type`、`minMinutes`、`maxMinutes`、`offsetMinute` 的範例與 schema 說明（尤其 hourlyOffset），並在 Dev_doc_v3 明確列出範例 JSON 以利前端解析。
+
+建議（短期優先）
+- 立即決定並在 SPEC/Dev_doc_v3 中統一「保留策略」與 LocalStorage key 命名（我建議保留 per-boss 最多 300 筆，key 為 `abt_records_v1` 的 single object，內含 records 與 meta，但 purge 基於 bossId 過濾）。
+- 明確化 migration 路徑：如果 repo 曾使用 `abt_records` 或 per-day key，提供一個可在 console 執行的 `migrationTool()`，並把它加入 `docs/app.js` 的 debug mode。此工具同時應檢查並將 record 補齊 version/createdAt 欄位。
+- 補強測試清單：在最小測試集中加入 `calculateRespawnTimes` 的 unit tests（包括跨日 23:50 + 60min、hourlyOffset 在整點邊界等）。
+
+風險評估
+- LocalStorage quota 與效能：若使用 single large array，parse/serialize 在大量紀錄下會影響性能。若預期使用者會擁有成千上萬筆資料，請改為 per-boss key 或提供匯出/分頁策略。
+- 多 tab 同時寫入 race condition：儘管低頻，建議 write 操作前重新讀取並合併（read-modify-write），或顯示警示以避免衝突。
+
+## Implementation phases（分階段任務與驗收）
+
+說明：依據 boss-record-guide 為第一優先規則，本分階段計畫以保證可用的最小功能（MVP）逐步擴展，且每個 phase の產出易於驗證。
+
+Phase 0 — 規格對齊與輕量修正（0.5d）
+- 目標：在程式碼與文件中統一保留策略與 LocalStorage key，解決文件內矛盾。輸出：更新後的 `SPEC.md` 與 `Dev_doc_v3.md`（已完成部分），以及簡短 migration 計畫。
+- 產出物：`SPEC.md`（保留策略明確）、`Dev_doc_v3.md`（已包含本 review），migration checklist。
+- 驗收：文件內文字無矛盾；保留策略由 PM/使用者確認。
+
+Phase 1 — Core LocalStorage module + migration helper（1.5d）
+- 目標：實作可復用的 LocalStorage helper（add/update/delete/get/purge/export/import），以及 `migrationTool()`。
+- 檔案：`docs/app.js`（或新模組 `docs/js/storage.js`）、unit tests（簡易 browser-based assertions 或 jest）。
+- 驗收測試：
+  - addRecord 回傳含 id/createdAt/version 的物件
+  - purgeOldRecordsIfNeeded 在超過 300 筆時正確刪除最舊項
+  - migrationTool 能由舊格式產生符合 `abt_records_v1` 的資料
+
+Phase 2 — 新增表單 UI 與驗證（1.0d）
+- 目標：在 `docs/index.html` 與 `docs/app.js` 加入表單，實作前端驗證（channel、looted、note 長度）與即時錯誤反饋。
+- 產出物：表單 UI（含 timestamp 預設為現在）、client-side 驗證、UI 單元測試（手動驗證步驟）。
+- 驗收：嘗試提交錯誤輸入（channel=0、非整數）應顯示錯誤並阻止儲存；成功新增會更新 LocalStorage。
+
+Phase 3 — 紀錄列表、編輯與刪除（1.0d）
+- 目標：實作當日紀錄表格、編輯 modal（或 inline edit）、刪除功能，並保證 UI 與 LocalStorage 同步。
+- 產出物：records table、edit/delete handlers、簡單篩選（bossId）。
+- 驗收：新增後能在表格中看見、編輯會更新 updatedAt、刪除會移除資料。
+
+Phase 4 — 復活計算器與 Boss 規則整合（1.0d）
+- 目標：載入 `docs/bosses/bosses.json` 規則，實作 `calculateRespawnTimes(killISO, bossRule)`，支援 fixed/range/hourly。
+- 測試重點：跨日與 offset 邊界情境（23:50 + 60、10:20 offset=15 -> 11:15 等）。
+
+Phase 5 — 樣式、回饋與小幅 UX（0.5d）
+- 目標：加入 styles（`docs/styles.css`）與 snackbar/通知，確保在行動裝置上的可用性。
+
+Phase 6 — 測試、文件與釋出（0.5d）
+- 目標：補上自動化測試範例、README/部署說明，並在本地以 `python -m http.server` 驗證整體流程。
+
+跨階段附加工作（low-risk enhancements）
+- 匯出/匯入 JSON 的 UI（在 Phase 1 或 Phase 6 插入）
+- 若需避免 single-key parse 性能問題：可在 Phase 1 實作 per-boss key 的替代方案並在 migration 中提供選項
+
+## 文件更新建議清單（小而重要）
+- 把 `Dev_doc_v3.md` 開頭的 "每日保留上限 300 筆" 改為「per-boss 最多 300 筆（總計）」。
+- 在 `docs/bosses/bosses.json` 加入 `type` 與 hourlyOffset 範例、以及 machine-friendly 範例段落。
+- 在 Acceptance Criteria 中加入 migration & export/import 的驗收要點。
+
+---
+
 ---
 
 變更紀錄：
