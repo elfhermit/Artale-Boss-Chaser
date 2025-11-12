@@ -1,56 +1,42 @@
 # ArtaleBossTimer
 
-Static client-only app to record Boss kills (LocalStorage). This repository contains a static UI and utilities for local preview and development.
+一個簡單好上手的 Boss 擊殺紀錄工具，幫助你記錄每次擊殺、追蹤已出貨狀態，並自動預估下一次復活時間。
 
-給新人的一句話：此專案是一個純前端（client-only）的 Boss 擊殺紀錄工具，使用瀏覽器 LocalStorage 儲存資料，供同一瀏覽器中查詢、編輯與顯示預估復活時間。
+適合對象
 
-快速上手（給新人）：
-- 開啟 `public/index.html`（或在本地啟動 HTTP server 後開啟 `/public/index.html`）
-- 從上方的 Boss 下拉選擇一個 Boss，表單會預填當下時間。輸入頻道（1-3000）、是否出貨、及備註，按「儲存」。
-- 下方「當天紀錄」會列出該 Boss 的今日紀錄，包含預估復活時間；可在表格中編輯或刪除紀錄。
-- 若需備份，請使用瀏覽器 Developer Tools → Application → Local Storage 將相關 `abt:` 開頭的 key 匯出。
+- 遊戲玩家、公會管理者或任何需要追蹤 Boss 出現/擊殺時間的人。
 
-Project layout (organized for clarity):
+主要功能
 
-- `/public` — static site files (HTML/CSS/JS) intended for local preview.
-  - `index.html` — main UI
-  - `app.js` — runtime JavaScript
-  - `styles.css` — styling
-- `/docs` — copy of the static site (kept for reference). NOTE: GitHub Pages is intentionally not configured in this repo per project settings.
-- `/src` — archived source snapshots for development/reference
-- `/` — repository root (this README, .gitignore, and config files)
+- 快速記錄：選擇 Boss、輸入頻道、標註是否出貨與備註，立即儲存擊殺紀錄。
+- 預估復活時間：系統會根據既有規則自動計算並顯示該 Boss 的下次預估復活時間，方便你安排狩獵或競賽。
+- 當日紀錄檢視：清楚列出當天的所有紀錄，支援快速搜尋、排序與過濾。
+- 編輯與刪除：可直接在紀錄列表中修改或移除錯誤紀錄。
+- 匯入 / 匯出備份：提供備份與還原資料的機制，讓你能保存重要紀錄或在不同裝置間移轉（資料僅存在於你的裝置上）。
 
-How to use locally
+為什麼使用它？
 
-1. Preview locally (quick):
-   - From the repository root run a simple HTTP server (Python):
+- 省時：快速輸入與自動計算，減少手動整理紀錄的時間。
+- 清晰：一目了然的列表與預估時間，方便你規劃行程與協調隊伍。
+- 私密：所有紀錄都保存在你的裝置中，不會自動上傳到外部伺服器（請依照你的需求定期備份）。
 
-```powershell
-python -m http.server 8000
+快速上手（給一般使用者）
 
-# then open http://localhost:8000/public/index.html (or /docs/index.html for reference)
-```
+1. 開啟應用程式（在瀏覽器中開啟主頁）。
+2. 在表單中選擇 Boss 並填入頻道、是否出貨和備註，按「儲存」。
+3. 在下方列表查看當日紀錄與預估復活時間；可以直接編輯或刪除特定紀錄。
+4. 如需備份或轉移資料，請使用應用的匯入/匯出功能。
 
-2. Git & GitHub
-   - Repo URL: https://github.com/elfhermit/ArtaleBossTimer.git
-   - Typical workflow:
+常見問題
 
-```powershell
-git add .
-git commit -m "Update: project organization"
-git branch -M main
-git remote add origin https://github.com/elfhermit/ArtaleBossTimer.git
-git push -u origin main
-```
+- 我可以在手機上使用嗎？
 
-3. GitHub Pages / Publishing
-   - NOTE: GitHub Pages deployment is intentionally disabled for this repository (per user request).
-   - If you later decide to enable Pages, you can manually set it in the repository Settings → Pages (Branch: `main`, Folder: `/docs`) or add an action to publish to `gh-pages`.
+   是的，介面為響應式，可在多數現代瀏覽器的手機或平板上運行。
 
-Notes & next steps
-- The runtime copies live in `/public` for local preview. `/docs` is retained for reference but Pages is not active.
-- If you'd like, I can:
-  - Add a license (e.g., MIT) and `CONTRIBUTING.md`.
-  - Add an optional manual publish workflow that you can trigger (`workflow_dispatch`) to publish `/docs` to `gh-pages` on demand.
-  - Produce a `NEXT_STEPS.md` with remaining tasks and risk assumptions.
+- 資料會不會被分享到網路？
+
+   所有紀錄預設儲存在你的裝置上；若你要備份或分享，請使用匯出功能。
+
+需要協助或有意見？
+歡迎透過專案頁面提出建議或回報使用問題，我們會參考使用者回饋持續改進產品體驗。
 
