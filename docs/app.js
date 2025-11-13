@@ -129,6 +129,28 @@ function calculateRespawnTimes(killISO, bossRule) {
 			alert(typeof msg === 'string' ? msg : String(msg));
 		}
 
+		// store recently deleted records for undo
+		window.__abt_recentlyDeleted = window.__abt_recentlyDeleted || {};
+		window.__abt_restoreDeleted = function(id) {
+			try {
+				const rec = window.__abt_recentlyDeleted && window.__abt_recentlyDeleted[id];
+				if (!rec) return showToast('無可還原的紀錄');
+				// restore by loading per-boss storage and reinserting the original record
+				const st = PerBossStorage.loadBossStorage(rec.bossId);
+				st.records = st.records || [];
+				// avoid duplicate id: if exists, generate new id
+				if (st.records.find(r => r.id === rec.id)) {
+					rec.id = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+				}
+				st.records.push(rec);
+				PerBossStorage.saveBossStorage(rec.bossId, st);
+				delete window.__abt_recentlyDeleted[id];
+				showToast('已還原紀錄', { classes: 'green darken-1' });
+				// re-render
+				renderRecords();
+			} catch (e) { showToast('還原失敗：' + e.message, { classes: 'red darken-1 white-text' }); }
+		};
+
 		// small helper to create elements
 		function el(tag, props = {}, ...children) {
 			const e = document.createElement(tag);
@@ -231,8 +253,10 @@ function calculateRespawnTimes(killISO, bossRule) {
 		const rf = el('div', {class: 'card', style: 'padding:12px'},
 			el('h5', {}, '新增擊殺紀錄'),
 			el('label', {}, 'Boss：'), el('select', {id: 'record-boss'}, bosses.map(b => el('option', {value: b.id}, b.name))), el('br'),
-			el('label', {}, '擊殺時間：'), el('input', {id: 'record-time', type: 'datetime-local'}), el('br'),
-			el('label', {}, '頻道：'), el('input', {id: 'record-channel', type: 'number', min: 1, max: 3000, step: 1}), el('br'),
+			/* 擊殺時間由系統自動生成 (使用新增時刻) */
+			el('p', {id: 'record-time-display', style: 'color:#666;margin:8px 0 0 0;font-size:0.95rem'}, `擊殺時間：${new Date().toLocaleString()}`),
+			el('br'),
+			el('label', {}, '頻道：'), el('input', {id: 'record-channel', type: 'number', min: 1, max: 3000, step: 1, placeholder: '例如 1'}), el('br'),
 			el('label', {}, '是否出貨：')
 		);
 
@@ -253,18 +277,26 @@ function calculateRespawnTimes(killISO, bossRule) {
 
 		rf.appendChild(el('label', {}, '備註：'));
 		rf.appendChild(el('textarea', {id: 'record-note', rows: 2, maxlength: 200}));
+		// inline validation / status area
+		rf.appendChild(el('div', {id: 'record-status', style: 'margin-top:8px;color:crimson'}));
 		rf.appendChild(el('br'));
-		rf.appendChild(el('button', {id: 'record-add', type: 'button'}, '新增紀錄'));
+		rf.appendChild(el('button', {id: 'record-add', type: 'button', class: 'btn teal'}, '新增紀錄'));
+		rf.appendChild(el('button', {id: 'record-cancel', type: 'button', class: 'btn grey', style: 'margin-left:8px;display:none'}, '取消編輯'));
 		recordFormRoot.appendChild(rf);
 
 		// build filters UI placeholder (will be filled by buildFiltersUI)
 		const filtersRoot = document.getElementById('filters-root');
 		if (filtersRoot) filtersRoot.innerHTML = '';
 
-	// set default time to now
-	document.getElementById('record-time').value = local;
-	// default looted to '否' to reduce accidental validation failures
+		// default looted to '否' to reduce accidental validation failures
 	try { document.getElementById('looted-no').checked = true; } catch (e) { /* ignore if not present */ }
+		// update display time periodically while form is open (optional)
+		try {
+			const disp = document.getElementById('record-time-display');
+			if (disp) {
+				setInterval(() => { try { disp.innerText = `擊殺時間：${new Date().toLocaleString()}`; } catch(e){} }, 60000);
+			}
+		} catch(e) {}
 
 		// restore last selected boss if present
 		const lastBoss = localStorage.getItem('abt_lastBoss');
@@ -285,33 +317,43 @@ function calculateRespawnTimes(killISO, bossRule) {
 			document.getElementById('looted-yes').checked = false;
 			document.getElementById('looted-no').checked = false;
 			document.getElementById('record-add').innerText = '新增紀錄';
+			// hide cancel edit button
+			try { document.getElementById('record-cancel').style.display = 'none'; } catch (e) {}
+			// reset time display to now
+			try { const disp = document.getElementById('record-time-display'); if (disp) disp.innerText = `擊殺時間：${new Date().toLocaleString()}`; } catch(e) {}
 		}
 
 		recordAddBtn.addEventListener('click', () => {
 			const bossId = document.getElementById('record-boss').value;
-			const t = document.getElementById('record-time').value;
+			// timestamp is set automatically to now for new records
+			const t = new Date().toISOString();
 			const channel = document.getElementById('record-channel').value;
 			const looted = document.getElementById('looted-yes').checked ? true : (document.getElementById('looted-no').checked ? false : null);
 			const note = document.getElementById('record-note').value.trim();
 			const editId = document.getElementById('record-id').value;
-			// validation
+			// validation (show inline)
 			const errors = [];
 			if (!bossId) errors.push('請選擇 Boss');
-			if (!t) errors.push('請輸入擊殺時間');
 			const chNum = Number(channel);
 			if (!channel || isNaN(chNum) || !Number.isInteger(chNum) || chNum < 1 || chNum > 3000) errors.push('頻道請輸入 1..3000 的整數');
 			if (looted == null) errors.push('請選擇是否出貨');
 			if (note.length > 200) errors.push('備註不可超過 200 字');
-			if (errors.length) { showToast(errors.join('<br/>'), { classes: 'red darken-1 white-text' }); return; }
+			const statusEl = document.getElementById('record-status');
+			if (errors.length) { if (statusEl) statusEl.innerHTML = errors.join('<br/>'); else showToast(errors.join('<br/>'), { classes: 'red darken-1 white-text' }); return; }
+			if (statusEl) statusEl.innerHTML = '';
 			try {
 				if (editId) {
-					// update
-					const updated = updateRecord(editId, { bossId, timestamp: new Date(t).toISOString(), channel: chNum, looted, note });
+					// update (keep original timestamp unless explicitly changed via future feature)
+					const updated = updateRecord(editId, { bossId, channel: chNum, looted, note });
+					// mark last edited for highlight
+					window.__abt_lastEditedId = updated.id;
 					renderRecords(bossId, new Date(t));
 					clearRecordForm();
 					showToast('已儲存修改', { classes: 'green darken-1' });
 				} else {
-					const rec = addRecord({ bossId, timestamp: new Date(t).toISOString(), channel: chNum, looted, note });
+					const rec = addRecord({ bossId, timestamp: t, channel: chNum, looted, note });
+					// mark last edited for highlight
+					window.__abt_lastEditedId = rec.id;
 					renderRecords(bossId, new Date(t));
 					// clear note / channel
 					document.getElementById('record-note').value = '';
@@ -319,11 +361,21 @@ function calculateRespawnTimes(killISO, bossRule) {
 					// remember last boss
 					try { localStorage.setItem('abt_lastBoss', bossId); } catch (e) {}
 					showToast('新增完成', { classes: 'green darken-1' });
+					// focus channel for next quick entry
+					try { document.getElementById('record-channel').focus(); } catch (e) {}
 				}
 			} catch (e) {
 				showToast('操作失敗：' + e.message, { classes: 'red darken-1 white-text' });
 			}
 		});
+
+		// cancel edit handler
+		try {
+			document.getElementById('record-cancel').addEventListener('click', () => {
+				clearRecordForm();
+				showToast('已取消編輯');
+			});
+		} catch (e) {}
 
 		// build filters UI and wire handlers
 		function buildFiltersUI(bosses) {
@@ -384,10 +436,10 @@ function calculateRespawnTimes(killISO, bossRule) {
 		recordsRoot.innerHTML = '';
 		const title = el('h5', {}, `紀錄 — ${bossId || '全部'}`);
 		recordsRoot.appendChild(title);
-		// get all records for boss (or all if no bossId)
-		let rows = getRecords({ bossId });
-		// gather filters from UI
-		const filters = readFiltersFromUI ? readFiltersFromUI() : {};
+	// get all records for boss (or all if no bossId)
+	let rows = getRecords({ bossId });
+	// gather filters from UI (use typeof checks to avoid ReferenceError if helper not yet defined)
+	const filters = (typeof readFiltersFromUI === 'function') ? readFiltersFromUI() : ((typeof window.__abt_readFiltersFromUI === 'function') ? window.__abt_readFiltersFromUI() : {});
 		// if a specific date is passed, override start/end filters to that date
 		if (date) {
 			const d = new Date(date);
@@ -447,12 +499,29 @@ function calculateRespawnTimes(killISO, bossRule) {
 				)
 			);
 			// attach delete handler
+			if (window.__abt_lastEditedId === r.id) {
+				tr.classList.add('highlight');
+				setTimeout(() => { try { tr.classList.remove('highlight'); } catch(e){} }, 4000);
+				// scroll into view
+				try { tr.scrollIntoView({behavior:'smooth', block:'center'}); } catch (e) {}
+			}
 			tr.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (ev) => {
 				const id = ev.target.getAttribute('data-id');
-				if (confirm('確定刪除此紀錄？')) {
-					deleteRecord(id);
+				const rec = rows.find(x => x.id === id);
+				if (!rec) return showToast('找不到紀錄');
+				try {
+					// perform deletion
+					const ok = deleteRecord(id);
+					if (!ok) return showToast('刪除失敗');
+					// store copy for undo (keep original timestamps/ids)
+					window.__abt_recentlyDeleted[id] = rec;
+					// schedule cleanup of undo cache after 10s
+					setTimeout(() => { try { delete window.__abt_recentlyDeleted[id]; } catch (e) {} }, 10000);
+					// show toast with undo button (calls global restore)
+					showToast(`<span>已刪除紀錄</span> <button class="btn-flat toast-undo" onclick="window.__abt_restoreDeleted('${id}')">撤銷</button>`, { displayLength: 10000 });
+					// re-render
 					renderRecords(bossId, date);
-				}
+				} catch (e) { showToast('刪除失敗：' + e.message, { classes: 'red darken-1 white-text' }); }
 			}));
 			// attach edit handler
 			tr.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (ev) => {
@@ -463,13 +532,16 @@ function calculateRespawnTimes(killISO, bossRule) {
 					document.getElementById('record-id').value = rec.id;
 					document.getElementById('record-boss').value = rec.bossId;
 					const dt = new Date(rec.timestamp);
-					const pad = (n)=>String(n).padStart(2,'0');
-					const localVal = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-					document.getElementById('record-time').value = localVal;
+					// show the original kill time in the read-only display
+					try { const disp = document.getElementById('record-time-display'); if (disp) disp.innerText = `擊殺時間：${dt.toLocaleString()}`; } catch(e) {}
 					document.getElementById('record-channel').value = String(rec.channel);
 					if (rec.looted) document.getElementById('looted-yes').checked = true; else document.getElementById('looted-no').checked = true;
 					document.getElementById('record-note').value = rec.note || '';
 					document.getElementById('record-add').innerText = '儲存修改';
+					// show cancel button while editing
+					try { document.getElementById('record-cancel').style.display = 'inline-block'; } catch (e) {}
+					// focus channel for quick edit
+					try { document.getElementById('record-channel').focus(); } catch (e) {}
 					showToast('已載入紀錄供編輯');
 				} catch (e) { showToast('編輯失敗：' + e.message, { classes: 'red darken-1 white-text' }); }
 			}));
@@ -477,6 +549,8 @@ function calculateRespawnTimes(killISO, bossRule) {
 		});
 		table.appendChild(tbody);
 		recordsRoot.appendChild(table);
+		// clear last edited marker after rendering
+		try { window.__abt_lastEditedId = null; } catch (e) {}
 	}
 
 	// --- fetch bosses and initialize UI ---
