@@ -451,6 +451,30 @@ function calculateRespawnTimes(killISO, bossRule) {
 		}
 		const title = el('h5', {}, `紀錄 — ${bossTitle}`);
 		recordsRoot.appendChild(title);
+
+		// show current sort status and reset control next to title
+		const keyLabelMap = { boss: '首領', timestamp: '時間', channel: '頻道', looted: '出貨', note: '備註', respawn: '預計復活' };
+		function renderSortStatus() {
+			// remove existing if present
+			const existing = document.getElementById('abt-sort-status');
+			if (existing) existing.remove();
+			const ks = sortState.key || 'timestamp';
+			const dir = sortState.dir === 'asc' ? '▲' : '▼';
+			const lbl = keyLabelMap[ks] || ks;
+			const span = el('span', {id: 'abt-sort-status', style: 'margin-left:12px;color:#666;font-size:0.9rem'}, `排序：${lbl} ${dir}`);
+			// reset button
+			const resetBtn = el('button', {id: 'abt-reset-sort', type: 'button', class: 'btn-small grey', style: 'margin-left:8px'}, '重設排序');
+			resetBtn.addEventListener('click', () => {
+				try { localStorage.removeItem('abt_records_sort'); } catch (e) {}
+				window.__abt_records_sort = { key: 'timestamp', dir: 'asc' };
+				renderRecords(bossId, date);
+				showToast('已重設排序');
+			});
+			span.appendChild(resetBtn);
+			title.parentNode.insertBefore(span, title.nextSibling);
+		}
+		renderSortStatus();
+		recordsRoot.appendChild(title);
 	// get all records for boss (or all if no bossId)
 	let rows = getRecords({ bossId });
 	// gather filters from UI (use typeof checks to avoid ReferenceError if helper not yet defined)
@@ -494,8 +518,7 @@ function calculateRespawnTimes(killISO, bossRule) {
 			active.forEach(a => af.appendChild(el('span', {class: 'chip', style: 'margin-right:6px'}, a)));
 			recordsRoot.appendChild(af);
 		}
-		// sorting state (persist per-window)
-		window.__abt_records_sort = window.__abt_records_sort || { key: 'timestamp', dir: 'desc' };
+			window.__abt_records_sort = window.__abt_records_sort || { key: 'timestamp', dir: 'asc' };
 		const sortState = window.__abt_records_sort;
 
 		// prepare table and headers (add Boss column when viewing all bosses)
