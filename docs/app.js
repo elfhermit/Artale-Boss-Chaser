@@ -115,6 +115,15 @@ function calculateRespawnTimes(killISO, bossRule) {
 		const recordsRoot = document.getElementById('records-root');
 		let BOSSES = [];
 
+		// load saved sort state from localStorage if present (key: abt_records_sort)
+		try {
+			const raw = localStorage.getItem('abt_records_sort');
+			if (raw) {
+				const s = JSON.parse(raw);
+				if (s && s.key) window.__abt_records_sort = s;
+			}
+		} catch (e) { /* ignore */ }
+
 		// helper to show non-blocking notifications (uses Materialize M.toast when available)
 		function showToast(msg, opts = {}) {
 			try {
@@ -494,28 +503,39 @@ function calculateRespawnTimes(killISO, bossRule) {
 		const thead = el('thead');
 		const headerRow = el('tr');
 
-		// helper to build a sortable header cell (adds aria-sort and a small indicator)
+		// helper to build a sortable header cell (adds aria-sort and keyboard support)
 		function thSortable(label, key) {
-			const th = el('th', {}, label);
+			const th = el('th');
 			th.classList.add('sortable');
 			th.style.cursor = 'pointer';
-			// show arrow for current sort and set aria-sort
+			th.textContent = label;
+			th.setAttribute('role', 'button');
+			th.setAttribute('tabindex', '0');
+
+			// update visual indicator and aria/data attributes
 			function renderIndicator() {
 				const isActive = sortState.key === key;
-				const arrow = isActive ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
-				th.innerHTML = label + arrow;
-				if (isActive) th.setAttribute('aria-sort', sortState.dir === 'asc' ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort');
+				if (isActive) {
+					th.setAttribute('aria-sort', sortState.dir === 'asc' ? 'ascending' : 'descending');
+					th.setAttribute('data-sort', sortState.dir === 'asc' ? 'asc' : 'desc');
+				} else {
+					th.removeAttribute('aria-sort');
+					th.removeAttribute('data-sort');
+				}
 			}
 			renderIndicator();
-			th.addEventListener('click', () => {
+
+			function toggleSort() {
 				if (sortState.key === key) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
 				else { sortState.key = key; sortState.dir = 'asc'; }
-				// persist to window and localStorage
+				// persist
 				window.__abt_records_sort = sortState;
 				try { localStorage.setItem('abt_records_sort', JSON.stringify(sortState)); } catch (e) {}
-				// re-render with new sort
 				renderRecords(bossId, date);
-			});
+			}
+
+			th.addEventListener('click', () => toggleSort());
+			th.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSort(); } });
 			return th;
 		}
 
