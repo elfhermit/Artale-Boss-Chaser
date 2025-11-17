@@ -285,7 +285,7 @@ function calculateRespawnTimes(killISO, bossRule) {
 			if (!Array.isArray(bosses) || !bosses.length) { monitorRoot.appendChild(el('p', {}, '無可顯示的 Boss')); return; }
 			bosses.forEach(b => {
 					const thumb = el('img', {class: 'monitor-thumb', src: `bosses/${b.image || 'placeholder.svg'}`, alt: b.name, 'data-tip': (b.respawn || ''), 'aria-label': b.name});
-					const wrap = el('div', {class: 'monitor-card', tabindex: '0', role: 'button'},
+					const wrap = el('div', {class: 'monitor-card', tabindex: '0', role: 'button', 'data-boss-id': b.id},
 						thumb,
 						el('div', {class: 'meta'},
 							el('div', {class: 'boss-name'}, b.name),
@@ -326,10 +326,19 @@ function calculateRespawnTimes(killISO, bossRule) {
 						if (!isNaN(t0) && !isNaN(t1)) {
 							if (now < t0) {
 								if (statusEl) statusEl.textContent = `冷卻中：${resp.humanReadable}`;
+								// cooling state (neutral gray)
+								wrap.classList.remove('respawn-soon','respawn-ready');
+								wrap.classList.add('respawn-cooling');
 							} else if (now >= t0 && now <= t1) {
 								if (statusEl) statusEl.textContent = `復活中：${resp.humanReadable}`;
+								// within respawn window -> soon (amber)
+								wrap.classList.remove('respawn-cooling','respawn-ready');
+								wrap.classList.add('respawn-soon');
 							} else {
 								if (statusEl) statusEl.textContent = `已復活：${resp.humanReadable}`;
+								// ready (green)
+								wrap.classList.remove('respawn-cooling','respawn-soon');
+								wrap.classList.add('respawn-ready');
 							}
 							// progress: from kill -> earliest
 							const duration = t0 - Date.parse(latest.timestamp);
@@ -388,6 +397,15 @@ function calculateRespawnTimes(killISO, bossRule) {
 									let pct = 0;
 									if (duration > 0) pct = Math.max(0, Math.min(100, Math.round(((now - Date.parse(latest.timestamp)) / duration) * 100)));
 									if (bar) bar.style.width = `${pct}%`;
+									// update monitor card semantic class so styles reflect state
+									try {
+										const wrap = document.querySelector(`.monitor-card[data-boss-id="${b.id}"]`);
+										if (wrap) {
+											if (now < t0) { wrap.classList.remove('respawn-soon','respawn-ready'); wrap.classList.add('respawn-cooling'); }
+											else if (now >= t0 && now <= t1) { wrap.classList.remove('respawn-cooling','respawn-ready'); wrap.classList.add('respawn-soon'); }
+											else { wrap.classList.remove('respawn-cooling','respawn-soon'); wrap.classList.add('respawn-ready'); }
+										}
+									} catch (e) {}
 								}
 							} else {
 								if (lastEl) lastEl.textContent = '';
@@ -587,11 +605,18 @@ function calculateRespawnTimes(killISO, bossRule) {
 		);
 		recordFormRoot.appendChild(timeAdjust);
 
-		// wire channel grid clicks
+		// wire channel grid clicks (make them behave like choice chips)
 		try {
 			channelGrid.querySelectorAll('button[data-channel]').forEach(btn => btn.addEventListener('click', (ev) => {
 				const ch = ev.currentTarget.getAttribute('data-channel');
-				try { document.getElementById('record-channel').value = ch; document.getElementById('record-channel').focus(); } catch (e) {}
+				try {
+					// remove active from siblings
+					channelGrid.querySelectorAll('button[data-channel]').forEach(b => b.classList.remove('active'));
+					// mark this one active
+					ev.currentTarget.classList.add('active');
+					document.getElementById('record-channel').value = ch;
+					document.getElementById('record-channel').focus();
+				} catch (e) {}
 			}));
 		} catch (e) { /* ignore if channelGrid not present */ }
 
