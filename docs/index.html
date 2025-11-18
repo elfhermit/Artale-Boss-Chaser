@@ -1,70 +1,148 @@
-<!doctype html>
-<html lang="zh-TW">
+<!DOCTYPE html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Artale Boss Timer — source copy</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss 獵人儀表板</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入 Google Fonts (包含 Noto Sans TC 和 Monospace 字體) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
 <body>
-  <!-- Source snapshot of the app (archived in src/) -->
-  <!-- Header: site title + theme toggle (moved from sidebar) -->
-  <div class="app-header" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-weight:700">Artale Boss Timer</div>
-    <div>
-      <label for="theme-toggle" style="margin:0 8px 0 0;font-size:0.95rem;color:inherit">主題</label>
-      <button id="theme-toggle" type="button" class="btn-small" aria-pressed="false">切換主題</button>
-    </div>
-  </div>
 
-  <div class="container">
-    <h2>Boss 資料檢視（範例）</h2>
-    <p>載入自 <code>docs/bosses/bosses.json</code> — 此為示範頁面，圖片為佔位圖。</p>
-
-    <div class="row">
-      <div class="input-field col s12">
-        <input id="search" type="text" placeholder="搜尋 Boss 名稱或復活時間">
-        <label for="search">搜尋</label>
-      </div>
-    </div>
-
-    <div class="row" style="margin-bottom:12px">
-      <div class="col s12">
-        <button id="export-btn" class="btn">匯出 JSON</button>
-        <button id="import-btn" class="btn grey" style="margin-left:8px">匯入 JSON</button>
-        <input id="import-file" type="file" accept="application/json" style="display:none" />
-      </div>
-    </div>
-
-    <div class="row">
-      <!-- 左側：監控主視覺（70%） -->
-      <div class="col s12 m8">
-        <div id="app">
-          <section class="card" style="padding:12px;margin-bottom:12px">
-            <h5>即時戰況監控</h5>
-            <p style="margin:0 0 8px 0;color:#666">點擊右側的快速紀錄或在卡片上按下「⚔️ 紀錄擊殺」</p>
-            <div id="monitor-root" style="max-height:520px;overflow:auto"></div>
-          </section>
-          <section class="card" style="padding:12px;">
-            <h5 style="margin-top:0">近期擊殺歷史紀錄</h5>
-            <div id="records-root"></div>
-          </section>
+    <!-- 頂部導覽列 -->
+    <header class="header">
+        <h1 class="header-title">Boss 獵人儀表板</h1>
+        <div class="header-controls">
+            <button class="btn btn-secondary btn-icon" title="匯出紀錄">
+                <span class="material-icons-outlined">file_upload</span>
+            </button>
+            <button class="btn btn-secondary btn-icon" title="匯入紀錄">
+                <span class="material-icons-outlined">file_download</span>
+            </button>
+            <button id="theme-toggle-btn" class="btn btn-icon btn-secondary" title="切換主題">
+                <span class="material-icons-outlined" id="theme-icon">light_mode</span>
+            </button>
         </div>
-      </div>
-      <!-- 右側：快速作業區（30%） -->
-      <div class="col s12 m4">
-        <aside id="sidebar" class="card sidebar-sticky" style="padding:12px;">
-          <h5 style="margin-top:0">快速紀錄 / 工具</h5>
-          <div id="record-form-root"></div>
-          <!-- theme toggle moved to header -->
-          <!-- 已移除：右下舊的快速篩選 / Boss 列表（以精簡右側操作區） -->
+    </header>
+
+    <!-- 主容器 (左右佈局) -->
+    <div class="container">
+        
+        <!-- 左側主內容區 -->
+        <main class="content">
+            <!-- 1. 即時戰況監控 -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2>即時戰況監控</h2>
+                    <div class="filter-chips">
+                        <span class="chip active" data-filter="all">全部</span>
+                        <span class="chip" data-filter="alive">🟢 已存活</span>
+                        <span class="chip" data-filter="warning">🟡 即將重生</span>
+                        <span class="chip" data-filter="cooldown">🔴 冷卻中</span>
+                    </div>
+                </div>
+                <!-- 搜尋框 -->
+                <div class="search-bar-wrapper">
+                    <span class="material-icons-outlined search-icon">search</span>
+                    <input type="text" id="boss-search-input" placeholder="搜尋 Boss 名稱..." class="search-input">
+                </div>
+                <!-- Boss 卡片列表將由 JS 動態填入 -->
+                <div id="boss-monitoring-list" class="boss-card-grid">
+                    <!-- JS 動態產生卡片 -->
+                </div>
+            </section>
+
+            <!-- 2. 近期擊殺歷史紀錄 -->
+            <section class="content-section" id="kill-history-section">
+                <div class="section-header">
+                    <!-- 標題由 JS 動態更新 -->
+                    <h2 id="history-table-title">近期擊殺歷史紀錄</h2>
+                    <button id="clear-history-btn" class="btn btn-danger btn-small">清除所有紀錄</button>
+                </div>
+                <div class="table-container">
+                    <table id="kill-history-table">
+                        <thead>
+                            <tr>
+                                <th>首領</th>
+                                <th>擊殺時間</th>
+                                <th>頻道</th>
+                                <th>掉寶</th>
+                                <th>備註</th>
+                                <th>預計復活區間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- JS 動態產生歷史紀錄 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- 右側黏性側邊欄 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-card">
+                <h2 class="sidebar-title">📝 紀錄擊殺</h2>
+
+                <!-- 顯示當前選中的 Boss -->
+                <div id="selected-boss-info" class="selected-boss-info">
+                    <span id="boss-placeholder">請從左側點擊 Boss 卡片</span>
+                    <!-- JS 動態更新 -->
+                </div>
+                
+                <!-- 擊殺表單 -->
+                <form id="kill-form">
+                    
+                    <!-- 擊殺時間控制 (已移除) -->
+
+                    <!-- 頻道控制 (步進器) -->
+                    <div class="form-group">
+                        <label for="channel-input" class="input-label">頻道 (1-3000)</label>
+                        <div class="stepper-wrapper">
+                            <button type="button" class="step-btn" id="channel-sub">❮</button>
+                            <input type="number" id="channel-input" class="channel-input" value="1" min="1" max="3000" required>
+                            <button type="button" class="step-btn" id="channel-add">❯</button>
+                        </div>
+                        <div class="quick-channels">
+                            <span class="quick-chip" data-channel="1">1</span>
+                            <span class="quick-chip" data-channel="2">2</span>
+                            <span class="quick-chip" data-channel="3">3</span>
+                            <span class="quick-chip" data-channel="4">4</span>
+                            <span class="quick-chip" data-channel="5">5</span>
+                        </div>
+                    </div>
+
+                    <!-- 是否掉寶 -->
+                    <div class="form-group form-group-inline">
+                        <label for="has-drop" class="input-label">是否掉寶</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="has-drop">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- 備註 -->
+                    <div class="form-group">
+                        <label for="notes" class="input-label">備註</label>
+                        <input type="text" id="notes" class="form-input" placeholder="例如：掉落物、隊友...">
+                    </div>
+
+                    <!-- 送出按鈕 -->
+                    <button type="submit" id="submit-kill-btn" class="btn btn-primary btn-full" disabled>
+                        <span class="material-icons-outlined">add_task</span>
+                        請先選擇 Boss
+                    </button>
+
+                </form>
+            </div>
         </aside>
-      </div>
+
     </div>
-  </div>
-  <script src="js/storage.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <script src="app.js"></script>
+
+    <!-- 引入 JavaScript -->
+    <script src="app.js" defer></script>
 </body>
 </html>
