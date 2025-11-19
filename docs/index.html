@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boss 獵人儀表板</title>
+    <title>Boss 獵人儀表板 (Pro)</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- 引入 Google Fonts (包含 Noto Sans TC 和 Monospace 字體) -->
+    <!-- 引入 Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
@@ -13,16 +13,16 @@
 
     <!-- 頂部導覽列 -->
     <header class="header">
-        <h1 class="header-title">Boss 獵人儀表板</h1>
+        <h1 class="header-title">Boss 獵人儀表板 <span class="version-badge">Pro</span></h1>
         <div class="header-controls">
-            <!-- 匯入/匯出按鈕已從 UI 移除（DOM 已永久刪除） -->
+            <!-- 匯入/匯出按鈕已移除 -->
             <button id="theme-toggle-btn" class="btn btn-icon btn-secondary" title="切換主題">
                 <span class="material-icons-outlined" id="theme-icon">light_mode</span>
             </button>
         </div>
     </header>
 
-    <!-- 主容器 (左右佈局) -->
+    <!-- 主容器 -->
     <div class="container">
         
         <!-- 左側主內容區 -->
@@ -33,7 +33,7 @@
                     <h2>即時戰況監控</h2>
                     <div class="filter-chips">
                         <span class="chip active" data-filter="all">全部</span>
-                        <span class="chip" data-filter="alive">🟢 已存活</span>
+                        <span class="chip" data-filter="alive">🟢 可擊殺</span>
                         <span class="chip" data-filter="warning">🟡 即將重生</span>
                         <span class="chip" data-filter="cooldown">🔴 冷卻中</span>
                     </div>
@@ -43,29 +43,28 @@
                     <span class="material-icons-outlined search-icon">search</span>
                     <input type="text" id="boss-search-input" placeholder="搜尋 Boss 名稱..." class="search-input">
                 </div>
-                <!-- Boss 卡片列表將由 JS 動態填入 -->
+                <!-- Boss 卡片列表 -->
                 <div id="boss-monitoring-list" class="boss-card-grid">
                     <!-- JS 動態產生卡片 -->
                 </div>
             </section>
 
-            <!-- 2. 近期擊殺歷史紀錄 -->
+            <!-- 2. 頻道狀態紀錄 -->
             <section class="content-section" id="kill-history-section">
                 <div class="section-header">
-                    <!-- 標題由 JS 動態更新 -->
-                    <h2 id="history-table-title">近期擊殺歷史紀錄</h2>
-                    <button id="clear-history-btn" class="btn btn-danger btn-small">清除所有紀錄</button>
+                    <h2 id="history-table-title">各頻道狀態紀錄</h2>
+                    <button id="clear-history-btn" class="btn btn-danger btn-small">清除所有</button>
                 </div>
                 <div class="table-container">
                     <table id="kill-history-table">
                         <thead>
                             <tr>
-                                <th>首領</th>
-                                <th>擊殺時間</th>
-                                <th>頻道</th>
-                                <th>掉寶</th>
+                                <th data-sort="name" class="sortable">首領 <span class="sort-icon"></span></th>
+                                <th data-sort="killTime" class="sortable">上次擊殺 <span class="sort-icon">▼</span></th>
+                                <th data-sort="channel" class="sortable">頻道 <span class="sort-icon"></span></th>
+                                <th data-sort="hasDrop" class="sortable">掉寶 <span class="sort-icon"></span></th>
                                 <th>備註</th>
-                                <th>預計復活區間</th>
+                                <th data-sort="respawn" class="sortable">預計復活 <span class="sort-icon"></span></th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -80,20 +79,17 @@
         <!-- 右側黏性側邊欄 -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-card">
-                <h2 class="sidebar-title">📝 紀錄擊殺</h2>
+                <h2 class="sidebar-title">📝 紀錄 / 更新狀態</h2>
 
                 <!-- 顯示當前選中的 Boss -->
                 <div id="selected-boss-info" class="selected-boss-info">
-                    <span id="boss-placeholder">請從左側點擊 Boss 卡片</span>
-                    <!-- JS 動態更新 -->
+                    <span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>
                 </div>
                 
                 <!-- 擊殺表單 -->
                 <form id="kill-form">
                     
-                    <!-- 擊殺時間控制 (已移除) -->
-
-                    <!-- 頻道控制 (步進器) -->
+                    <!-- 頻道控制 -->
                     <div class="form-group">
                         <label for="channel-input" class="input-label">頻道 (1-3000)</label>
                         <div class="stepper-wrapper">
@@ -130,6 +126,11 @@
                         <span class="material-icons-outlined">add_task</span>
                         請先選擇 Boss
                     </button>
+                    
+                    <p class="form-hint">
+                        <span class="material-icons-outlined" style="font-size:12px; vertical-align:middle;">info</span>
+                        送出後自動記錄當下時間，並覆蓋該頻道舊紀錄。
+                    </p>
 
                 </form>
             </div>

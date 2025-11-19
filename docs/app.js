@@ -1,5 +1,4 @@
-// --- 1. 資料 (Data) ---
-// 你的 bosses.json 資料
+// --- 1. 資料定義 (Data) ---
 const BOSSES_JSON = [
   { "id": "boss-1", "name": "紅寶王", "respawn": "23分~30分", "minMinutes": 23, "maxMinutes": 30, "image": "placeholder.svg" },
   { "id": "boss-2", "name": "冥界幽靈", "respawn": "45分~1小時", "minMinutes": 45, "maxMinutes": 60, "image": "placeholder.svg" },
@@ -44,30 +43,38 @@ const BOSSES_JSON = [
 
 // --- 2. 應用程式狀態 (State) ---
 let killHistory = []; // 儲存所有擊殺紀錄
-let focusedBossId = null; // 【獵人模式】當前專注的 Boss ID
+let focusedBossId = null; // 當前專注的 Boss ID
 let currentFilter = 'all'; // 當前篩選器
-let currentSearch = ''; // 當前搜尋關鍵字
-let bossData = BOSSES_JSON; // Boss 靜態資料
+let currentSearch = ''; // 搜尋關鍵字
+let currentSort = { col: 'killTime', dir: 'desc' }; // 預設排序：擊殺時間 (新->舊)
+
 let timerInterval = null; // 計時器
 
-// --- 3. DOM 元素 (*** Bug Fix ***) ---
+// --- 3. DOM 元素 ---
 const dom = {
     bossListContainer: document.getElementById('boss-monitoring-list'),
     historyTableBody: document.querySelector('#kill-history-table tbody'),
-    historyTableTitle: document.getElementById('history-table-title'), // *** 修正：補上這個 DOM 選取 ***
-    sidebar: document.getElementById('sidebar'),
+    historyTableTitle: document.getElementById('history-table-title'),
+    tableHeaders: document.querySelectorAll('#kill-history-table th.sortable'),
+    
     selectedBossInfo: document.getElementById('selected-boss-info'),
     killForm: document.getElementById('kill-form'),
-    // killTimeInput 已移除
+    
     channelInput: document.getElementById('channel-input'),
     hasDropInput: document.getElementById('has-drop'),
     notesInput: document.getElementById('notes'),
     submitKillBtn: document.getElementById('submit-kill-btn'),
+    
     themeToggleBtn: document.getElementById('theme-toggle-btn'),
     themeIcon: document.getElementById('theme-icon'),
     filterChips: document.querySelectorAll('.filter-chips .chip'),
     searchInput: document.getElementById('boss-search-input'),
     clearHistoryBtn: document.getElementById('clear-history-btn'),
+    
+    // 頻道步進器
+    channelSubBtn: document.getElementById('channel-sub'),
+    channelAddBtn: document.getElementById('channel-add'),
+    quickChannels: document.querySelectorAll('.quick-chip')
 };
 
 // --- 4. 初始化 ---
@@ -76,22 +83,22 @@ document.addEventListener('DOMContentLoaded', init);
 function init() {
     loadTheme();
     loadHistory();
-    renderBossCards(); // 包含更新計時器
+    renderBossCards();
     renderHistoryTable();
     setupEventListeners();
     startTimerLoop();
-    console.log("Boss 獵人儀表板已啟動 (Ultimate Hunter Mode - Bug Fixed)");
+    console.log("Boss 獵人儀表板 (Pro) 已啟動");
 }
 
 function startTimerLoop() {
     if (timerInterval) clearInterval(timerInterval);
-    // 每秒更新一次計時器
+    // 瀏覽器效能優化：每秒執行一次，但 DOM 操作最小化
     timerInterval = setInterval(updateAllTimers, 1000);
 }
 
 // --- 5. 事件監聽 (Event Listeners) ---
 function setupEventListeners() {
-    // 點擊 Boss 卡片 (觸發獵人模式)
+    // 1. 點擊 Boss 卡片
     dom.bossListContainer.addEventListener('click', (e) => {
         const card = e.target.closest('.boss-card');
         if (card) {
@@ -99,63 +106,98 @@ function setupEventListeners() {
         }
     });
 
-    // 表單提交
+    // 2. 表單提交
     dom.killForm.addEventListener('submit', handleFormSubmit);
 
-    // 主題切換
-    dom.themeToggleBtn.addEventListener('click', toggleTheme);
-
-    // 時間微調 (已移除)
-    
-    // 頻道步進器
-    document.getElementById('channel-sub').addEventListener('click', () => updateChannel(-1));
-    document.getElementById('channel-add').addEventListener('click', () => updateChannel(1));
-    
-    // 頻道快速選擇
-    document.querySelectorAll('.quick-chip').forEach(chip => {
+    // 3. 頻道操作
+    dom.channelSubBtn.addEventListener('click', () => updateChannel(-1));
+    dom.channelAddBtn.addEventListener('click', () => updateChannel(1));
+    dom.quickChannels.forEach(chip => {
         chip.addEventListener('click', () => setChannel(chip.dataset.channel));
     });
 
-    // 篩選器
+    // 4. 篩選與搜尋
     dom.filterChips.forEach(chip => {
         chip.addEventListener('click', () => setFilter(chip.dataset.filter));
     });
-    
-    // 搜尋框
     dom.searchInput.addEventListener('input', (e) => setSearch(e.target.value));
 
-    // 清除歷史紀錄
-    dom.clearHistoryBtn.addEventListener('click', clearAllHistory);
+    // 5. 排序標題點擊
+    dom.tableHeaders.forEach(th => {
+        th.addEventListener('click', () => {
+            const sortKey = th.dataset.sort;
+            if (currentSort.col === sortKey) {
+                // 切換方向
+                currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                // 新欄位，預設 desc (通常看最新的比較方便)
+                currentSort.col = sortKey;
+                currentSort.dir = 'desc';
+            }
+            renderHistoryTable();
+            updateSortIcons();
+        });
+    });
 
-    // 歷史紀錄表的操作 (事件委派)
+    // 6. 點擊歷史紀錄列 (編輯模式)
     dom.historyTableBody.addEventListener('click', (e) => {
-        // 刪除按鈕
-        if (e.target.closest('.delete-btn')) {
-            const historyId = e.target.closest('tr').dataset.historyId;
+        // 如果點到刪除按鈕，不觸發編輯
+        if (e.target.closest('.delete-btn')) return;
+
+        const row = e.target.closest('tr');
+        if (row && row.dataset.bossId) {
+            const entry = killHistory.find(h => h.id === row.dataset.historyId);
+            if (entry) {
+                loadEntryToForm(entry);
+            }
+        }
+    });
+    
+    // 7. 刪除按鈕 (事件委派)
+    dom.historyTableBody.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('.delete-btn');
+        if (delBtn) {
+            e.stopPropagation(); // 防止觸發列點擊
+            const historyId = delBtn.closest('tr').dataset.historyId;
             deleteHistoryEntry(historyId);
         }
     });
+
+    // 8. 其他
+    dom.themeToggleBtn.addEventListener('click', toggleTheme);
+    dom.clearHistoryBtn.addEventListener('click', clearAllHistory);
 }
 
-// --- 6. 核心功能 (Core Logic) ---
+// --- 6. 核心邏輯 (Core Logic) ---
 
 /**
- * 【Ultimate Hunter 模式核心】
- * 處理表單提交
+ * 處理表單提交：實作唯一性約束與連續狩獵邏輯
  */
 function handleFormSubmit(e) {
     e.preventDefault();
-    if (!focusedBossId) { // 必須處於專注模式
+    if (!focusedBossId) {
         alert("請先選擇一個 Boss");
         return;
     }
 
     const currentChannel = parseInt(dom.channelInput.value);
+    const nowISO = new Date().toISOString();
 
+    // [唯一性約束]：檢查是否已存在該 Boss + 該頻道的紀錄
+    // 如果有，先移除舊的 (視為更新狀態)
+    const existingIndex = killHistory.findIndex(
+        k => k.bossId === focusedBossId && k.channel === currentChannel
+    );
+    
+    if (existingIndex !== -1) {
+        killHistory.splice(existingIndex, 1);
+    }
+
+    // 建立新紀錄
     const newEntry = {
-        id: `kill-${Date.now()}`,
+        id: `kill-${Date.now()}`, // 用 Timestamp 當 ID
         bossId: focusedBossId,
-        killTime: new Date().toISOString(), // *** 關鍵修改：擷取當下時間 ***
+        killTime: nowISO,
         channel: currentChannel,
         hasDrop: dom.hasDropInput.checked,
         notes: dom.notesInput.value.trim(),
@@ -163,53 +205,42 @@ function handleFormSubmit(e) {
 
     killHistory.push(newEntry);
     saveHistory();
-    renderHistoryTable(); // 重繪歷史 (會保持專注)
-    updateBossCard(focusedBossId); // 更新卡片計時器
+    
+    // 更新 UI
+    renderHistoryTable();
+    updateBossCard(focusedBossId);
 
-    // --- 連續狩獵 (Chain Hunting) 邏輯 ---
-    // 保持選中，自動準備下一次紀錄
-    
-    // 1. 更新時間為現在 (已移除，時間欄位不存在)
-    
-    // 2. 頻道自動 +1 (帶邊界檢查)
-    setChannel(currentChannel + 1); 
-    
-    // 3. 重設掉寶
+    // [連續狩獵]：自動準備下一次紀錄
+    // 頻道+1, 重置掉寶, 清空備註
+    setChannel(currentChannel + 1);
     dom.hasDropInput.checked = false;
-    
-    // 4. 清空備註
     dom.notesInput.value = "";
-    
-    console.log(`已紀錄 CH ${currentChannel}，自動準備 CH ${currentChannel + 1}`);
 }
 
 /**
- * 【獵人模式核心】
- * 選中一個 Boss，更新側邊欄表單，並觸發歷史紀錄篩選
- * @param {string} bossId 
+ * 選擇 Boss (切換專注模式)
  */
 function selectBoss(bossId) {
-    const oldSelected = document.querySelector('.boss-card.selected');
-    
-    // 點擊同一個已選中的 Boss = 取消專注
-    if (oldSelected && focusedBossId === bossId) {
+    // 如果點同一個，取消專注 (Toggle)
+    if (focusedBossId === bossId) {
         focusedBossId = null;
-        deselectBoss();
-        renderHistoryTable(); // 重繪歷史為 "全部"
+        dom.submitKillBtn.disabled = true;
+        dom.submitKillBtn.textContent = "請先選擇 Boss";
+        document.querySelectorAll('.boss-card').forEach(c => c.classList.remove('selected'));
+        dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>`;
+        renderHistoryTable();
         return;
     }
 
-    // 移除舊的 selected class
-    if (oldSelected) oldSelected.classList.remove('selected');
+    focusedBossId = bossId;
+    
+    // 更新卡片選中樣式
+    document.querySelectorAll('.boss-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.bossId === bossId);
+    });
 
-    focusedBossId = bossId; // 設定專注
+    // 更新右側面板資訊
     const boss = getBossById(bossId);
-    if (!boss) return;
-
-    // 增加新的 selected class
-    document.querySelector(`.boss-card[data-boss-id="${bossId}"]`)?.classList.add('selected');
-
-    // 更新側邊欄顯示
     dom.selectedBossInfo.innerHTML = `
         <div class="boss-card-img" id="selected-boss-img">
             ${boss.name.substring(0, 2)}
@@ -220,80 +251,52 @@ function selectBoss(bossId) {
         </div>
     `;
 
-    // 【重設表單為「新狩獵」的預設值】
-    // dom.killTimeInput.value = getFormattedDateTimeLocal(new Date()); // (已移除)
-    dom.channelInput.value = "1"; // *每次*手動選王，都從 CH 1 開始
-    dom.hasDropInput.checked = false;
-    dom.notesInput.value = "";
+    // 啟用表單
     dom.submitKillBtn.disabled = false;
     dom.submitKillBtn.textContent = `確認新增 ${boss.name} 紀錄`;
-
-    // *** 關鍵連動 ***
+    
+    // 觸發列表過濾
     renderHistoryTable();
 }
 
 /**
- * 取消選中，清空表單
+ * [新功能] 點擊列載入資料到表單 (方便重複紀錄)
  */
-function deselectBoss() {
-    const oldSelected = document.querySelector('.boss-card.selected');
-    if (oldSelected) oldSelected.classList.remove('selected');
+function loadEntryToForm(entry) {
+    // 1. 切換到該 Boss
+    if (focusedBossId !== entry.bossId) {
+        selectBoss(entry.bossId);
+    }
     
-    focusedBossId = null;
+    // 2. 填入資料
+    setChannel(entry.channel);
+    dom.notesInput.value = entry.notes || "";
+    // 掉寶通常是該次擊殺的結果，重複紀錄時通常是新的擊殺，所以這裡預設不勾選，或者保留原樣？
+    // 根據需求 "如果該頻道王已重生，方便User重複紀錄"，應該是為了打下一隻
+    // 所以這裡只帶入頻道跟備註(可能是固定隊友名單)，掉寶重置比較合理
+    dom.hasDropInput.checked = false;
 
-    dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">請從左側點擊 Boss 卡片</span>`;
-    dom.killForm.reset();
-    // dom.killTimeInput.value = ""; // (已移除)
-    dom.submitKillBtn.disabled = true;
-    dom.submitKillBtn.textContent = "請先選擇 Boss";
-}
-
-/**
- * 刪除一筆歷史紀錄
- * @param {string} historyId
- */
-function deleteHistoryEntry(historyId) {
-    if (!confirm("確定要刪除這筆紀錄嗎？")) return;
-    
-    const entry = killHistory.find(h => h.id === historyId);
-    killHistory = killHistory.filter(h => h.id !== historyId);
-    
-    saveHistory();
-    renderHistoryTable(); // 重繪歷史 (會保持專注)
-    
-    // 如果刪除的是該 Boss 的最後一筆紀錄，需更新卡片
-    if (entry) {
-        updateBossCard(entry.bossId);
+    // 視覺回饋：捲動到表單
+    if (window.innerWidth < 900) {
+        dom.sidebar.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
-/**
- * 清除所有歷史紀錄
- */
-function clearAllHistory() {
-    if (!confirm("確定要刪除 *所有* 擊殺紀錄嗎？此操作無法復原！")) return;
-
-    killHistory = [];
-    saveHistory();
-    renderHistoryTable(); // 重繪為空
-    renderBossCards(); // 重新渲染所有卡片
-    deselectBoss(); // 清空表單
-}
-
-
-// --- 7. 渲染 (Rendering) ---
+// --- 7. 渲染與視圖 (Rendering) ---
 
 /**
- * 渲染所有 Boss 卡片 (僅在初始化時)
+ * 渲染 Boss 卡片 (初始化或重新整理)
  */
 function renderBossCards() {
-    dom.bossListContainer.innerHTML = ""; // 清空
-    const sortedBosses = [...bossData].sort((a, b) => a.name.localeCompare(b.name));
-    
-    for (const boss of sortedBosses) {
+    dom.bossListContainer.innerHTML = "";
+    // 依名稱排序
+    const sortedBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedBosses.forEach(boss => {
         const card = document.createElement('div');
         card.className = 'boss-card';
         card.dataset.bossId = boss.id;
+        
         card.innerHTML = `
             <div class="boss-card-header">
                 <div class="boss-card-img">${boss.name.substring(0, 2)}</div>
@@ -302,127 +305,173 @@ function renderBossCards() {
                     <p>${boss.respawn}</p>
                 </div>
             </div>
-            <div class="boss-card-status" data-status="status">狀態未知</div>
-            <div class="progress-bar">
-                <div class="progress-fill" data-progress="fill" style="width: 0%;"></div>
-            </div>
-            <div class="boss-card-footer">
-                <span data-timer="timer">--:--:--</span>
-                <span data-respawn-window="window"></span>
+            <div class="boss-card-timer-block">
+                <span class="boss-card-status-text" data-status="text">偵測中...</span>
+                <div class="boss-card-countdown" data-timer="timer">--:--</div>
+                <div class="boss-card-channel-hint" data-channel-hint="hint"></div>
             </div>
         `;
         dom.bossListContainer.appendChild(card);
-        updateBossCard(boss.id); // 更新該卡片的計時器與狀態
-    }
+        
+        // 立即計算一次狀態
+        updateBossCard(boss.id);
+    });
 }
 
 /**
- * 更新單個 Boss 卡片的計時器、進度條和狀態
- * @param {string} bossId
+ * [核心優化] 計算並更新單張卡片狀態
+ * 邏輯：找出該 Boss 所有頻道紀錄中，「最快復活」的那一個顯示
  */
 function updateBossCard(bossId) {
     const card = dom.bossListContainer.querySelector(`.boss-card[data-boss-id="${bossId}"]`);
     if (!card) return;
 
+    const records = killHistory.filter(k => k.bossId === bossId);
     const boss = getBossById(bossId);
-    const latestKill = getLatestKillForBoss(bossId);
-    
-    const statusEl = card.querySelector('[data-status]');
-    const timerEl = card.querySelector('[data-timer]');
-    const windowEl = card.querySelector('[data-respawn-window]');
-    const progressFill = card.querySelector('[data-progress]');
-    
-    let status = 'alive'; // 預設狀態
 
-    if (!latestKill) {
-        status = 'alive';
-        statusEl.textContent = "🟢 已存活 (無紀錄)";
-        timerEl.textContent = "立即擊殺";
-        windowEl.textContent = "";
-        progressFill.style.width = "100%";
-    } else {
-        const state = calculateTimerState(boss, latestKill);
-        status = state.status;
-        statusEl.textContent = state.text;
-        timerEl.textContent = state.timer;
-        windowEl.textContent = state.windowText;
-        progressFill.style.width = `${state.progress}%`;
+    const statusTextEl = card.querySelector('[data-status]');
+    const timerEl = card.querySelector('[data-timer]');
+    const hintEl = card.querySelector('[data-channel-hint]');
+
+    // 1. 無紀錄
+    if (records.length === 0) {
+        setCardState(card, 'alive', '🟢 可擊殺', '立即前往', '無紀錄');
+        updateCardVisibility(card, 'alive');
+        return;
     }
 
-    // 更新狀態 class (視覺降噪)
-    const statusClasses = ['status-alive', 'status-warning', 'status-cooldown'];
-    card.classList.remove(...statusClasses);
-    card.classList.add(`status-${status}`);
+    // 2. 找出所有頻道的狀態，取「最優先」的
+    // 優先級：已復活 (時間越久越優先) > 即將復活 (時間越短越優先) > 冷卻中 (時間越短越優先)
     
-    // 最後，套用可見度
-    updateCardVisibility(card, status);
+    const now = new Date();
+    let bestCandidate = null;
+    let minSortScore = Infinity; // 分數越小越優先
+
+    records.forEach(record => {
+        const state = calculateTimerState(boss, record.killTime);
+        let score = 0;
+
+        // 自定義評分邏輯
+        if (state.status === 'alive') {
+            // 已復活：分數區間 [-100000, 0]，越早復活分數越小
+            // state.secondsToMin 是負數，代表已經過多久
+            score = state.secondsToMin; 
+        } else {
+            // 冷卻中/即將復活：分數區間 [0, Infinity]，剩餘時間越短分數越小
+            score = state.secondsToMin;
+        }
+
+        if (score < minSortScore) {
+            minSortScore = score;
+            bestCandidate = { ...state, channel: record.channel };
+        }
+    });
+
+    if (bestCandidate) {
+        setCardState(
+            card, 
+            bestCandidate.status, 
+            bestCandidate.text, 
+            bestCandidate.timer, 
+            `Ch. ${bestCandidate.channel}` // 顯示推薦頻道
+        );
+        updateCardVisibility(card, bestCandidate.status);
+    }
+}
+
+function setCardState(card, statusClass, text, timer, hint) {
+    const statusTextEl = card.querySelector('[data-status]');
+    const timerEl = card.querySelector('[data-timer]');
+    const hintEl = card.querySelector('[data-channel-hint]');
+
+    // 清除舊狀態
+    card.classList.remove('status-alive', 'status-warning', 'status-cooldown');
+    card.classList.add(`status-${statusClass}`);
+
+    statusTextEl.textContent = text;
+    timerEl.textContent = timer;
+    hintEl.textContent = hint;
 }
 
 /**
- * 【獵人模式核心】
- * 渲染擊殺歷史紀錄表格 (根據 focusedBossId)
+ * 渲染歷史紀錄列表 (含排序與篩選)
  */
 function renderHistoryTable() {
-    // *** Bug Fix Check ***
-    if (!dom.historyTableBody || !dom.historyTableTitle) {
-        console.error("DOM 元素 'historyTableBody' 或 'historyTableTitle' 未找到！請檢查 index.html。");
-        return;
-    }
-
-    dom.historyTableBody.innerHTML = ""; // 清空
-    
-    let historyToShow = [...killHistory];
-
-    // *** 檢查是否處於專注模式 ***
+    // 1. 決定要顯示哪些資料
+    let displayData = [...killHistory];
     if (focusedBossId) {
-        historyToShow = killHistory.filter(entry => entry.bossId === focusedBossId);
-        const bossName = getBossById(focusedBossId).name;
-        // 更新標題，並加上 "顯示全部" 按鈕
-        dom.historyTableTitle.innerHTML = `
-            <span><span class="material-icons-outlined" style="font-size: 1.2rem; vertical-align: middle;">filter_center_focus</span>
-            ${bossName} - 擊殺歷史</span>
-            <button id="show-all-history" class="btn btn-secondary btn-small">顯示全部</button>
-        `;
-        
-        // 幫 "顯示全部" 按鈕加上事件
-        document.getElementById('show-all-history')?.addEventListener('click', () => {
-            deselectBoss(); // 取消專注會自動重繪
-        }, { once: true });
-
+        displayData = displayData.filter(k => k.bossId === focusedBossId);
+        dom.historyTableTitle.innerHTML = `${getBossById(focusedBossId).name} - 頻道狀態`;
     } else {
-        dom.historyTableTitle.innerHTML = `近期擊殺歷史紀錄`;
+        dom.historyTableTitle.innerHTML = `各頻道狀態紀錄`;
     }
-    
-    // 依擊殺時間倒序排列
-    const sortedHistory = historyToShow.sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
 
-    if (sortedHistory.length === 0) {
-        dom.historyTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--color-text-disabled);">尚無紀錄</td></tr>`;
+    // 2. 執行排序
+    displayData.sort((a, b) => {
+        let valA, valB;
+        
+        // 根據欄位取值
+        switch(currentSort.col) {
+            case 'name':
+                valA = getBossById(a.bossId).name;
+                valB = getBossById(b.bossId).name;
+                break;
+            case 'channel':
+                valA = a.channel;
+                valB = b.channel;
+                break;
+            case 'hasDrop':
+                valA = a.hasDrop ? 1 : 0;
+                valB = b.hasDrop ? 1 : 0;
+                break;
+            case 'respawn':
+                // 預估復活時間排序
+                valA = new Date(a.killTime).getTime() + getBossById(a.bossId).minMinutes * 60000;
+                valB = new Date(b.killTime).getTime() + getBossById(b.bossId).minMinutes * 60000;
+                break;
+            case 'killTime':
+            default:
+                valA = new Date(a.killTime).getTime();
+                valB = new Date(b.killTime).getTime();
+                break;
+        }
+
+        if (valA < valB) return currentSort.dir === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // 3. 產生 HTML
+    dom.historyTableBody.innerHTML = "";
+    if (displayData.length === 0) {
+        dom.historyTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--color-text-disabled);">暫無資料</td></tr>`;
         return;
     }
 
-    sortedHistory.forEach(entry => {
+    displayData.forEach(entry => {
         const boss = getBossById(entry.bossId);
-        if (!boss) return;
-
-        const killTime = new Date(entry.killTime);
-        const minRespawn = new Date(killTime.getTime() + boss.minMinutes * 60000);
-        const maxRespawn = new Date(killTime.getTime() + boss.maxMinutes * 60000);
-
+        const killDate = new Date(entry.killTime);
+        const minRespawn = new Date(killDate.getTime() + boss.minMinutes * 60000);
+        const maxRespawn = new Date(killDate.getTime() + boss.maxMinutes * 60000);
+        
         const tr = document.createElement('tr');
+        tr.dataset.bossId = entry.bossId;
         tr.dataset.historyId = entry.id;
+
         tr.innerHTML = `
             <td>${boss.name}</td>
-            <td>${formatHistoryDateTime(killTime)}</td>
-            <td>${entry.channel} 頻</td>
+            <td>${formatTimeDisplay(killDate)}</td>
+            <td><span style="font-weight:700; color:var(--color-primary);">${entry.channel}</span></td>
             <td class="${entry.hasDrop ? 'drop-yes' : 'drop-no'}">
-                <span class="material-icons-outlined">${entry.hasDrop ? 'check_circle' : 'cancel'}</span>
+                ${entry.hasDrop ? '有' : '無'}
             </td>
-            <td>${entry.notes || '-'}</td>
+            <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${entry.notes || '-'}
+            </td>
             <td>${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</td>
             <td>
-                <button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除紀錄">
-                    <span class="material-icons-outlined">delete_outline</span>
+                <button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除">
+                    <span class="material-icons-outlined" style="font-size:16px;">delete</span>
                 </button>
             </td>
         `;
@@ -431,262 +480,198 @@ function renderHistoryTable() {
 }
 
 /**
- * 每秒被呼叫一次，更新所有卡片的計時器
+ * 更新排序圖示
  */
-function updateAllTimers() {
-    dom.bossListContainer.querySelectorAll('.boss-card').forEach(card => {
-        const bossId = card.dataset.bossId;
-        const boss = getBossById(bossId);
-        const latestKill = getLatestKillForBoss(bossId);
-        
-        let status = 'alive';
-
-        if (latestKill) {
-            const state = calculateTimerState(boss, latestKill);
-            status = state.status;
-
-            // 只更新會變動的 DOM
-            card.querySelector('[data-status]').textContent = state.text;
-            card.querySelector('[data-timer]').textContent = state.timer;
-            card.querySelector('[data-respawn-window]').textContent = state.windowText;
-            card.querySelector('[data-progress]').style.width = `${state.progress}%`;
-            
-            // 避免重複設定 class
-            if (!card.classList.contains(`status-${status}`)) {
-                card.classList.remove('status-alive', 'status-warning', 'status-cooldown');
-                card.classList.add(`status-${status}`);
-            }
+function updateSortIcons() {
+    dom.tableHeaders.forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (th.dataset.sort === currentSort.col) {
+            icon.textContent = currentSort.dir === 'asc' ? '▲' : '▼';
+            th.style.color = 'var(--color-primary)';
+        } else {
+            icon.textContent = '';
+            th.style.color = '';
         }
-        
-        // 每次更新狀態後，都要檢查可見度
-        updateCardVisibility(card, status);
     });
 }
 
 
-// --- 8. 資料處理 (Data Handling) ---
+// --- 8. 輔助計算與工具 ---
 
 /**
- * 根據 Boss ID 和最新擊殺紀錄，計算當前狀態
+ * 計算計時器狀態
  */
-function calculateTimerState(boss, latestKill) {
+function calculateTimerState(boss, killTimeStr) {
     const now = new Date();
-    const killTime = new Date(latestKill.killTime);
+    const killTime = new Date(killTimeStr);
     
     const minRespawnTime = new Date(killTime.getTime() + boss.minMinutes * 60000);
     const maxRespawnTime = new Date(killTime.getTime() + boss.maxMinutes * 60000);
     
     const secondsToMin = (minRespawnTime - now) / 1000;
     const secondsToMax = (maxRespawnTime - now) / 1000;
-    
-    const totalWindowSeconds = (boss.maxMinutes - boss.minMinutes) * 60;
-    const totalCooldownSeconds = boss.maxMinutes * 60;
-    const secondsSinceKill = (now - killTime) / 1000;
 
-    let status, text, timer, windowText, progress;
-    
-    // 狀態 1: 已存活 (超過最早重生時間)
     if (secondsToMin <= 0) {
-        status = 'alive';
-        text = '🟢 已存活';
-        progress = 100;
-        
-        // 狀態 1a: 仍在重生區間內
         if (secondsToMax > 0) {
-            timer = `剩 ${formatDuration(secondsToMax)} (最晚)`;
-            windowText = `${formatTime(minRespawnTime)} ~ ${formatTime(maxRespawnTime)}`;
-        } 
-        // 狀態 1b: 已超過最晚重生時間
-        else {
-            timer = '立即擊殺';
-            windowText = `自 ${formatTime(maxRespawnTime)} 起`;
+            // 正在重生區間內
+            return { 
+                status: 'alive', 
+                text: '🟢 可能已出', 
+                timer: `區間剩 ${formatDuration(secondsToMax)}`,
+                secondsToMin: secondsToMin 
+            };
+        } else {
+            // 超過最晚時間
+            return { 
+                status: 'alive', 
+                text: '🟢 必出', 
+                timer: '立即前往',
+                secondsToMin: secondsToMin 
+            };
         }
-    } 
-    // 狀態 2: 即將重生 (例如 10 分鐘內)
-    else if (secondsToMin <= 600) { // 10 分鐘警告
-        status = 'warning';
-        text = '🟡 即將重生';
-        timer = `剩 ${formatDuration(secondsToMin)}`;
-        windowText = `${formatTime(minRespawnTime)} ~ ${formatTime(maxRespawnTime)}`;
-        progress = Math.min(100, (secondsSinceKill / totalCooldownSeconds) * 100);
-    } 
-    // 狀態 3: 冷卻中
-    else {
-        status = 'cooldown';
-        text = '🔴 冷卻中';
-        timer = `剩 ${formatDuration(secondsToMin)}`;
-        windowText = `${formatTime(minRespawnTime)} ~ ${formatTime(maxRespawnTime)}`;
-        progress = Math.min(100, (secondsSinceKill / totalCooldownSeconds) * 100);
+    } else if (secondsToMin <= 600) { // 10分鐘內
+        return { 
+            status: 'warning', 
+            text: '🟡 即將重生', 
+            timer: formatDuration(secondsToMin),
+            secondsToMin: secondsToMin 
+        };
+    } else {
+        return { 
+            status: 'cooldown', 
+            text: '🔴 冷卻中', 
+            timer: formatDuration(secondsToMin),
+            secondsToMin: secondsToMin 
+        };
     }
-    
-    return { status, text, timer, windowText, progress: Math.max(0, progress) };
 }
 
+// 統一更新所有計時器 (每秒呼叫)
+function updateAllTimers() {
+    // 只更新目前畫面上有顯示的卡片
+    const visibleCards = document.querySelectorAll('.boss-card[style*="display: block"]');
+    if (visibleCards.length === 0 && currentFilter === 'all' && currentSearch === '') {
+        // 如果全部都顯示
+        BOSSES_JSON.forEach(b => updateBossCard(b.id));
+    } else {
+        // 針對 DOM 存在的更新
+        visibleCards.forEach(card => updateBossCard(card.dataset.bossId));
+    }
+}
+
+// --- 資料存取與格式化 ---
 function loadHistory() {
-    const historyJSON = localStorage.getItem('bossKillHistory');
-    killHistory = historyJSON ? JSON.parse(historyJSON) : [];
+    const data = localStorage.getItem('bossKillHistory');
+    killHistory = data ? JSON.parse(data) : [];
 }
 
 function saveHistory() {
     localStorage.setItem('bossKillHistory', JSON.stringify(killHistory));
 }
 
+function clearAllHistory() {
+    if(confirm("確定要清空所有紀錄嗎？")) {
+        killHistory = [];
+        saveHistory();
+        renderHistoryTable();
+        updateAllTimers();
+        dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">已清空</span>`;
+    }
+}
+
+function deleteHistoryEntry(id) {
+    if(confirm("刪除此筆紀錄？")) {
+        const index = killHistory.findIndex(k => k.id === id);
+        if (index !== -1) {
+            const bossId = killHistory[index].bossId;
+            killHistory.splice(index, 1);
+            saveHistory();
+            renderHistoryTable();
+            updateBossCard(bossId);
+        }
+    }
+}
+
+// 格式化工具
+function getBossById(id) { return BOSSES_JSON.find(b => b.id === id); }
+
+function formatTimeDisplay(date) {
+    const now = new Date();
+    const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth();
+    const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return isToday ? timeStr : `${date.getMonth()+1}/${date.getDate()} ${timeStr}`;
+}
+
+function formatTime(date) {
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatDuration(secs) {
+    if (secs < 0) secs = 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+    return `${pad(m)}:${pad(s)}`;
+}
+
+function pad(n) { return n.toString().padStart(2, '0'); }
+
+// UI 操作工具
+function updateChannel(delta) {
+    let val = parseInt(dom.channelInput.value) || 1;
+    setChannel(val + delta);
+}
+
+function setChannel(val) {
+    let num = parseInt(val);
+    if (num < 1) num = 1;
+    if (num > 3000) num = 3000;
+    dom.channelInput.value = num;
+}
+
+function setFilter(filter) {
+    currentFilter = filter;
+    dom.filterChips.forEach(c => c.classList.toggle('active', c.dataset.filter === filter));
+    updateCardVisibility();
+}
+
+function setSearch(val) {
+    currentSearch = val.toLowerCase();
+    updateCardVisibility();
+}
+
+function updateCardVisibility(specificCard = null, specificStatus = null) {
+    const cards = specificCard ? [specificCard] : document.querySelectorAll('.boss-card');
+    
+    cards.forEach(card => {
+        // 如果只更新特定卡片，不需要重算狀態，直接用傳入的狀態
+        // 如果是全面更新，則需重新檢查 DOM class
+        let status = specificStatus;
+        if (!status) {
+            if (card.classList.contains('status-alive')) status = 'alive';
+            else if (card.classList.contains('status-warning')) status = 'warning';
+            else status = 'cooldown';
+        }
+
+        const bossName = getBossById(card.dataset.bossId).name.toLowerCase();
+        const matchesSearch = bossName.includes(currentSearch);
+        const matchesFilter = currentFilter === 'all' || currentFilter === status;
+
+        card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+    });
+}
+
 function loadTheme() {
-    const theme = localStorage.getItem('bossTimerTheme');
-    if (theme === 'light') {
+    if (localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-mode');
         dom.themeIcon.textContent = 'dark_mode';
-    } else {
-        document.body.classList.remove('light-mode');
-        dom.themeIcon.textContent = 'light_mode';
     }
 }
 
 function toggleTheme() {
     document.body.classList.toggle('light-mode');
-    if (document.body.classList.contains('light-mode')) {
-        localStorage.setItem('bossTimerTheme', 'light');
-        dom.themeIcon.textContent = 'dark_mode';
-    } else {
-        localStorage.setItem('bossTimerTheme', 'dark');
-        dom.themeIcon.textContent = 'light_mode';
-    }
-}
-
-
-// --- 9. 篩選器與搜尋 (Filtering & Search) ---
-
-function setFilter(filter) {
-    currentFilter = filter;
-    
-    // 更新 chip 樣式
-    dom.filterChips.forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.filter === filter);
-    });
-    
-    updateAllCardVisibility();
-}
-
-function setSearch(term) {
-    currentSearch = term.toLowerCase();
-    updateAllCardVisibility();
-}
-
-/**
- * 集中處理所有卡片的可見度
- */
-function updateAllCardVisibility() {
-    document.querySelectorAll('.boss-card').forEach(card => {
-        const bossId = card.dataset.bossId;
-        const boss = getBossById(bossId);
-        const latestKill = getLatestKillForBoss(bossId);
-        
-        let status = 'alive';
-        if (latestKill) {
-            status = calculateTimerState(boss, latestKill).status;
-        }
-        
-        updateCardVisibility(card, status);
-    });
-}
-
-/**
- * 根據當前篩選器和搜尋，顯示或隱藏卡片
- * @param {HTMLElement} card 
- * @param {string} status 
- */
-function updateCardVisibility(card, status) {
-    const matchesFilter = (currentFilter === 'all' || currentFilter === status);
-    
-    const bossName = getBossById(card.dataset.bossId).name;
-    const matchesSearch = bossName.toLowerCase().includes(currentSearch);
-
-    if (matchesFilter && matchesSearch) {
-        card.style.display = 'block';
-    } else {
-        card.style.display = 'none';
-    }
-}
-
-
-// --- 10. 輔助工具 (Utilities) ---
-
-function getBossById(id) {
-    return bossData.find(b => b.id === id);
-}
-
-function getLatestKillForBoss(bossId) {
-    const kills = killHistory.filter(k => k.bossId === bossId);
-    if (kills.length === 0) return null;
-    return kills.sort((a, b) => new Date(b.killTime) - new Date(a.killTime))[0];
-}
-
-/**
- * 將 Date 物件轉為 YYYY-MM-DD HH:mm:ss (僅供歷史紀錄使用)
- */
-function formatHistoryDateTime(date) {
-    const pad = (num) => num.toString().padStart(2, '0');
-    
-    const Y = date.getFullYear();
-    const M = pad(date.getMonth() + 1);
-    const D = pad(date.getDate());
-    const h = pad(date.getHours());
-    const m = pad(date.getMinutes());
-    const s = pad(date.getSeconds());
-    
-    return `${Y}-${M}-${D} ${h}:${m}:${s}`;
-}
-
-
-/**
- * 格式化時間 HH:mm
- */
-function formatTime(date) {
-    const pad = (num) => num.toString().padStart(2, '0');
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-/**
- * 格式化剩餘秒數為 HH:mm:ss
- */
-function formatDuration(totalSeconds) {
-    if (totalSeconds < 0) totalSeconds = 0;
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = Math.floor(totalSeconds % 60);
-    
-    const pad = (num) => num.toString().padStart(2, '0');
-
-    if (h > 0) {
-        return `${pad(h)}:${pad(m)}:${pad(s)}`;
-    } else {
-        return `${pad(m)}:${pad(s)}`;
-    }
-}
-
-/**
- * 調整表單中的時間 (已移除)
- */
-// function adjustTime(minutes) { ... }
-
-/**
- * 更新頻道輸入框
- * @param {number} delta - 變化量 (+1 或 -1)
- */
-function updateChannel(delta) {
-    let val = parseInt(dom.channelInput.value) || 1;
-    val += delta;
-    setChannel(val);
-}
-
-/**
- * 設定頻道 (含 3000 上限)
- * @param {number | string} val - 頻道號碼
- */
-function setChannel(val) {
-    let num = parseInt(val);
-    if (isNaN(num)) num = 1;
-    if (num < 1) num = 1;
-    if (num > 3000) num = 3000; // 邊界檢查
-    dom.channelInput.value = num;
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    dom.themeIcon.textContent = isLight ? 'dark_mode' : 'light_mode';
 }
