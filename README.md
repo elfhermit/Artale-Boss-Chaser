@@ -58,4 +58,47 @@
 
 如果你想，我可以幫你把 README 加入示意截圖或製作一個可供使用者下載的備份 JSON 範例。請告訴我你要我做哪一項，我會 `建立` 並提交變更。
 
+---
+
+**開發者檢視（Code Review 摘要）**
+
+- **專案類型**: 單頁靜態前端，所有資料儲存在瀏覽器 LocalStorage（請參考 `dev/SPEC.md` 為權威規格）。
+- **主要檔案**: `docs/index.html`（UI）、`docs/app.js`（主要邏輯與 LocalStorage helper）、`docs/styles.css`（樣式）、`dev/SPEC.md`（schema / 復活規則）。
+- **關鍵設計**: 使用 per-boss LocalStorage key（`abt_records_v1` 或 SPEC 指定的變體），復活規則以靜態物件定義，Chain Hunting 支援頻道自動 +1。
+- **已發現的注意事項**: README 與 `dev/SPEC.md` 在保留上限（300 vs 3000）說明不一致；若調整儲存策略，請在同一 PR 提供遷移 helper。
+- **改進建議**:
+   - 把 `docs/app.js` 的儲存與邏輯分成小型 Function（例如 `storage.js`）以增加可測試性與可讀性。
+   - 新增一個簡單的遷移工具（`migrateToV1()`）以便未來變更 schema 時在 console 或 UI 上執行驗證。
+   - 加入基本的 E2E/手動驗證步驟到開發文件：如何啟動本機伺服器、如何在 DevTools 檢視 LocalStorage key、匯出/匯入檢查流程。
+   - 提供自動匯出（JSON 下載）功能，降低用戶誤刪風險。
+- **安全/隱私**: 無遠端上傳，使用者資料僅存在本地；如要跨裝置同步，建議加入匯出/匯入或授權第三方備份由使用者自行啟用。
+
+**簡易玩家說明（精簡版）**
+
+- **目的**: 快速記錄 Boss 擊殺、追蹤掉寶與預估復活時間。
+- **快速步驟**:
+   1. 打開 `docs/index.html`（或啟動本機伺服器後開啟該檔案）。
+   2. 點選左側 Boss 卡片，調整頻道與備註（如需要）。
+   3. 點「確認新增紀錄」以當下時間記錄擊殺；系統會自動為下一次準備（頻道 +1、掉寶設為「否」、備註清空）。
+   4. 在下方歷史紀錄表查看或刪除紀錄。
+- **備份（匯出）**: 在瀏覽器 DevTools Console 執行：
+
+```
+const data = localStorage.getItem('bossKillHistory');
+console.log(data);
+```
+
+- **還原（匯入）**: 將備份字串貼入並執行：
+
+```
+localStorage.setItem('bossKillHistory', '<PASTE_JSON_STRING>');
+location.reload();
+```
+
+- **重要提醒**: 資料只保存在你的瀏覽器；請定期匯出備份以免遺失。
+
+---
+
+如需我也可以幫你 `建立` 一個範例備份 JSON 檔或在 `docs/` 中新增一個「匯出/匯入」按鈕，我可以接著實作並送出 PR。
+
 
