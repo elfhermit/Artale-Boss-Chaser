@@ -68,4 +68,7 @@
 - 請確認保留上限：要以 `SPEC.md` 的每 Boss 300 筆為準，還是以 `README.md` 的 3000 為準？（若要改為 global policy，我可以順便實作遷移 helper。）
 - 已設定 canonical preview 資料夾為 `docs/`（Settings → Pages 指向 `main` + `/docs`）。若你想改回 `public/` 或改為 `gh-pages` branch，請告知我我可以協助調整部署流程或新增 Action。
 
--- 檔案結束
+
+## Agent Skill
+- Added: see [.github/agent-skill.md](.github/agent-skill.md) for the agent's responsibilities, allowed actions, local preview commands, verification checklist, and boundaries.
+
