@@ -1,101 +1,34 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boss 獵人儀表板 (Pro)</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- 引入 Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
 
-    <!-- 頂部導覽列 -->
-    <header class="header">
-        <h1 class="header-title">Boss 獵人儀表板 <span class="version-badge">Pro</span></h1>
-        <div class="header-controls">
-            <!-- 匯入/匯出按鈕已移除 -->
-            <button id="theme-toggle-btn" class="btn btn-icon btn-secondary" title="切換主題">
-                <span class="material-icons-outlined" id="theme-icon">light_mode</span>
-            </button>
-        </div>
-    </header>
+<body class="dark-mode">
+    <div class="app-container">
 
-    <!-- 主容器 -->
-    <div class="container">
-        
-        <!-- 左側主內容區 -->
-        <main class="content">
-            <!-- 1. 即時戰況監控 -->
-            <section class="content-section">
-                <div class="section-header">
-                    <h2>即時戰況監控</h2>
-                    <div class="filter-chips">
-                        <span class="chip active" data-filter="all">全部</span>
-                        <span class="chip" data-filter="alive">🟢 可擊殺</span>
-                        <span class="chip" data-filter="warning">🟡 即將重生</span>
-                        <span class="chip" data-filter="cooldown">🔴 冷卻中</span>
-                    </div>
-                </div>
-                <!-- 搜尋框 -->
-                <div class="search-bar-wrapper">
-                    <span class="material-icons-outlined search-icon">search</span>
-                    <input type="text" id="boss-search-input" placeholder="搜尋 Boss 名稱..." class="search-input">
-                </div>
-                <!-- Boss 卡片列表 -->
-                <div id="boss-monitoring-list" class="boss-card-grid">
-                    <!-- JS 動態產生卡片 -->
-                </div>
-            </section>
-
-            <!-- 2. 頻道狀態紀錄 -->
-            <section class="content-section" id="kill-history-section">
-                <div class="section-header">
-                    <h2 id="history-table-title">各頻道狀態紀錄</h2>
-                    <button id="clear-history-btn" class="btn btn-danger btn-small">清除所有</button>
-                </div>
-                <div class="table-container">
-                    <table id="kill-history-table">
-                        <thead>
-                            <tr>
-                                <th data-sort="name" class="sortable">首領 <span class="sort-icon"></span></th>
-                                <th data-sort="killTime" class="sortable">上次擊殺 <span class="sort-icon">▼</span></th>
-                                <th data-sort="channel" class="sortable">頻道 <span class="sort-icon"></span></th>
-                                <th data-sort="hasDrop" class="sortable">掉寶 <span class="sort-icon"></span></th>
-                                <th>備註</th>
-                                <th data-sort="respawn" class="sortable">預計復活 <span class="sort-icon"></span></th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- JS 動態產生歷史紀錄 -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-
-        <!-- 右側黏性側邊欄 -->
+        <!-- Sidebar / Mobile Drawer -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-card">
-                <h2 class="sidebar-title">📝 紀錄 / 更新狀態</h2>
-
-                <!-- 顯示當前選中的 Boss -->
+            <div class="sidebar-header">
+                <h2>紀錄擊殺</h2>
+            </div>
+            <div class="sidebar-content">
                 <div id="selected-boss-info" class="selected-boss-info">
                     <span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>
                 </div>
-                
-                <!-- 擊殺表單 -->
-                <form id="kill-form">
-                    
-                    <!-- 頻道控制 -->
+
+                <form id="kill-form" class="kill-form">
                     <div class="form-group">
-                        <label for="channel-input" class="input-label">頻道 (1-3000)</label>
-                        <div class="stepper-wrapper">
-                            <button type="button" class="step-btn" id="channel-sub">❮</button>
-                            <input type="number" id="channel-input" class="channel-input" value="1" min="1" max="3000" required>
-                            <button type="button" class="step-btn" id="channel-add">❯</button>
+                        <label>頻道 (Channel)</label>
+                        <div class="channel-stepper">
+                            <button type="button" class="stepper-btn" id="channel-sub">-</button>
+                            <input type="number" id="channel-input" min="1" max="3000" value="1">
+                            <button type="button" class="stepper-btn" id="channel-add">+</button>
                         </div>
                         <div class="quick-channels">
                             <span class="quick-chip" data-channel="1">1</span>
@@ -103,42 +36,133 @@
                             <span class="quick-chip" data-channel="3">3</span>
                             <span class="quick-chip" data-channel="4">4</span>
                             <span class="quick-chip" data-channel="5">5</span>
+                            <span class="quick-chip" data-channel="6">6</span>
+                            <span class="quick-chip" data-channel="7">7</span>
+                            <span class="quick-chip" data-channel="8">8</span>
                         </div>
                     </div>
 
-                    <!-- 是否掉寶 -->
-                    <div class="form-group form-group-inline">
-                        <label for="has-drop" class="input-label">是否掉寶</label>
-                        <label class="toggle-switch">
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
                             <input type="checkbox" id="has-drop">
-                            <span class="slider"></span>
-                        </label>
+                            <label for="has-drop">掉寶 (Drop)</label>
+                        </div>
                     </div>
 
-                    <!-- 備註 -->
                     <div class="form-group">
-                        <label for="notes" class="input-label">備註</label>
-                        <input type="text" id="notes" class="form-input" placeholder="例如：掉落物、隊友...">
+                        <label>備註 (Notes)</label>
+                        <input type="text" id="notes" placeholder="例如: 隊友A, 下次必出...">
                     </div>
 
-                    <!-- 送出按鈕 -->
-                    <button type="submit" id="submit-kill-btn" class="btn btn-primary btn-full" disabled>
-                        <span class="material-icons-outlined">add_task</span>
-                        請先選擇 Boss
-                    </button>
-                    
-                    <p class="form-hint">
-                        <span class="material-icons-outlined" style="font-size:12px; vertical-align:middle;">info</span>
-                        送出後自動記錄當下時間，並覆蓋該頻道舊紀錄。
-                    </p>
+                    <button type="submit" class="submit-btn" id="submit-kill-btn" disabled>請先選擇 Boss</button>
 
+                    <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
+                        <label style="font-size:0.9rem; color:var(--color-text-secondary);">快速範本 (Presets)</label>
+                        <div style="display:flex; gap:8px; margin-bottom:8px;">
+                            <button type="button" class="btn btn-secondary btn-small"
+                                id="save-preset-btn">儲存當前設定</button>
+                        </div>
+                        <div id="presets-list" class="presets-list"></div>
+                    </div>
+
+                    <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
+                        <label style="font-size:0.9rem; color:var(--color-text-secondary);">批次輸入 (Batch)</label>
+                        <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
+                            style="margin-bottom:8px;">
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
+                            <button type="button" class="btn btn-secondary btn-small"
+                                id="save-batch-preset-btn">存為批次範本</button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </aside>
 
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Artale Boss Chaser <span class="badge">PRO</span></h1>
+                <div class="header-actions">
+                    <div class="secondary-header-actions">
+                        <button class="feature-btn" id="view-mode-btn" title="切換檢視模式">
+                            <span class="material-icons-outlined" id="view-mode-icon">grid_view</span>
+                        </button>
+                        <button class="feature-btn" id="sound-toggle-btn" title="切換音效提示">
+                            <span class="material-icons-outlined" id="sound-toggle-icon">volume_off</span>
+                        </button>
+                    </div>
+                    <button class="icon-btn" id="theme-toggle-btn" title="切換主題">
+                        <span class="material-icons-outlined" id="theme-icon">dark_mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Search & Filter -->
+            <div class="filter-bar">
+                <div class="search-box">
+                    <span class="material-icons-outlined">search</span>
+                    <input type="text" id="boss-search-input" placeholder="搜尋 Boss (例如: 蘑菇王, 紅寶王)...">
+                </div>
+                <div class="filter-chips">
+                    <div class="chip active" data-filter="all">全部</div>
+                    <div class="chip" data-filter="alive">🟢 可擊殺</div>
+                    <div class="chip" data-filter="warning">🟡 即將重生</div>
+                    <div class="chip" data-filter="cooldown">🔴 冷卻中</div>
+                    <div class="smart-sort-btn" id="smart-sort-btn" title="優先顯示即將重生的 Boss">
+                        <span class="material-icons-outlined" style="font-size:16px">sort</span> 智慧排序
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boss Monitoring List -->
+            <section class="boss-list" id="boss-monitoring-list">
+                <!-- Boss Cards will be injected here via JS -->
+            </section>
+
+            <!-- Kill History Table -->
+            <section class="history-section" id="kill-history-section">
+                <div class="section-header">
+                    <h2 id="history-table-title">各頻道狀態紀錄</h2>
+                    <button class="btn btn-danger btn-small" id="clear-history-btn">清空所有紀錄</button>
+                </div>
+                <div class="table-container">
+                    <table id="kill-history-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="name">Boss <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="killTime">擊殺時間 <span class="sort-icon">▼</span></th>
+                                <th class="sortable" data-sort="channel">頻道 <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="hasDrop">掉寶 <span class="sort-icon"></span></th>
+                                <th>備註</th>
+                                <th class="sortable" data-sort="respawn">預計重生 <span class="sort-icon"></span></th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="history-pagination" class="pagination-controls"></div>
+            </section>
+        </main>
+
     </div>
 
-    <!-- 引入 JavaScript -->
-    <script src="app.js" defer></script>
+    <!-- Toast container for non-blocking messages / undo -->
+    <div id="toast-container" aria-live="polite" style="position:fixed; right:16px; bottom:16px; z-index:1000;"></div>
+
+    <!-- 引入 JavaScript (Sequential Loading for file:// compatibility) -->
+    <script src="js/namespace.js"></script>
+    <script src="js/data/bosses.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/ui/dom.js"></script>
+    <script src="js/ui/render.js"></script>
+    <script src="js/logic/actions.js"></script>
+    <script src="js/ui/events.js"></script>
+    <script src="js/main.js"></script>
 </body>
+
 </html>
