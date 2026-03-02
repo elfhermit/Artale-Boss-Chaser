@@ -60,10 +60,12 @@ body {
 }
 
 /* --- 2. 頂部導覽列 --- */
-.header {
+.main-header {
     height: var(--header-height);
-    background-color: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -71,10 +73,17 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    border-radius: 0 0 16px 16px;
+    margin-bottom: 24px;
+}
+body.light-mode .main-header {
+    background: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
-.header-title {
+.main-header h1 {
     font-size: 1.5rem;
     font-weight: 700;
     display: flex;
@@ -82,20 +91,22 @@ body {
     gap: 8px;
 }
 
-.version-badge {
+.badge {
     font-size: 0.7rem;
-    background-color: var(--color-primary);
-    color: var(--color-primary-text);
-    padding: 2px 6px;
-    border-radius: 4px;
+    background: linear-gradient(135deg, var(--color-primary), #9c27b0);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    box-shadow: 0 2px 6px rgba(187, 134, 252, 0.4);
 }
 
-.header-controls { display: flex; gap: 8px; }
+.header-actions { display: flex; gap: 8px; }
 
 /* --- 3. 主佈局 --- */
-.container {
+.app-container {
+    width: 100%;
     display: flex;
     max-width: 1600px;
     margin: 24px auto;
@@ -104,9 +115,11 @@ body {
     align-items: flex-start;
 }
 
-.content { flex: 1; min-width: 0; }
+.main-content { flex: 1; min-width: 0; width: 100%; overflow-x: hidden; }
 
 .sidebar {
+    max-height: 100vh;
+    overflow-y: auto;
     flex-basis: 360px;
     position: sticky;
     top: calc(var(--header-height) + 24px);
@@ -210,9 +223,9 @@ body {
 }
 
 .boss-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow);
-    border-color: var(--color-text-secondary);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    border-color: var(--color-primary);
 }
 
 .boss-card.selected {
@@ -521,6 +534,11 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     font-size: 0.85rem;
     cursor: pointer;
     color: var(--color-text-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 .chip.active {
     background-color: var(--color-primary);
@@ -551,14 +569,17 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 
 /* RWD */
 @media (max-width: 900px) {
-    .container { flex-direction: column; }
-    .sidebar { 
+    .app-container {
+    width: 100%; flex-direction: column; }
+    .sidebar {
+    max-height: 100vh;
+    overflow-y: auto; 
         width: 100%; 
         flex-basis: auto; 
         position: static;
         order: -1; /* 手機版讓操作區在最上面 */
     }
-    .header-title { font-size: 1.2rem; }
+    .main-header h1 { font-size: 1.2rem; }
 }
 
 /* --- Toast / Snackbar --- */
@@ -603,27 +624,62 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 .boss-card-channels .ch-badge { padding:4px 8px; border-radius:12px; background:var(--color-bg); border:1px solid var(--color-border); font-size:0.8rem; color:var(--color-text-secondary); }
 
 /* Batch section input small tweak */
-.batch-section .form-input { padding:8px; font-size:0.95rem; } 
- / *    
-       K e e p   e x i s t i n g   c o n t e n t   a n d   a p p e n d   n e w   c o n t e n t   f o r   s i m p l i c i t y   O R   o v e r w r i t e   i f   w e   w a n t   t o   b e   s u r e .    
-       S i n c e   t h i s   t o o l   o v e r w r i t e s ,   I   w i l l   r e a d   t h e   f i l e   m a n u a l l y   f i r s t ?    
-       N o ,   I   c a n ' t   r e a d   i t   i n   t h e   m i d d l e   o f   t h i s .    
-       I   s h o u l d   h a v e   u s e d   r e p l a c e   o r   a p p e n d .    
-       W a i t ,   I   c a n   u s e   r e p l a c e _ f i l e _ c o n t e n t   t o   a p p e n d   i f   I   t a r g e t   t h e   e n d   o f   f i l e ?    
-       O r   j u s t   o v e r w r i t e   t h e   w h o l e   f i l e   i f   I   h a d   t h e   c o n t e n t .  
-       I   d o n ' t   h a v e   t h e   f u l l   c o n t e n t   o f   s t y l e s . c s s   i n   m y   m e m o r y   p e r f e c t l y .  
-        
-       A c t u a l l y ,   ` r e p l a c e _ f i l e _ c o n t e n t `   f a i l e d   b e c a u s e   " t a r g e t   c o n t e n t   n o t   f o u n d " .  
-       I   w i l l   u s e   ` r e a d _ u r l _ c o n t e n t `   ( o r   v i e w _ f i l e )   t h e n   ` w r i t e _ t o _ f i l e `   t o   a p p e n d   s a f e l y .  
-        
-       B U T   I   c a n   j u s t   u s e   ` r u n _ c o m m a n d `   t o   a p p e n d   t o   f i l e ?    
-       N o ,   e n c o d i n g   i s s u e s .  
-        
-       I   w i l l   b l i n d l y   a p p e n d   u s i n g   ` w r i t e _ t o _ f i l e `   w i t h   O v e r w r i t e = f a l s e ?    
-       W a i t ,   ` w r i t e _ t o _ f i l e `   e r r o r s   i f   f i l e   e x i s t s   a n d   O v e r w r i t e = f a l s e .  
-        
-       I   w i l l   u s e   ` a p p e n d _ t o _ f i l e ` ?   N o   s u c h   t o o l .  
-        
-       I   w i l l   u s e   ` r e a d _ f i l e `   t h e n   ` w r i t e _ t o _ f i l e ` .  
- * /  
+.batch-section .form-input { padding:8px; font-size:0.95rem; }
  
+ / *   
+ 
+       K e e p   e x i s t i n g   c o n t e n t   a n d   a p p e n d   n e w   c o n t e n t   f o r   s i m p l i c i t y   O R   o v e r w r i t e   i f   w e   w a n t   t o   b e   s u r e .   
+ 
+       S i n c e   t h i s   t o o l   o v e r w r i t e s ,   I   w i l l   r e a d   t h e   f i l e   m a n u a l l y   f i r s t ?   
+ 
+       N o ,   I   c a n ' t   r e a d   i t   i n   t h e   m i d d l e   o f   t h i s .   
+ 
+       I   s h o u l d   h a v e   u s e d   r e p l a c e   o r   a p p e n d .   
+ 
+       W a i t ,   I   c a n   u s e   r e p l a c e _ f i l e _ c o n t e n t   t o   a p p e n d   i f   I   t a r g e t   t h e   e n d   o f   f i l e ?   
+ 
+       O r   j u s t   o v e r w r i t e   t h e   w h o l e   f i l e   i f   I   h a d   t h e   c o n t e n t . 
+ 
+       I   d o n ' t   h a v e   t h e   f u l l   c o n t e n t   o f   s t y l e s . c s s   i n   m y   m e m o r y   p e r f e c t l y . 
+ 
+       
+ 
+       A c t u a l l y ,   ` r e p l a c e _ f i l e _ c o n t e n t `   f a i l e d   b e c a u s e   " t a r g e t   c o n t e n t   n o t   f o u n d " . 
+ 
+       I   w i l l   u s e   ` r e a d _ u r l _ c o n t e n t `   ( o r   v i e w _ f i l e )   t h e n   ` w r i t e _ t o _ f i l e `   t o   a p p e n d   s a f e l y . 
+ 
+       
+ 
+       B U T   I   c a n   j u s t   u s e   ` r u n _ c o m m a n d `   t o   a p p e n d   t o   f i l e ?   
+ 
+       N o ,   e n c o d i n g   i s s u e s . 
+ 
+       
+ 
+       I   w i l l   b l i n d l y   a p p e n d   u s i n g   ` w r i t e _ t o _ f i l e `   w i t h   O v e r w r i t e = f a l s e ?   
+ 
+       W a i t ,   ` w r i t e _ t o _ f i l e `   e r r o r s   i f   f i l e   e x i s t s   a n d   O v e r w r i t e = f a l s e . 
+ 
+       
+ 
+       I   w i l l   u s e   ` a p p e n d _ t o _ f i l e ` ?   N o   s u c h   t o o l . 
+ 
+       
+ 
+       I   w i l l   u s e   ` r e a d _ f i l e `   t h e n   ` w r i t e _ t o _ f i l e ` . 
+ 
+ * / 
+ 
+ 
+
+/* Top Actions */
+.secondary-header-actions { display: flex; gap: 8px; }
+.feature-btn, .icon-btn { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-primary); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
+.feature-btn:hover, .icon-btn:hover { background: var(--color-surface-hover); transform: translateY(-2px); box-shadow: var(--box-shadow); }
+
+/* 表格響應式捲動 */
+@media (max-width: 900px) {
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius:12px; }
+    #kill-history-table { min-width: 700px; }
+    .main-header { padding: 0 16px; flex-direction: column; gap: 12px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+}
