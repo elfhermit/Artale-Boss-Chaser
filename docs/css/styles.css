@@ -54,6 +54,11 @@ body.light-mode {
 body {
     font-family: var(--font-family);
     background-color: var(--color-bg);
+    /* Ambient Glow Background for Glassmorphism */
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(187, 134, 252, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(3, 218, 198, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
     color: var(--color-text-primary);
     line-height: 1.5;
     transition: background-color 0.3s, color 0.3s;
@@ -118,12 +123,23 @@ body.light-mode .main-header {
 .main-content { flex: 1; min-width: 0; width: 100%; overflow-x: hidden; }
 
 .sidebar {
-    max-height: 100vh;
+    max-height: calc(100vh - var(--header-height) - 48px);
     overflow-y: auto;
     flex-basis: 360px;
     position: sticky;
     top: calc(var(--header-height) + 24px);
     transition: top 0.3s;
+    background: rgba(30,30,30,0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+body.light-mode .sidebar {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .content-section { margin-bottom: 32px; }
@@ -167,9 +183,10 @@ body.light-mode .main-header {
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-primary-text);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, var(--color-primary), #9c27b0);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+    border: 1px solid rgba(255,255,255,0.1);
 }
 .btn-primary:hover:not(:disabled) {
     filter: brightness(1.1);
@@ -330,11 +347,20 @@ body.light-mode .main-header {
 }
 
 #kill-history-table th {
-    background-color: var(--color-surface-hover);
-    color: var(--color-text-secondary);
+    background: rgba(45, 45, 45, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-text-primary);
     font-weight: 600;
     white-space: nowrap;
     user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+}
+body.light-mode #kill-history-table th {
+    background: rgba(240, 240, 240, 0.85);
 }
 
 /* 排序標頭樣式 */
@@ -376,7 +402,8 @@ body.light-mode .main-header {
 
 
 /* --- 7. 右側表單 --- */
-.sidebar-card {
+/* .sidebar-card unused, merged to .sidebar */
+.sidebar-card-deprecated {
     background-color: var(--color-surface);
     border-radius: var(--border-radius);
     border: 1px solid var(--color-border);
@@ -682,4 +709,37 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius:12px; }
     #kill-history-table { min-width: 700px; }
     .main-header { padding: 0 16px; flex-direction: column; gap: 12px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+}
+
+/* Custom Scrollbar for Webkit */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+body.light-mode ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+}
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.3);
+}
+
+@media (max-width: 900px) {
+    .app-container { padding: 0 16px; gap: 16px; margin: 16px auto; }
+    .sidebar { padding: 16px; margin-bottom: 24px; max-height: none; }
+    /* Scroll Hint Shadow */
+    .table-container {
+        position: relative;
+        box-shadow: inset -10px 0 10px -10px rgba(0,0,0,0.5);
+    }
 }

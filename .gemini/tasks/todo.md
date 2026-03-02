@@ -1,28 +1,19 @@
-# Artale Boss Chaser UI/UX 修復與優化計畫
+# Artale Boss Chaser UI/UX Phase 2 (Deep Glassmorphism & RWD) 計畫
 
 ## [階段一] 任務目標與範圍
-- **目標**：修復目前網站大多存在的「跑版」問題，並進行整體的 UI/UX 設計優化，使其更具現代感及易用性狀態。同時檢閱程式碼確保網站功能正常運作。
-- **範圍**：
-  - 前端結構：`docs/index.html`
-  - 樣式設計：`docs/css/styles.css`
-  - 核心功能檢查：`docs/js/` 目錄下的各項邏輯腳本（確保 UI 變更不影響現有功能）。
+- 確認針對深色模式的玻璃擬態深度優化與 RWD 打磨方向。
 
 ## [執行步驟] 詳細執行步驟
-1. **問題檢測與重現（診斷）**
-   - 審視 `index.html` 結構與 `styles.css`，找出跑版成因（例如：Flexbox/Grid 佈局設定錯誤、未處理好的 overflow、或是 RWD 響應式斷點設定問題）。
-   - 確認 Sidebar（側邊欄）與 Main Content（主內容區）在不同螢幕尺寸下的響應狀態。
-2. **UI/UX 優化方向與擬定**
-   - **版面修復與 RWD 強化**：修正元件重疊、文字溢出等情形，確保手機版與電腦版皆有良好的觀看體驗。
-   - **視覺質感提升**：引進更細緻的色系搭配（如優雅的深色模式、Glassmorphism 玻璃擬物等），增加微動畫（Hover 效果、轉場動畫）以加強互動回饋。
-   - **操作體驗優化**：改善表單設計（如 Boss 擊殺紀錄區塊）、按鈕大小、以及表格（History Table）的響應式呈現（可滑動或卡片式轉換）。
-3. **實作修復與重構程式碼**
-   - 直接修改 `docs/css/styles.css` 與 `docs/index.html` 以應用設計更新。
-   - 運用 Browser Subagent 擷取網頁畫面以確認成果。
-4. **功能性迴歸測試（Code Review 與功能測試）**
-   - 走查 `docs/js/` 下的模組 (如 `ui/render.js`, `logic/actions.js`)，確認是否有過時寫法或潛在 bug。
-   - 開啟自動化輔助或手動驗證新增、篩選、紀錄擊殺等功能均運作正常。
-
-## [預期結果] 驗證標準
-1. 網頁於 Desktop 及 Mobile 斷點下，均無版面破裂或內容被不正常遮擋的情形。
-2. UI 質感明顯提升，具備更流暢的操作手感與視覺層次。
-3. 頁面所有按鈕與功能（包含狀態紀錄、快選、排序）皆能正常觸發且不報錯。
+1. 視覺氛圍與背景升級 (Background & Atmosphere)
+  - 加入動態漸層背景，使毛玻璃效果顯著。
+  - 實作自定義深色捲動軸。
+2. 深度 Glassmorphism 擴展 (Component Level)
+  - 為側邊欄 (.sidebar-card, .selected-boss-info) 套用 Backdrop blur。
+  - 表格標題區 (th) 的 Sticky 玻璃效果。
+  - 主要按鈕 (.btn-primary) 漸層與外發光效果。
+3. RWD 與細節打磨 (RWD Perfection)
+  - 確保平板/手機 (max-width: 900px) 的排版留白舒適度。
+  - 增強手機版表格的水平滾動提示。
+4. 功能迴歸測試 (Tests & CI/CD)
+  - 確認互動無損與跨解析度測試。
+  - Git 版控推播與收尾。
