@@ -13,14 +13,16 @@
 
         const nowISO = new Date().toISOString();
 
-        const existingIndex = state.killHistory.findIndex(k => k.bossId === bossId && k.channel === channel);
+        const safeChannel = Math.max(1, Math.min(3000, parseInt(channel) || 1));
+
+        const existingIndex = state.killHistory.findIndex(k => k.bossId === bossId && k.channel === safeChannel);
         if (existingIndex !== -1) state.killHistory.splice(existingIndex, 1);
 
         const entry = {
             id: `kill-${Date.now()}`,
             bossId: bossId,
             killTime: nowISO,
-            channel: channel,
+            channel: safeChannel,
             hasDrop: (dom.hasDropInput.checked || opts.equip || opts.scroll || opts.star) && !opts.viaKeyboard,
             drops: {
                 equip: opts.equip || false,
@@ -38,15 +40,20 @@
         saveHistory();
         renderHistoryTable();
         updateBossCard(bossId);
-        saveLastChannel(channel);
+        saveLastChannel(safeChannel);
 
         if (state.focusedBossId === bossId) {
             window.App.UI.Render.renderBossCards(); // Fully refresh to update list
+            if (dom.focusChannelInput) {
+                dom.focusChannelInput.focus();
+                dom.focusChannelInput.select();
+            }
         }
 
         if (opts.autoinc) {
-            setChannel(channel + 1);
-            if (dom.focusChannelInput) dom.focusChannelInput.value = channel + 1;
+            const nextCh = safeChannel + 1;
+            setChannel(nextCh);
+            if (dom.focusChannelInput) dom.focusChannelInput.value = nextCh;
         }
         dom.hasDropInput.checked = false;
         if (dom.focusDropEquip) dom.focusDropEquip.checked = false;
@@ -114,8 +121,14 @@
             selectBoss(entry.bossId);
         }
         setChannel(entry.channel);
+        if (dom.focusChannelInput) dom.focusChannelInput.value = entry.channel;
+        
         dom.notesInput.value = entry.notes || "";
-        dom.hasDropInput.checked = false;
+        dom.hasDropInput.checked = entry.hasDrop || false;
+
+        if (dom.focusDropEquip) dom.focusDropEquip.checked = entry.drops ? entry.drops.equip : false;
+        if (dom.focusDropScroll) dom.focusDropScroll.checked = entry.drops ? entry.drops.scroll : false;
+        if (dom.focusDropStar) dom.focusDropStar.checked = entry.drops ? entry.drops.star : false;
 
         if (window.innerWidth < 900) {
             dom.sidebar.scrollIntoView({ behavior: 'smooth' });
