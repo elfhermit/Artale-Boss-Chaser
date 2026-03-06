@@ -41,6 +41,7 @@
         renderHistoryTable();
         updateBossCard(bossId);
         saveLastChannel(safeChannel);
+        window.App.Core.State.updateRecentBoss(bossId);
 
         if (state.focusedBossId === bossId) {
             window.App.UI.Render.renderBossCards(); // Fully refresh to update list
@@ -102,6 +103,7 @@
             state.focusedBossId = null;
         } else {
             state.focusedBossId = bossId;
+            window.App.Core.State.updateRecentBoss(bossId);
         }
 
         renderBossCards();

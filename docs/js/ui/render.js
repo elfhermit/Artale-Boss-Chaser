@@ -1,4 +1,3 @@
-
 (function () {
     // Shortcuts
     const getBossById = (id) => window.App.Core.Utils.getBossById(window.App.Data.Bosses, id);
@@ -18,35 +17,26 @@
             dom.bossListContainer.classList.remove('compact');
         }
 
-        // Apply View Mode Icon Update
-        if (dom.viewIcon) {
-            dom.viewIcon.textContent = state.viewMode === 'compact' ? 'view_list' : 'grid_view';
-            dom.viewToggleBtn.classList.toggle('active', state.viewMode === 'compact');
-            dom.viewToggleBtn.title = state.viewMode === 'compact' ? '切換為網格檢視' : '切換為清單檢視';
+        // Apply UI state for Smart Sort button
+        if (dom.smartSortBtn) {
+            dom.smartSortBtn.classList.toggle('active', state.smartSortActive);
         }
 
-        // Apply Sound Icon Update
-        if (dom.soundIcon) {
-            dom.soundIcon.textContent = state.soundEnabled ? 'volume_up' : 'volume_off';
-            dom.soundToggleBtn.classList.toggle('active', state.soundEnabled);
-        }
-
-        // Determine sorting order
-        // Check if smart sort is requested via a temporary flag or if we just want to sort by name by default
+        // --- Improved Sorting Logic ---
         let displayBosses = [...BOSSES_JSON];
 
-        // If Smart Sort is active (we can store this in state too, or just re-sort here if needed)
-        // For now, let's assume the order in DOM is controlled here.
-        // If the user clicked "Smart Sort", we re-order displayBosses.
+        // 1. Filter by Search
+        if (state.currentSearch) {
+            displayBosses = displayBosses.filter(b => b.name.toLowerCase().includes(state.currentSearch.toLowerCase()));
+        }
+
+        // 2. Sort Logic
         if (state.smartSortActive) {
-            // Calculate imminent respawns for sorting
             const timerData = new Map();
             displayBosses.forEach(boss => {
                 const records = state.killHistory.filter(k => k.bossId === boss.id);
                 if (records.length === 0) {
-                    timerData.set(boss.id, -999999); // No record = low priority or high? Usually low priority in "Respawn" sort, but actually "Alive" is high priority.
-                    // Let's say: Alive (Sure) > Alive (Range) > Warning > Cooldown
-                    // No record = Alive (Sure) effectively.
+                    timerData.set(boss.id, -999999); 
                 } else {
                     let minSeconds = Infinity;
                     records.forEach(r => {
@@ -56,45 +46,34 @@
                     timerData.set(boss.id, minSeconds);
                 }
             });
-
-            displayBosses.sort((a, b) => {
-                const scoreA = timerData.get(a.id);
-                const scoreB = timerData.get(b.id);
-                return scoreA - scoreB; // Smallest seconds (most negative or smallest positive) first
-            });
+            displayBosses.sort((a, b) => timerData.get(a.id) - timerData.get(b.id));
         } else {
-            // Default Name Sort
-            displayBosses.sort((a, b) => a.name.localeCompare(b.name));
+            displayBosses.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
         }
 
+        // 3. Separate Recent Bosses (Only when NOT searching)
+        const recentOnes = !state.currentSearch ? displayBosses.filter(b => state.recentBossIds.includes(b.id))
+            .sort((a, b) => state.recentBossIds.indexOf(a.id) - state.recentBossIds.indexOf(b.id)) : [];
+        
+        const otherOnes = !state.currentSearch ? displayBosses.filter(b => !state.recentBossIds.includes(b.id)) : displayBosses;
 
-        displayBosses.forEach(boss => {
-            const card = document.createElement('div');
-            card.className = 'boss-card';
-            card.dataset.bossId = boss.id;
+        // Render Recent Section
+        if (recentOnes.length > 0) {
+            const divider = document.createElement('div');
+            divider.className = 'boss-list-divider';
+            divider.innerHTML = '<span class="material-icons-outlined">history</span> 最近獵殺';
+            dom.bossListContainer.appendChild(divider);
+            
+            recentOnes.forEach(boss => createBossCard(boss, true));
 
-            card.innerHTML = `
-                <div class="boss-card-header">
-                    <div class="boss-card-img">${boss.name.substring(0, 2)}</div>
-                    <div class="boss-card-info">
-                        <h3>${boss.name}</h3>
-                        <p>${boss.respawn}</p>
-                    </div>
-                </div>
-                <!-- Compact view re-ordering handled by CSS via Flexbox orders if needed, or DOM structure -->
-                
-                <div class="boss-card-timer-block">
-                    <span class="boss-card-status-text" data-status="text">偵測中...</span>
-                    <div class="boss-card-countdown" data-timer="timer">--:--</div>
-                    <div class="boss-card-channel-hint" data-channel-hint="hint"></div>
-                    <div class="boss-card-progress" data-progress><div class="bar" style="width:0%"></div></div>
-                    <div class="boss-card-channels" data-channels></div>
-                </div>
-                <button class="quick-kill-btn" data-boss-id="${boss.id}" title="一鍵紀錄">Quick</button>
-            `;
-            dom.bossListContainer.appendChild(card);
-            updateBossCard(boss.id);
-        });
+            const divider2 = document.createElement('div');
+            divider2.className = 'boss-list-divider';
+            divider2.innerHTML = '<span class="material-icons-outlined">list</span> 全部 Boss';
+            divider2.style.marginTop = '16px';
+            dom.bossListContainer.appendChild(divider2);
+        }
+
+        otherOnes.forEach(boss => createBossCard(boss, false));
 
         // Restore selection visualization
         if (state.focusedBossId) {
@@ -105,7 +84,40 @@
             dom.targetLockPanel.style.display = 'none';
             dom.selectedBossInfo.style.display = 'flex';
             dom.killForm.style.display = 'block';
+            
+            // Auto-focus search if no boss selected and on desktop
+            if (window.innerWidth > 900 && !state.currentSearch) {
+                setTimeout(() => dom.searchInput.focus(), 100);
+            }
         }
+    }
+
+    function createBossCard(boss, isRecent) {
+        const { dom } = window.App.UI.DOM;
+        const card = document.createElement('div');
+        card.className = 'boss-card';
+        if (isRecent) card.classList.add('is-recent');
+        card.dataset.bossId = boss.id;
+
+        card.innerHTML = `
+            <div class="boss-card-header">
+                <div class="boss-card-img">${boss.name.substring(0, 2)}</div>
+                <div class="boss-card-info">
+                    <h3>${boss.name}</h3>
+                    <p>${boss.respawn}</p>
+                </div>
+            </div>
+            <div class="boss-card-timer-block">
+                <span class="boss-card-status-text" data-status="text">偵測中...</span>
+                <div class="boss-card-countdown" data-timer="timer">--:--</div>
+                <div class="boss-card-channel-hint" data-channel-hint="hint"></div>
+                <div class="boss-card-progress" data-progress><div class="bar" style="width:0%"></div></div>
+                <div class="boss-card-channels" data-channels></div>
+            </div>
+            <button class="quick-kill-btn" data-boss-id="${boss.id}" title="一鍵紀錄">Quick</button>
+        `;
+        dom.bossListContainer.appendChild(card);
+        updateBossCard(boss.id);
     }
 
     function renderTargetLock(bossId) {

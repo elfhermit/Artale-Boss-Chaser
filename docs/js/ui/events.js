@@ -145,7 +145,19 @@
         // New Features
         if (dom.viewToggleBtn) dom.viewToggleBtn.addEventListener('click', actions.toggleViewMode);
         if (dom.soundToggleBtn) dom.soundToggleBtn.addEventListener('click', actions.toggleSound);
-        if (dom.smartSortBtn) dom.smartSortBtn.addEventListener('click', actions.toggleSmartSort);
+        if (dom.smartSortBtn) {
+            dom.smartSortBtn.addEventListener('click', () => {
+                actions.toggleSmartSort();
+            });
+        }
+
+        // Search Input focus and sync
+        if (dom.searchInput) {
+            dom.searchInput.addEventListener('input', (e) => {
+                state.currentSearch = e.target.value;
+                renderBossCards();
+            });
+        }
 
         // Target Lock Mode Events
         if (dom.unlockBossBtn) {

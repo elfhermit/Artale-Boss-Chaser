@@ -15,7 +15,9 @@
         // New Features
         viewMode: 'card', // 'card' | 'compact'
         soundEnabled: false,
-        alertedBosses: new Set() // Set<bossId> to track played sounds for current cycle
+        alertedBosses: new Set(), // Set<bossId> to track played sounds for current cycle
+        recentBossIds: JSON.parse(localStorage.getItem('recentBossIds') || '[]'),
+        smartSortActive: localStorage.getItem('smartSortActive') === 'true'
     };
 
     function loadHistory() {
@@ -25,6 +27,17 @@
 
     function saveHistory() {
         localStorage.setItem('bossKillHistory', JSON.stringify(state.killHistory));
+    }
+
+    function updateRecentBoss(bossId) {
+        if (!bossId) return;
+        state.recentBossIds = [bossId, ...state.recentBossIds.filter(id => id !== bossId)].slice(0, 6);
+        localStorage.setItem('recentBossIds', JSON.stringify(state.recentBossIds));
+    }
+
+    function saveSmartSort(active) {
+        state.smartSortActive = active;
+        localStorage.setItem('smartSortActive', String(active));
     }
 
     function loadPresets() {
@@ -84,6 +97,7 @@
         loadPresets, savePresets,
         loadTheme, saveTheme,
         saveViewMode, saveSoundEnabled,
-        loadLastChannel, saveLastChannel
+        loadLastChannel, saveLastChannel,
+        updateRecentBoss, saveSmartSort
     };
 })();
