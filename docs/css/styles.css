@@ -736,7 +736,26 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 900px) {
     .app-container { padding: 0 16px; gap: 16px; margin: 16px auto; }
-    .sidebar { padding: 16px; margin-bottom: 24px; max-height: none; }
+    .sidebar { 
+        padding: 12px; 
+        margin-bottom: 16px; 
+        max-height: none; 
+        position: relative; 
+        top: 0;
+    }
+    .sidebar-header { margin-bottom: 12px; }
+    .sidebar-header h2 { font-size: 1.1rem; }
+    
+    .large-channel-input {
+        font-size: 2rem;
+        padding: 12px;
+    }
+    
+    .drop-chip .chip-content {
+        padding: 12px 8px; /* 加大點擊範圍 */
+        font-size: 0.8rem;
+    }
+
     /* Scroll Hint Shadow */
     .table-container {
         position: relative;

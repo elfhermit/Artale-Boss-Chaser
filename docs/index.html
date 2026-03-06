@@ -35,7 +35,9 @@
                         <div class="form-group">
                             <label class="input-label">目前頻道 (Focus Channel)</label>
                             <div class="large-channel-input-wrapper">
-                                <input type="number" id="focus-channel-input" class="large-channel-input" min="1" max="3000" placeholder="Ch.">
+                                <input type="number" id="focus-channel-input" class="large-channel-input" 
+                                       min="1" max="3000" placeholder="Ch." 
+                                       inputmode="numeric" pattern="[0-9]*">
                                 <div class="input-actions">
                                     <button type="button" class="btn-icon" id="focus-ch-sub"><span class="material-icons-outlined">remove</span></button>
                                     <button type="button" class="btn-icon" id="focus-ch-add"><span class="material-icons-outlined">add</span></button>

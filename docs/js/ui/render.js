@@ -104,6 +104,7 @@
         } else {
             dom.targetLockPanel.style.display = 'none';
             dom.selectedBossInfo.style.display = 'flex';
+            dom.killForm.style.display = 'block';
         }
     }
 
@@ -114,6 +115,7 @@
 
         dom.targetLockPanel.style.display = 'block';
         dom.selectedBossInfo.style.display = 'none';
+        dom.killForm.style.display = 'none';
 
         dom.targetBossImg.textContent = boss.name.substring(0, 2);
         dom.targetBossName.textContent = boss.name;
