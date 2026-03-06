@@ -23,13 +23,13 @@
             bossId: bossId,
             killTime: nowISO,
             channel: safeChannel,
-            hasDrop: (dom.hasDropInput.checked || opts.equip || opts.scroll || opts.star) && !opts.viaKeyboard,
+            hasDrop: ( (dom.hasDropInput && dom.hasDropInput.checked) || opts.equip || opts.scroll || opts.star) && !opts.viaKeyboard,
             drops: {
                 equip: opts.equip || false,
                 scroll: opts.scroll || false,
                 star: opts.star || false
             },
-            notes: dom.notesInput.value.trim() || ''
+            notes: (dom.notesInput ? dom.notesInput.value.trim() : '') || ''
         };
 
         state.killHistory.push(entry);

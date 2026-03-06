@@ -219,8 +219,12 @@
         if (!isTyping && (e.key === 'ArrowUp' || e.key === 'ArrowRight')) { actions.updateChannel(1); return; }
         if (!isTyping && (e.key === 'ArrowDown' || e.key === 'ArrowLeft')) { actions.updateChannel(-1); return; }
 
-        if (e.key === 'Enter' && state.focusedBossId && !isTyping) {
-            dom.killForm.requestSubmit();
+        if (e.key === 'Enter' && !isTyping) {
+            if (state.focusedBossId) {
+                actions.handleFocusSubmit();
+            } else {
+                dom.killForm.requestSubmit();
+            }
             return;
         }
 
