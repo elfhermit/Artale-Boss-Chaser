@@ -21,7 +21,12 @@
             bossId: bossId,
             killTime: nowISO,
             channel: channel,
-            hasDrop: dom.hasDropInput.checked && !opts.viaKeyboard ? dom.hasDropInput.checked : false,
+            hasDrop: (dom.hasDropInput.checked || opts.equip || opts.scroll || opts.star) && !opts.viaKeyboard,
+            drops: {
+                equip: opts.equip || false,
+                scroll: opts.scroll || false,
+                star: opts.star || false
+            },
             notes: dom.notesInput.value.trim() || ''
         };
 
@@ -35,11 +40,36 @@
         updateBossCard(bossId);
         saveLastChannel(channel);
 
-        if (opts.autoinc) setChannel(channel + 1);
+        if (state.focusedBossId === bossId) {
+            window.App.UI.Render.renderBossCards(); // Fully refresh to update list
+        }
+
+        if (opts.autoinc) {
+            setChannel(channel + 1);
+            if (dom.focusChannelInput) dom.focusChannelInput.value = channel + 1;
+        }
         dom.hasDropInput.checked = false;
+        if (dom.focusDropEquip) dom.focusDropEquip.checked = false;
+        if (dom.focusDropScroll) dom.focusDropScroll.checked = false;
+        if (dom.focusDropStar) dom.focusDropStar.checked = false;
         dom.notesInput.value = '';
 
         showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${channel}`, { timeout: 1400 });
+    }
+
+    function handleFocusSubmit() {
+        const { state } = window.App.Core.State;
+        const { dom } = window.App.UI.DOM;
+        if (!state.focusedBossId) return;
+        
+        const ch = parseInt(dom.focusChannelInput.value) || 1;
+        const autoInc = dom.autoIncCheckbox.checked;
+        
+        const equip = dom.focusDropEquip ? dom.focusDropEquip.checked : false;
+        const scroll = dom.focusDropScroll ? dom.focusDropScroll.checked : false;
+        const star = dom.focusDropStar ? dom.focusDropStar.checked : false;
+        
+        recordKillQuick(state.focusedBossId, ch, { autoinc: autoInc, equip, scroll, star });
     }
 
     function handleFormSubmit(e) {
@@ -57,40 +87,24 @@
     function selectBoss(bossId) {
         const { state } = window.App.Core.State;
         const { dom } = window.App.UI.DOM;
-        const { renderHistoryTable } = window.App.UI.Render;
+        const { renderHistoryTable, renderBossCards } = window.App.UI.Render;
         const BOSSES_JSON = window.App.Data.Bosses;
 
-        // Toggle
-        if (state.focusedBossId === bossId) {
+        // Toggle off
+        if (state.focusedBossId === bossId && bossId !== null) {
             state.focusedBossId = null;
-            dom.submitKillBtn.disabled = true;
-            dom.submitKillBtn.textContent = "請先選擇 Boss";
-            document.querySelectorAll('.boss-card').forEach(c => c.classList.remove('selected'));
-            dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>`;
-            renderHistoryTable();
-            return;
+        } else {
+            state.focusedBossId = bossId;
         }
 
-        state.focusedBossId = bossId;
-
-        document.querySelectorAll('.boss-card').forEach(c => {
-            c.classList.toggle('selected', c.dataset.bossId === bossId);
-        });
-
-        const boss = getBossById(bossId);
-        dom.selectedBossInfo.innerHTML = `
-            <div class="boss-card-img" id="selected-boss-img">
-                ${boss.name.substring(0, 2)}
-            </div>
-            <div>
-                <div id="selected-boss-name">${boss.name}</div>
-                <div id="selected-boss-respawn">${boss.respawn}</div>
-            </div>
-        `;
-
-        dom.submitKillBtn.disabled = false;
-        dom.submitKillBtn.textContent = `確認新增 ${boss.name} 紀錄`;
+        renderBossCards();
         renderHistoryTable();
+
+        if (state.focusedBossId) {
+            if (window.innerWidth < 900) {
+                dom.sidebar.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     }
 
     function loadEntryToForm(entry) {

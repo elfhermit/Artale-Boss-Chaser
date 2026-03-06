@@ -32,6 +32,24 @@
 
         sidebar: null,
 
+        // Target Lock Mode
+        targetLockPanel: null,
+        targetBossImg: null,
+        targetBossName: null,
+        targetBossRespawn: null,
+        unlockBossBtn: null,
+        
+        // Focus Mode Elements
+        focusChannelInput: null,
+        focusChSubBtn: null,
+        focusChAddBtn: null,
+        focusSubmitBtn: null,
+        autoIncCheckbox: null,
+        targetHistoryList: null,
+        focusDropEquip: null,
+        focusDropScroll: null,
+        focusDropStar: null,
+
         // Batch
         batchInput: null,
         batchBtn: null,
@@ -74,6 +92,24 @@
         dom.quickChannels = document.querySelectorAll('.quick-chip');
 
         dom.sidebar = document.getElementById('sidebar'); // ensure sidebar reference for scrolling on mobile
+
+        // Init Target Lock Mode Elements
+        dom.targetLockPanel = document.getElementById('target-lock-panel');
+        dom.targetBossImg = document.getElementById('target-boss-img');
+        dom.targetBossName = document.getElementById('target-boss-name');
+        dom.targetBossRespawn = document.getElementById('target-boss-respawn');
+        dom.unlockBossBtn = document.getElementById('unlock-boss-btn');
+        
+        // Focus Mode Init
+        dom.focusChannelInput = document.getElementById('focus-channel-input');
+        dom.focusChSubBtn = document.getElementById('focus-ch-sub');
+        dom.focusChAddBtn = document.getElementById('focus-ch-add');
+        dom.focusSubmitBtn = document.getElementById('focus-submit-btn');
+        dom.autoIncCheckbox = document.getElementById('auto-inc-ch');
+        dom.targetHistoryList = document.getElementById('target-history-list');
+        dom.focusDropEquip = document.getElementById('focus-drop-equip');
+        dom.focusDropScroll = document.getElementById('focus-drop-scroll');
+        dom.focusDropStar = document.getElementById('focus-drop-star');
 
         dom.batchInput = document.getElementById('batch-channels-input');
         dom.batchBtn = document.getElementById('apply-batch-btn');

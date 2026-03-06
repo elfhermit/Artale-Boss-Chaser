@@ -18,6 +18,70 @@
                 <h2>紀錄擊殺</h2>
             </div>
             <div class="sidebar-content">
+                <!-- Target Lock Mode Panel (New) -->
+                <div id="target-lock-panel" class="target-lock-panel" style="display: none;">
+                    <div class="target-boss-header">
+                        <div id="target-boss-img" class="boss-card-img"></div>
+                        <div class="target-boss-info">
+                            <h2 id="target-boss-name">Boss Name</h2>
+                            <p id="target-boss-respawn">Respawn info</p>
+                        </div>
+                        <button id="unlock-boss-btn" class="btn-icon" title="取消鎖定">
+                            <span class="material-icons-outlined">close</span>
+                        </button>
+                    </div>
+                    
+                    <div class="focus-input-area">
+                        <div class="form-group">
+                            <label class="input-label">目前頻道 (Focus Channel)</label>
+                            <div class="large-channel-input-wrapper">
+                                <input type="number" id="focus-channel-input" class="large-channel-input" min="1" max="3000" placeholder="Ch.">
+                                <div class="input-actions">
+                                    <button type="button" class="btn-icon" id="focus-ch-sub"><span class="material-icons-outlined">remove</span></button>
+                                    <button type="button" class="btn-icon" id="focus-ch-add"><span class="material-icons-outlined">add</span></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="focus-actions">
+                            <div class="drop-type-selector">
+                                <label class="drop-chip" title="掉落裝備">
+                                    <input type="checkbox" id="focus-drop-equip">
+                                    <span class="chip-content"><span class="material-icons-outlined">shield</span> 裝備</span>
+                                </label>
+                                <label class="drop-chip" title="掉落卷軸">
+                                    <input type="checkbox" id="focus-drop-scroll">
+                                    <span class="chip-content"><span class="material-icons-outlined">description</span> 卷軸</span>
+                                </label>
+                                <label class="drop-chip star-chip" title="大寶物/幸運頻道">
+                                    <input type="checkbox" id="focus-drop-star">
+                                    <span class="chip-content"><span class="material-icons-outlined">stars</span> 星星</span>
+                                </label>
+                            </div>
+                            <button type="button" id="focus-submit-btn" class="btn btn-primary btn-large">
+                                <span class="material-icons-outlined">bolt</span> 立即紀錄擊殺
+                            </button>
+                        </div>
+
+                        <div class="auto-inc-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-inc-ch" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span>紀錄後自動跳轉下一頻道</span>
+                        </div>
+                    </div>
+                    
+                    <div class="target-history-section">
+                        <div class="channel-grid-header">
+                            <span>此 Boss 的最近紀錄</span>
+                        </div>
+                        <div id="target-history-list" class="target-history-list">
+                            <!-- Recent kills for THIS boss will be shown here -->
+                        </div>
+                    </div>
+                </div>
+
                 <div id="selected-boss-info" class="selected-boss-info">
                     <span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>
                 </div>

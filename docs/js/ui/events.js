@@ -146,6 +146,41 @@
         if (dom.viewToggleBtn) dom.viewToggleBtn.addEventListener('click', actions.toggleViewMode);
         if (dom.soundToggleBtn) dom.soundToggleBtn.addEventListener('click', actions.toggleSound);
         if (dom.smartSortBtn) dom.smartSortBtn.addEventListener('click', actions.toggleSmartSort);
+
+        // Target Lock Mode Events
+        if (dom.unlockBossBtn) {
+            dom.unlockBossBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                actions.selectBoss(null);
+            });
+        }
+
+        // Focus Mode Events
+        if (dom.focusSubmitBtn) {
+            dom.focusSubmitBtn.addEventListener('click', actions.handleFocusSubmit);
+        }
+
+        if (dom.focusChSubBtn) {
+            dom.focusChSubBtn.addEventListener('click', () => {
+                const val = parseInt(dom.focusChannelInput.value) || 1;
+                dom.focusChannelInput.value = Math.max(1, val - 1);
+            });
+        }
+
+        if (dom.focusChAddBtn) {
+            dom.focusChAddBtn.addEventListener('click', () => {
+                const val = parseInt(dom.focusChannelInput.value) || 1;
+                dom.focusChannelInput.value = Math.min(3000, val + 1);
+            });
+        }
+
+        if (dom.focusChannelInput) {
+            dom.focusChannelInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    actions.handleFocusSubmit();
+                }
+            });
+        }
     }
 
     function toggleTheme() {

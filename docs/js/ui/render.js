@@ -100,7 +100,75 @@
         if (state.focusedBossId) {
             const card = dom.bossListContainer.querySelector(`.boss-card[data-boss-id="${state.focusedBossId}"]`);
             if (card) card.classList.add('selected');
+            renderTargetLock(state.focusedBossId);
+        } else {
+            dom.targetLockPanel.style.display = 'none';
+            dom.selectedBossInfo.style.display = 'flex';
         }
+    }
+
+    function renderTargetLock(bossId) {
+        const { dom } = window.App.UI.DOM;
+        const boss = getBossById(bossId);
+        if (!boss) return;
+
+        dom.targetLockPanel.style.display = 'block';
+        dom.selectedBossInfo.style.display = 'none';
+
+        dom.targetBossImg.textContent = boss.name.substring(0, 2);
+        dom.targetBossName.textContent = boss.name;
+        dom.targetBossRespawn.textContent = `重生週期: ${boss.respawn}`;
+
+        // Initialize input with current state if needed
+        if (!dom.focusChannelInput.value) {
+            dom.focusChannelInput.value = window.App.Core.State.state.lastChannel || 1;
+        }
+
+        renderTargetHistory(bossId);
+    }
+
+    function renderTargetHistory(bossId) {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        const { calculateTimerState } = window.App.Core.Utils;
+        const boss = getBossById(bossId);
+
+        dom.targetHistoryList.innerHTML = '';
+
+        // Filter history for this specific boss, sorted by time desc
+        const relevant = state.killHistory
+            .filter(k => k.bossId === bossId)
+            .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
+
+        if (relevant.length === 0) {
+            dom.targetHistoryList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--color-text-disabled); font-style:italic;">尚無此 Boss 的紀錄</div>';
+            return;
+        }
+
+        relevant.forEach(record => {
+            const ts = calculateTimerState(boss, record.killTime);
+            const item = document.createElement('div');
+            item.className = 'target-history-item';
+            
+            let dropHtml = '';
+            if (record.drops) {
+                if (record.drops.equip) dropHtml += '<span class="material-icons-outlined drop-icon equip" title="裝備">shield</span>';
+                if (record.drops.scroll) dropHtml += '<span class="material-icons-outlined drop-icon scroll" title="卷軸">description</span>';
+                if (record.drops.star) dropHtml += '<span class="material-icons-outlined drop-icon star" title="大寶物">stars</span>';
+            }
+
+            item.innerHTML = `
+                <div class="history-ch-badge">
+                    CH.${record.channel}
+                    <div class="history-drops">${dropHtml}</div>
+                </div>
+                <div class="history-time-info">
+                    <span class="history-status-tag tag-${ts.status}">${ts.text}</span>
+                    <span class="history-countdown">${ts.timer}</span>
+                </div>
+            `;
+            dom.targetHistoryList.appendChild(item);
+        });
     }
 
     function updateBossCard(bossId) {
@@ -268,6 +336,17 @@
             const minRespawn = new Date(killDate.getTime() + boss.minMinutes * 60000);
             const maxRespawn = new Date(killDate.getTime() + boss.maxMinutes * 60000);
 
+            let dropHtml = '';
+            if (entry.drops) {
+                if (entry.drops.equip) dropHtml += '<span class="material-icons-outlined drop-icon equip" title="裝備" style="font-size:16px;">shield</span>';
+                if (entry.drops.scroll) dropHtml += '<span class="material-icons-outlined drop-icon scroll" title="卷軸" style="font-size:16px;">description</span>';
+                if (entry.drops.star) dropHtml += '<span class="material-icons-outlined drop-icon star" title="大寶物" style="font-size:16px;">stars</span>';
+            } else if (entry.hasDrop) {
+                dropHtml = '<span class="material-icons-outlined" style="font-size:16px; color:var(--color-success);">check_circle</span>';
+            } else {
+                dropHtml = '<span style="color:var(--color-text-disabled); opacity:0.5;">-</span>';
+            }
+
             const tr = document.createElement('tr');
             tr.dataset.bossId = entry.bossId;
             tr.dataset.historyId = entry.id;
@@ -275,7 +354,7 @@
                 <td>${boss.name}</td>
                 <td>${formatTimeDisplay(killDate)}</td>
                 <td><span style="font-weight:700; color:var(--color-primary);">${entry.channel}</span></td>
-                <td class="${entry.hasDrop ? 'drop-yes' : 'drop-no'}">${entry.hasDrop ? '有' : '無'}</td>
+                <td>${dropHtml}</td>
                 <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entry.notes || '-'}</td>
                 <td>${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</td>
                 <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
