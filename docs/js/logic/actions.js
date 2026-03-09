@@ -59,7 +59,6 @@
 
         if (opts.autoinc) {
             const nextCh = safeChannel + 1;
-            console.log(`[Action] Auto-incrementing to ${nextCh}`);
             setChannel(nextCh);
         }
         
