@@ -17,3 +17,7 @@
 4. 功能迴歸測試 (Tests & CI/CD)
   - 確認互動無損與跨解析度測試。
   - Git 版控推播與收尾。
+5. Subagent 自動化跨瀏覽器功能測試 (Automated Verification)
+  - 啟動 local Python HTTP Server 服務。
+  - 透過 browser_subagent 驗證前端操作，包含所有的按鈕互動、表單填寫與畫面呈現。
+  - 收集 subagent 觀察結果。若有任何 JS Exception 或功能異常，自動修復直到各功能正常運作。
