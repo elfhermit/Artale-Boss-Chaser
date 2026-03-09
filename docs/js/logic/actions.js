@@ -8,22 +8,28 @@
         if (!bossId) return;
         const { state, saveHistory, saveLastChannel } = window.App.Core.State;
         const { dom } = window.App.UI.DOM;
-        const { renderHistoryTable, updateBossCard } = window.App.UI.Render;
+        const { renderHistoryTable, updateBossCard, renderBossCards } = window.App.UI.Render;
         const BOSSES_JSON = window.App.Data.Bosses;
 
-        const nowISO = new Date().toISOString();
+        // Prevent rapid double-clicking
+        const now = Date.now();
+        if (state.lastRecordTime && (now - state.lastRecordTime < 300)) return;
+        state.lastRecordTime = now;
 
+        const nowISO = new Date().toISOString();
         const safeChannel = Math.max(1, Math.min(3000, parseInt(channel) || 1));
 
         const existingIndex = state.killHistory.findIndex(k => k.bossId === bossId && k.channel === safeChannel);
-        if (existingIndex !== -1) state.killHistory.splice(existingIndex, 1);
+        if (existingIndex !== -1) {
+            state.killHistory.splice(existingIndex, 1);
+        }
 
         const entry = {
             id: `kill-${Date.now()}`,
             bossId: bossId,
             killTime: nowISO,
             channel: safeChannel,
-            hasDrop: ( (dom.hasDropInput && dom.hasDropInput.checked) || opts.equip || opts.scroll || opts.star) && !opts.viaKeyboard,
+            hasDrop: ((dom.hasDropInput && dom.hasDropInput.checked) || opts.equip || opts.scroll || opts.star) && (!opts.viaKeyboard || (opts.equip || opts.scroll || opts.star)),
             drops: {
                 equip: opts.equip || false,
                 scroll: opts.scroll || false,
@@ -44,7 +50,7 @@
         window.App.Core.State.updateRecentBoss(bossId);
 
         if (state.focusedBossId === bossId) {
-            window.App.UI.Render.renderBossCards(); // Fully refresh to update list
+            renderBossCards(); // Fully refresh to update list
             if (dom.focusChannelInput) {
                 dom.focusChannelInput.focus();
                 dom.focusChannelInput.select();
@@ -53,16 +59,28 @@
 
         if (opts.autoinc) {
             const nextCh = safeChannel + 1;
+            console.log(`[Action] Auto-incrementing to ${nextCh}`);
             setChannel(nextCh);
-            if (dom.focusChannelInput) dom.focusChannelInput.value = nextCh;
         }
-        dom.hasDropInput.checked = false;
+        
+        // Safety checks for resetting UI
+        if (dom.hasDropInput) dom.hasDropInput.checked = false;
         if (dom.focusDropEquip) dom.focusDropEquip.checked = false;
         if (dom.focusDropScroll) dom.focusDropScroll.checked = false;
         if (dom.focusDropStar) dom.focusDropStar.checked = false;
-        dom.notesInput.value = '';
+        if (dom.notesInput) dom.notesInput.value = '';
 
-        showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${channel}`, { timeout: 1400 });
+        showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400 });
+        
+        // Feedback animation on the history table row if it exists
+        setTimeout(() => {
+            const row = document.querySelector(`tr[data-history-id="${entry.id}"]`);
+            if (row) {
+                row.style.transition = 'background-color 0.5s';
+                row.style.backgroundColor = 'rgba(255, 215, 0, 0.2)';
+                setTimeout(() => row.style.backgroundColor = '', 1000);
+            }
+        }, 50);
     }
 
     function handleFocusSubmit() {
@@ -71,7 +89,7 @@
         if (!state.focusedBossId) return;
         
         const ch = parseInt(dom.focusChannelInput.value) || 1;
-        const autoInc = dom.autoIncCheckbox.checked;
+        const autoInc = dom.autoIncCheckbox ? dom.autoIncCheckbox.checked : false;
         
         const equip = dom.focusDropEquip ? dom.focusDropEquip.checked : false;
         const scroll = dom.focusDropScroll ? dom.focusDropScroll.checked : false;
@@ -106,6 +124,17 @@
             window.App.Core.State.updateRecentBoss(bossId);
         }
 
+        // Enable/Disable Submit Button
+        if (dom.submitKillBtn) {
+            if (state.focusedBossId) {
+                dom.submitKillBtn.disabled = false;
+                dom.submitKillBtn.textContent = '立即紀錄擊殺';
+            } else {
+                dom.submitKillBtn.disabled = true;
+                dom.submitKillBtn.textContent = '請先選擇 Boss';
+            }
+        }
+
         renderBossCards();
         renderHistoryTable();
 
@@ -113,6 +142,13 @@
             if (window.innerWidth < 900) {
                 dom.sidebar.scrollIntoView({ behavior: 'smooth' });
             }
+            // UX Improvement: Auto-focus the channel input in Target Lock Mode
+            setTimeout(() => {
+                if (dom.focusChannelInput) {
+                    dom.focusChannelInput.focus();
+                    dom.focusChannelInput.select();
+                }
+            }, 100);
         }
     }
 
@@ -247,7 +283,8 @@
         let num = parseInt(val);
         if (num < 1) num = 1;
         if (num > 3000) num = 3000;
-        dom.channelInput.value = num;
+        if (dom.channelInput) dom.channelInput.value = num;
+        if (dom.focusChannelInput) dom.focusChannelInput.value = num;
     }
 
     function showToast(message, opts = {}) {
@@ -331,7 +368,7 @@
     }
 
     window.App.Logic.Actions = {
-        recordKillQuick, handleFormSubmit, selectBoss, loadEntryToForm, deleteHistoryEntry, clearAllHistory,
+        recordKillQuick, handleFormSubmit, handleFocusSubmit, selectBoss, loadEntryToForm, deleteHistoryEntry, clearAllHistory,
         saveInlineChannel, saveInlineNotes, handleSavePreset, handleSaveBatchPreset, applyPreset, handleBatchApply,
         updateChannel, setChannel, showToast, showUndoToast,
         toggleViewMode, toggleSound, toggleSmartSort

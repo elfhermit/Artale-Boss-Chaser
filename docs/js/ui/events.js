@@ -169,7 +169,23 @@
 
         // Focus Mode Events
         if (dom.focusSubmitBtn) {
-            dom.focusSubmitBtn.addEventListener('click', actions.handleFocusSubmit);
+            dom.focusSubmitBtn.addEventListener('click', () => {
+                actions.handleFocusSubmit();
+            });
+        }
+
+        // UX: Real-time sync between inputs when typing
+        if (dom.focusChannelInput) {
+            dom.focusChannelInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (dom.channelInput) dom.channelInput.value = val;
+            });
+        }
+        if (dom.channelInput) {
+            dom.channelInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (dom.focusChannelInput) dom.focusChannelInput.value = val;
+            });
         }
 
         if (dom.focusChSubBtn) {
@@ -230,7 +246,8 @@
 
         if (!isTyping && (e.key === 'k' || e.key === 'K')) {
             if (state.focusedBossId) {
-                actions.recordKillQuick(state.focusedBossId, parseInt(dom.channelInput.value) || 1, { autoinc: true, viaKeyboard: true });
+                const ch = dom.focusChannelInput ? (parseInt(dom.focusChannelInput.value) || 1) : (parseInt(dom.channelInput.value) || 1);
+                actions.recordKillQuick(state.focusedBossId, ch, { autoinc: true, viaKeyboard: true });
             }
         }
     }

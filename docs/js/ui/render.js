@@ -299,11 +299,22 @@
 
         // 1. 決定要顯示哪些資料
         let displayData = [...state.killHistory];
+        
+        // UX Improvement: If a boss is focused, show that boss's history. 
+        // But also provide a way to see "Recent Global" if there's no data for this boss.
         if (state.focusedBossId) {
-            displayData = displayData.filter(k => k.bossId === state.focusedBossId);
-            dom.historyTableTitle.innerHTML = `${getBossById(state.focusedBossId).name} - 頻道狀態`;
+            const filtered = displayData.filter(k => k.bossId === state.focusedBossId);
+            const boss = getBossById(state.focusedBossId);
+            
+            if (filtered.length > 0) {
+                displayData = filtered;
+                dom.historyTableTitle.innerHTML = `<span class="material-icons-outlined" style="vertical-align:middle; margin-right:4px;">target</span> ${boss.name} - 頻道紀錄`;
+            } else {
+                // If focused boss has no history, show everything but dim the title or indicate it
+                dom.historyTableTitle.innerHTML = `<span style="color:var(--color-text-disabled)">${boss.name} (尚無紀錄) - 顯示全部</span>`;
+            }
         } else {
-            dom.historyTableTitle.innerHTML = `各頻道狀態紀錄`;
+            dom.historyTableTitle.innerHTML = `<span class="material-icons-outlined" style="vertical-align:middle; margin-right:4px;">history</span> 全域擊殺流水帳`;
         }
 
         // 2. 執行排序
@@ -333,7 +344,10 @@
 
         dom.historyTableBody.innerHTML = "";
         if (displayData.length === 0) {
-            dom.historyTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--color-text-disabled);">暫無資料</td></tr>`;
+            dom.historyTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--color-text-disabled);">
+                <div class="material-icons-outlined" style="font-size:48px; display:block; margin-bottom:10px;">inventory_2</div>
+                目前沒有任何擊殺紀錄
+            </td></tr>`;
             renderPaginationControls(0, 0);
             return;
         }
@@ -346,6 +360,7 @@
 
         pageItems.forEach(entry => {
             const boss = getBossById(entry.bossId);
+            if (!boss) return;
             const killDate = new Date(entry.killTime);
             const minRespawn = new Date(killDate.getTime() + boss.minMinutes * 60000);
             const maxRespawn = new Date(killDate.getTime() + boss.maxMinutes * 60000);
@@ -364,13 +379,22 @@
             const tr = document.createElement('tr');
             tr.dataset.bossId = entry.bossId;
             tr.dataset.historyId = entry.id;
+            
+            // Highlight if this is the focused boss
+            if (state.focusedBossId === entry.bossId) {
+                tr.style.borderLeft = '4px solid var(--color-primary)';
+            }
+
             tr.innerHTML = `
-                <td>${boss.name}</td>
+                <td><div style="display:flex; align-items:center; gap:8px;">
+                    <div class="mini-boss-img">${boss.name.substring(0,1)}</div>
+                    <span>${boss.name}</span>
+                </div></td>
                 <td>${formatTimeDisplay(killDate)}</td>
-                <td><span style="font-weight:700; color:var(--color-primary);">${entry.channel}</span></td>
-                <td>${dropHtml}</td>
+                <td><span style="font-weight:700; color:var(--color-primary); font-size:1.1rem;">${entry.channel}</span></td>
+                <td><div style="display:flex; gap:4px; justify-content:center;">${dropHtml}</div></td>
                 <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entry.notes || '-'}</td>
-                <td>${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</td>
+                <td><span class="respawn-range">${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</span></td>
                 <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
             `;
             dom.historyTableBody.appendChild(tr);
