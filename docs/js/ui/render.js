@@ -154,6 +154,29 @@
             .filter(k => k.bossId === bossId)
             .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
 
+        // Update Stats
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+        let todayKills = 0, todayEquip = 0, todayScroll = 0, todayStar = 0;
+
+        relevant.forEach(record => {
+            const rt = new Date(record.killTime).getTime();
+            if (rt >= startOfDay) {
+                todayKills++;
+                if (record.drops) {
+                    if (record.drops.equip) todayEquip++;
+                    if (record.drops.scroll) todayScroll++;
+                    if (record.drops.star) todayStar++;
+                }
+            }
+        });
+
+        if (dom.statKills) dom.statKills.textContent = todayKills;
+        if (dom.statEquip) dom.statEquip.textContent = todayEquip;
+        if (dom.statScroll) dom.statScroll.textContent = todayScroll;
+        if (dom.statStar) dom.statStar.textContent = todayStar;
+
         if (relevant.length === 0) {
             dom.targetHistoryList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--color-text-disabled); font-style:italic;">尚無此 Boss 的紀錄</div>';
             return;
@@ -454,7 +477,7 @@
 
     function updateAllTimers() {
         const { state, saveSoundEnabled } = window.App.Core.State;
-        const { playNotificationSound, calculateTimerState } = window.App.Core.Utils;
+        const { playNotificationSound, calculateTimerState, sendDesktopNotification } = window.App.Core.Utils;
         const BOSSES_JSON = window.App.Data.Bosses;
 
         let shouldSort = false;
@@ -477,6 +500,7 @@
                 if (minSeconds < 120 && minSeconds > 0) {
                     if (!state.alertedBosses.has(boss.id)) {
                         playNotificationSound();
+                        sendDesktopNotification("Boss 即將重生", `[${boss.name}] 於第 ${alertChannel} 頻道即將於 2 分鐘內重生！`);
                         state.alertedBosses.add(boss.id);
                     }
                 } else if (minSeconds > 120) {

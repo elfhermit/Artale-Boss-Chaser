@@ -764,6 +764,40 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     box-shadow: 0 0 12px rgba(253, 216, 53, 0.3);
 }
 
+/* --- Stats Panel --- */
+.target-stats-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+.stats-header {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
 /* --- History List inside Panel --- */
 .target-history-list {
     display: flex;
