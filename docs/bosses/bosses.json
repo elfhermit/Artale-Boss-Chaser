@@ -5,7 +5,11 @@
     "respawn": "23分~30分",
     "minMinutes": 23,
     "maxMinutes": 30,
-    "image": "placeholder.svg"
+    "image": "紅寶王.gif",
+    "maps": [
+      "海岸草叢3"
+    ],
+    "color": "#ff4444"
   },
   {
     "id": "boss-2",
@@ -13,7 +17,12 @@
     "respawn": "45分~1小時",
     "minMinutes": 45,
     "maxMinutes": 60,
-    "image": "placeholder.svg"
+    "image": "冥界幽靈.gif",
+    "maps": [
+      "1號線<4區>",
+      "2號線<3區>"
+    ],
+    "color": "#9c27b0"
   },
   {
     "id": "boss-3",
@@ -21,7 +30,11 @@
     "respawn": "45分~1小時",
     "minMinutes": 45,
     "maxMinutes": 60,
-    "image": "placeholder.svg"
+    "image": "巨居蟹.gif",
+    "maps": [
+      "海龜沙灘"
+    ],
+    "color": "#ff9800"
   },
   {
     "id": "boss-4",
@@ -29,7 +42,11 @@
     "respawn": "3小時30分~4小時",
     "minMinutes": 210,
     "maxMinutes": 240,
-    "image": "placeholder.svg"
+    "image": "蘑菇王.gif",
+    "maps": [
+      "鋼之肥肥公園3"
+    ],
+    "color": "#ff5722"
   },
   {
     "id": "boss-5",
@@ -37,7 +54,11 @@
     "respawn": "6小時45分~9小時",
     "minMinutes": 405,
     "maxMinutes": 540,
-    "image": "placeholder.svg"
+    "image": "巴洛古.gif",
+    "maps": [
+      "受詛咒的神殿"
+    ],
+    "color": "#ff0000"
   },
   {
     "id": "boss-6",
@@ -45,7 +66,11 @@
     "respawn": "23分~30分",
     "minMinutes": 23,
     "maxMinutes": 30,
-    "image": "placeholder.svg"
+    "image": "樹妖王.gif",
+    "maps": [
+      "東方岩石山5"
+    ],
+    "color": "#8bc34a"
   },
   {
     "id": "boss-7",
@@ -53,7 +78,11 @@
     "respawn": "38分~45分",
     "minMinutes": 38,
     "maxMinutes": 45,
-    "image": "placeholder.svg"
+    "image": "殭屍猴王.gif",
+    "maps": [
+      "巫婆森林1"
+    ],
+    "color": "#795548"
   },
   {
     "id": "boss-8",
@@ -61,7 +90,11 @@
     "respawn": "1小時30分~1小時45分",
     "minMinutes": 90,
     "maxMinutes": 105,
-    "image": "placeholder.svg"
+    "image": "沼澤巨鱷.gif",
+    "maps": [
+      "危險的黑鱷魚1"
+    ],
+    "color": "#4caf50"
   },
   {
     "id": "boss-9",
@@ -69,7 +102,11 @@
     "respawn": "3小時15分~3小時45分",
     "minMinutes": 195,
     "maxMinutes": 225,
-    "image": "placeholder.svg"
+    "image": "殭屍蘑菇王.gif",
+    "maps": [
+      "蘑菇王之墓"
+    ],
+    "color": "#e91e63"
   },
   {
     "id": "boss-10",
@@ -77,7 +114,11 @@
     "respawn": "2小時38分~3小時",
     "minMinutes": 158,
     "maxMinutes": 180,
-    "image": "placeholder.svg"
+    "image": "雪山女巫.gif",
+    "maps": [
+      "冰面1"
+    ],
+    "color": "#87ceeb"
   },
   {
     "id": "boss-11",
@@ -85,7 +126,11 @@
     "respawn": "45分~1小時8分",
     "minMinutes": 45,
     "maxMinutes": 68,
-    "image": "placeholder.svg"
+    "image": "雪毛怪人.gif",
+    "maps": [
+      "雪人之谷"
+    ],
+    "color": "#f0f8ff"
   },
   {
     "id": "boss-12",
@@ -93,7 +138,11 @@
     "respawn": "45分~1小時45分",
     "minMinutes": 45,
     "maxMinutes": 105,
-    "image": "placeholder.svg"
+    "image": "厄運死神.gif",
+    "maps": [
+      "死亡森林4"
+    ],
+    "color": "#2f4f4f"
   },
   {
     "id": "boss-13",
@@ -101,7 +150,11 @@
     "respawn": "1小時58分~2小時8分",
     "minMinutes": 118,
     "maxMinutes": 128,
-    "image": "placeholder.svg"
+    "image": "艾利傑.gif",
+    "maps": [
+      "天空階梯2"
+    ],
+    "color": "#00bcd4"
   },
   {
     "id": "boss-14",
@@ -109,7 +162,11 @@
     "respawn": "1小時8分~1小時30分",
     "minMinutes": 68,
     "maxMinutes": 90,
-    "image": "placeholder.svg"
+    "image": "咕咕鐘.gif",
+    "maps": [
+      "時間之路<3>"
+    ],
+    "color": "#daa520"
   },
   {
     "id": "boss-15",
@@ -117,7 +174,11 @@
     "respawn": "4小時30分~5小時50分",
     "minMinutes": 270,
     "maxMinutes": 350,
-    "image": "placeholder.svg"
+    "image": "葛雷金剛.gif",
+    "maps": [
+      "葛雷草原"
+    ],
+    "color": "#8b4513"
   },
   {
     "id": "boss-16",
@@ -125,7 +186,11 @@
     "respawn": "2小時30分~5小時",
     "minMinutes": 150,
     "maxMinutes": 300,
-    "image": "placeholder.svg"
+    "image": "書生幽靈.gif",
+    "maps": [
+      "狐狸谷"
+    ],
+    "color": "#9370db"
   },
   {
     "id": "boss-17",
@@ -133,7 +198,11 @@
     "respawn": "3小時30分~9小時30分",
     "minMinutes": 210,
     "maxMinutes": 570,
-    "image": "placeholder.svg"
+    "image": "九尾妖狐.gif",
+    "maps": [
+      "月亮山坡"
+    ],
+    "color": "#ff69b4"
   },
   {
     "id": "boss-18",
@@ -141,7 +210,11 @@
     "respawn": "3小時~5小時",
     "minMinutes": 180,
     "maxMinutes": 300,
-    "image": "placeholder.svg"
+    "image": "海怒斯.gif",
+    "maps": [
+      "海怒斯洞穴"
+    ],
+    "color": "#1e90ff"
   },
   {
     "id": "boss-19",
@@ -149,7 +222,11 @@
     "respawn": "3小時~5小時",
     "minMinutes": 180,
     "maxMinutes": 300,
-    "image": "placeholder.svg"
+    "image": "海怒斯.gif",
+    "maps": [
+      "海怒斯洞穴"
+    ],
+    "color": "#1e90ff"
   },
   {
     "id": "boss-20",
@@ -157,7 +234,11 @@
     "respawn": "1小時8分~1小時30分",
     "minMinutes": 68,
     "maxMinutes": 90,
-    "image": "placeholder.svg"
+    "image": "仙人長老.gif",
+    "maps": [
+      "仙人掌沙漠2"
+    ],
+    "color": "#d2b48c"
   },
   {
     "id": "boss-21",
@@ -165,7 +246,11 @@
     "respawn": "2小時38分~2小時53分",
     "minMinutes": 158,
     "maxMinutes": 173,
-    "image": "placeholder.svg"
+    "image": "自動警備.gif",
+    "maps": [
+      "研究所C-3區"
+    ],
+    "color": "#708090"
   },
   {
     "id": "boss-22",
@@ -173,7 +258,11 @@
     "respawn": "2小時~2小時15分",
     "minMinutes": 120,
     "maxMinutes": 135,
-    "image": "placeholder.svg"
+    "image": "奇美拉.gif",
+    "maps": [
+      "祕密通道"
+    ],
+    "color": "#8b0000"
   },
   {
     "id": "boss-23",
@@ -181,7 +270,13 @@
     "respawn": "1小時53分~2小時15分",
     "minMinutes": 113,
     "maxMinutes": 135,
-    "image": "placeholder.svg"
+    "image": "紅藍雙怪.gif",
+    "maps": [
+      "研究所B-1區",
+      "研究所B-3區",
+      "研究所C-2區"
+    ],
+    "color": "#c71585"
   },
   {
     "id": "boss-24",
@@ -189,7 +284,11 @@
     "respawn": "2小時30分~2小時45分",
     "minMinutes": 150,
     "maxMinutes": 165,
-    "image": "placeholder.svg"
+    "image": "迪特和洛伊.gif",
+    "maps": [
+      "研究所202號房"
+    ],
+    "color": "#4682b4"
   },
   {
     "id": "boss-25",
@@ -197,7 +296,11 @@
     "respawn": "2小時38分~3小時",
     "minMinutes": 158,
     "maxMinutes": 180,
-    "image": "placeholder.svg"
+    "image": "仙人娃娃.gif",
+    "maps": [
+      "上級訓練場"
+    ],
+    "color": "#98fb98"
   },
   {
     "id": "boss-26",
@@ -205,7 +308,11 @@
     "respawn": "1小時53分~2小時8分",
     "minMinutes": 113,
     "maxMinutes": 128,
-    "image": "placeholder.svg"
+    "image": "肯德熊.gif",
+    "maps": [
+      "流浪熊的領土"
+    ],
+    "color": "#8b7355"
   },
   {
     "id": "boss-27",
@@ -213,7 +320,11 @@
     "respawn": "1小時~2小時15分",
     "minMinutes": 60,
     "maxMinutes": 135,
-    "image": "placeholder.svg"
+    "image": "巨大深山人蔘.gif",
+    "maps": [
+      "豐饒的藥草田"
+    ],
+    "color": "#ffd700"
   },
   {
     "id": "boss-28",
@@ -221,7 +332,11 @@
     "respawn": "2小時30分~2小時50分",
     "minMinutes": 150,
     "maxMinutes": 170,
-    "image": "placeholder.svg"
+    "image": "喵怪仙人.gif",
+    "maps": [
+      "喵怪仙人的領域"
+    ],
+    "color": "#ffb6c1"
   },
   {
     "id": "boss-29",
@@ -229,7 +344,11 @@
     "respawn": "45分~5小時15分",
     "minMinutes": 45,
     "maxMinutes": 315,
-    "image": "placeholder.svg"
+    "image": "placeholder.svg",
+    "maps": [
+      "未知地圖"
+    ],
+    "color": "#808080"
   },
   {
     "id": "boss-30",
@@ -237,7 +356,11 @@
     "respawn": "45分~5小時15分",
     "minMinutes": 45,
     "maxMinutes": 315,
-    "image": "placeholder.svg"
+    "image": "placeholder.svg",
+    "maps": [
+      "未知地圖"
+    ],
+    "color": "#808080"
   },
   {
     "id": "boss-31",
@@ -245,7 +368,11 @@
     "respawn": "45分~5小時15分",
     "minMinutes": 45,
     "maxMinutes": 315,
-    "image": "placeholder.svg"
+    "image": "placeholder.svg",
+    "maps": [
+      "未知地圖"
+    ],
+    "color": "#808080"
   },
   {
     "id": "boss-32",
@@ -253,7 +380,11 @@
     "respawn": "20分~1小時",
     "minMinutes": 20,
     "maxMinutes": 60,
-    "image": "placeholder.svg"
+    "image": "噴火龍.gif",
+    "maps": [
+      "噴火龍的森林"
+    ],
+    "color": "#ff4500"
   },
   {
     "id": "boss-33",
@@ -261,7 +392,11 @@
     "respawn": "4小時~12小時",
     "minMinutes": 240,
     "maxMinutes": 720,
-    "image": "placeholder.svg"
+    "image": "寒霜冰龍.gif",
+    "maps": [
+      "深山凶屋"
+    ],
+    "color": "#00ffff"
   },
   {
     "id": "boss-34",
@@ -269,7 +404,11 @@
     "respawn": "20分~1小時",
     "minMinutes": 20,
     "maxMinutes": 60,
-    "image": "placeholder.svg"
+    "image": "格瑞芬多.gif",
+    "maps": [
+      "格瑞芬多森林"
+    ],
+    "color": "#cd853f"
   },
   {
     "id": "boss-35",
@@ -277,7 +416,11 @@
     "respawn": "1小時53分~2小時8分",
     "minMinutes": 113,
     "maxMinutes": 128,
-    "image": "placeholder.svg"
+    "image": "竹刀武士.gif",
+    "maps": [
+      "暗夜松林"
+    ],
+    "color": "#7b8b3a"
   },
   {
     "id": "boss-36",
@@ -285,7 +428,11 @@
     "respawn": "16小時40分~31小時20分",
     "minMinutes": 1000,
     "maxMinutes": 1880,
-    "image": "placeholder.svg"
+    "image": "藍色蘑菇王.gif",
+    "maps": [
+      "天皇殿堂"
+    ],
+    "color": "#4169e1"
   },
   {
     "id": "boss-37",
@@ -293,7 +440,11 @@
     "respawn": "45分~2小時15分",
     "minMinutes": 45,
     "maxMinutes": 135,
-    "image": "placeholder.svg"
+    "image": "placeholder.svg",
+    "maps": [
+      "未知地圖"
+    ],
+    "color": "#808080"
   },
   {
     "id": "boss-38",
@@ -301,7 +452,12 @@
     "respawn": "13小時~17小時",
     "minMinutes": 780,
     "maxMinutes": 1020,
-    "image": "placeholder.svg"
+    "image": "黑輪王.gif",
+    "maps": [
+      "夜市徒步區7",
+      "夜市徒步區7-1"
+    ],
+    "color": "#000000"
   },
   {
     "id": "boss-39",
@@ -309,6 +465,10 @@
     "respawn": "2小時~7小時",
     "minMinutes": 120,
     "maxMinutes": 420,
-    "image": "placeholder.svg"
+    "image": "瘋狂喵z客.gif",
+    "maps": [
+      "名人大道西部區域"
+    ],
+    "color": "#ffa500"
   }
 ]

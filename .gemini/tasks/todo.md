@@ -1,23 +1,25 @@
-# Artale Boss Chaser UI/UX Phase 2 (Deep Glassmorphism & RWD) 計畫
+# Artale Boss Chaser - Data Update & UI/UX Analysis 計畫
 
 ## [階段一] 任務目標與範圍
-- 確認針對深色模式的玻璃擬態深度優化與 RWD 打磨方向。
+- 參考 `https://github.com/yru8cl421-hub/artale-Boss.git` 的專案資料。
+- 提取該專案的 Boss 數據，並將新的資訊更新至我們專案的資料結構中。
+- 針對我們的專案與參考專案，進行深度的 UI/UX 設計比對與分析。
+- 從使用者（玩家）的實際情境出發，評估並總結哪一種設計風格、視覺層級與交互邏輯更適合用於「獵殺紀錄 Boss」。
 
 ## [執行步驟] 詳細執行步驟
-1. 視覺氛圍與背景升級 (Background & Atmosphere)
-  - 加入動態漸層背景，使毛玻璃效果顯著。
-  - 實作自定義深色捲動軸。
-2. 深度 Glassmorphism 擴展 (Component Level)
-  - 為側邊欄 (.sidebar-card, .selected-boss-info) 套用 Backdrop blur。
-  - 表格標題區 (th) 的 Sticky 玻璃效果。
-  - 主要按鈕 (.btn-primary) 漸層與外發光效果。
-3. RWD 與細節打磨 (RWD Perfection)
-  - 確保平板/手機 (max-width: 900px) 的排版留白舒適度。
-  - 增強手機版表格的水平滾動提示。
-4. 功能迴歸測試 (Tests & CI/CD)
-  - 確認互動無損與跨解析度測試。
-  - Git 版控推播與收尾。
-5. Subagent 自動化跨瀏覽器功能測試 (Automated Verification)
-  - 啟動 local Python HTTP Server 服務。
-  - 透過 browser_subagent 驗證前端操作，包含所有的按鈕互動、表單填寫與畫面呈現。
-  - 收集 subagent 觀察結果。若有任何 JS Exception 或功能異常，自動修復直到各功能正常運作。
+1. 專案探索與資料擷取：
+  - 啟動 Subagent 或透過工具下載並探索 `yru8cl421-hub/artale-Boss` 原始碼。
+  - 解析該專案的 Boss 資料結構 (如 JSON config 或常數定義)。
+2. 資料比對與更新：
+  - 比對本專案 `docs/js` 內的現有 Boss 資料與參考專案的數據差異。
+  - 將缺少的 Boss 資訊（包含等級、重生區間、名稱、地圖等）無縫補齊至本系統。
+3. 啟動瀏覽器代理進行 UI/UX 截圖與體驗分析：
+  - 透過 Subagent 啟動本機伺服器，模擬預覽參考專案的 UI，與我們專案進行視覺及操作動線對比。
+  - 探討兩者在「追蹤多隻王」、「倒數計時視覺化」、「操作簡便度」上的優劣。
+4. 產出綜合分析報告：
+  - 基於觀測結果，撰寫並產出一份 Markdown 報告，詳細說明哪個設計對玩家比較實用。
+
+## [預期結果] 驗證標準
+- 本專案成功整合最新的 Boss 資料且應用程式運行正常（無 Schema 破壞）。
+- 完成一份具體、附帶理由的 UI/UX 分析報告。
+- 清楚回答使用者所關心的問題：「對於 user(Player)來說 哪個適合獵殺紀錄boss ?」
