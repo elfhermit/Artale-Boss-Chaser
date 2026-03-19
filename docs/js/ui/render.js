@@ -114,7 +114,7 @@
                 <div class="boss-card-progress" data-progress><div class="bar" style="width:0%"></div></div>
                 <div class="boss-card-channels" data-channels></div>
             </div>
-            <button class="quick-kill-btn" data-boss-id="${boss.id}" title="一鍵紀錄">Quick</button>
+            <button class="quick-kill-btn" data-boss-id="${boss.id}" title="一鍵紀錄" aria-label="一鍵紀錄">Quick</button>
         `;
         dom.bossListContainer.appendChild(card);
         updateBossCard(boss.id);
@@ -395,7 +395,7 @@
                 <td><div style="display:flex; gap:4px; justify-content:center;">${dropHtml}</div></td>
                 <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entry.notes || '-'}</td>
                 <td><span class="respawn-range">${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</span></td>
-                <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
+                <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除" aria-label="刪除此紀錄"><span class="material-icons-outlined" style="font-size:16px;" aria-hidden="true">delete</span></button></td>
             `;
             dom.historyTableBody.appendChild(tr);
         });
