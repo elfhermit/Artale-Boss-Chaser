@@ -395,7 +395,7 @@
                 <td><div style="display:flex; gap:4px; justify-content:center;">${dropHtml}</div></td>
                 <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entry.notes || '-'}</td>
                 <td><span class="respawn-range">${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</span></td>
-                <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
+                <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除" aria-label="刪除紀錄"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
             `;
             dom.historyTableBody.appendChild(tr);
         });
