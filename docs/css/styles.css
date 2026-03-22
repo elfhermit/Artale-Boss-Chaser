@@ -517,7 +517,8 @@ body.light-mode #kill-history-table th {
     width: 48px;
     height: 26px;
 }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+input:focus-visible + .slider { box-shadow: 0 0 0 2px var(--color-primary); }
 .slider {
     position: absolute;
     cursor: pointer;
@@ -733,7 +734,12 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 }
 
 .drop-chip input {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
 }
 
 .drop-chip .chip-content {
@@ -751,6 +757,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     white-space: nowrap;
 }
 
+.drop-chip input:focus-visible + .chip-content { box-shadow: 0 0 0 2px var(--color-primary); }
 .drop-chip input:checked + .chip-content {
     background: rgba(187, 134, 252, 0.2);
     border-color: var(--color-primary);
@@ -848,3 +855,15 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+
+/* Accessibility: Focus Visible Outlines */
+.btn:focus-visible,
+.btn-icon:focus-visible,
+.stepper-btn:focus-visible,
+.chip:focus-visible,
+.quick-chip:focus-visible,
+.smart-sort-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

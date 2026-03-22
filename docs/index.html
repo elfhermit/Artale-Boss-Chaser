@@ -26,21 +26,21 @@
                             <h2 id="target-boss-name">Boss Name</h2>
                             <p id="target-boss-respawn">Respawn info</p>
                         </div>
-                        <button id="unlock-boss-btn" class="btn-icon" title="取消鎖定">
+                        <button id="unlock-boss-btn" class="btn-icon" title="取消鎖定" aria-label="取消鎖定">
                             <span class="material-icons-outlined">close</span>
                         </button>
                     </div>
                     
                     <div class="focus-input-area">
                         <div class="form-group">
-                            <label class="input-label">目前頻道 (Focus Channel)</label>
+                            <label class="input-label" for="focus-channel-input">目前頻道 (Focus Channel)</label>
                             <div class="large-channel-input-wrapper">
                                 <input type="number" id="focus-channel-input" class="large-channel-input" 
                                        min="1" max="3000" placeholder="Ch." 
                                        inputmode="numeric" pattern="[0-9]*">
                                 <div class="input-actions">
-                                    <button type="button" class="btn-icon" id="focus-ch-sub"><span class="material-icons-outlined">remove</span></button>
-                                    <button type="button" class="btn-icon" id="focus-ch-add"><span class="material-icons-outlined">add</span></button>
+                                    <button type="button" class="btn-icon" id="focus-ch-sub" aria-label="減少頻道"><span class="material-icons-outlined">remove</span></button>
+                                    <button type="button" class="btn-icon" id="focus-ch-add" aria-label="增加頻道"><span class="material-icons-outlined">add</span></button>
                                 </div>
                             </div>
                         </div>
@@ -90,11 +90,11 @@
 
                 <form id="kill-form" class="kill-form">
                     <div class="form-group">
-                        <label>頻道 (Channel)</label>
+                        <label for="channel-input">頻道 (Channel)</label>
                         <div class="channel-stepper">
-                            <button type="button" class="stepper-btn" id="channel-sub">-</button>
+                            <button type="button" class="stepper-btn" id="channel-sub" aria-label="減少頻道">-</button>
                             <input type="number" id="channel-input" min="1" max="3000" value="1">
-                            <button type="button" class="stepper-btn" id="channel-add">+</button>
+                            <button type="button" class="stepper-btn" id="channel-add" aria-label="增加頻道">+</button>
                         </div>
                         <div class="quick-channels">
                             <span class="quick-chip" data-channel="1">1</span>
@@ -116,8 +116,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>備註 (Notes)</label>
-                        <input type="text" id="notes" placeholder="例如: 隊友A, 下次必出...">
+                        <label for="notes">備註 (Notes)</label>
+                        <input type="text" id="notes" class="form-input" placeholder="例如: 隊友A, 下次必出...">
                     </div>
 
                     <button type="submit" class="submit-btn btn-primary" id="submit-kill-btn" disabled>請先選擇 Boss</button>
@@ -132,8 +132,8 @@
                     </div>
 
                     <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
-                        <label style="font-size:0.9rem; color:var(--color-text-secondary);">批次輸入 (Batch)</label>
-                        <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
+                        <label for="batch-channels-input" style="font-size:0.9rem; color:var(--color-text-secondary);">批次輸入 (Batch)</label>
+                        <input type="text" id="batch-channels-input" class="form-input" placeholder="例如: 1, 3, 5-7"
                             style="margin-bottom:8px;">
                         <div style="display:flex; gap:8px;">
                             <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
@@ -151,14 +151,14 @@
                 <h1>Artale Boss Chaser <span class="badge">PRO</span></h1>
                 <div class="header-actions">
                     <div class="secondary-header-actions">
-                        <button class="feature-btn" id="view-mode-btn" title="切換檢視模式">
+                        <button class="feature-btn" id="view-mode-btn" title="切換檢視模式" aria-label="切換檢視模式">
                             <span class="material-icons-outlined" id="view-mode-icon">grid_view</span>
                         </button>
-                        <button class="feature-btn" id="sound-toggle-btn" title="切換音效提示">
+                        <button class="feature-btn" id="sound-toggle-btn" title="切換音效提示" aria-label="切換音效提示">
                             <span class="material-icons-outlined" id="sound-toggle-icon">volume_off</span>
                         </button>
                     </div>
-                    <button class="icon-btn" id="theme-toggle-btn" title="切換主題">
+                    <button class="icon-btn" id="theme-toggle-btn" title="切換主題" aria-label="切換主題">
                         <span class="material-icons-outlined" id="theme-icon">dark_mode</span>
                     </button>
                 </div>
