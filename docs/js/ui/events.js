@@ -9,10 +9,29 @@
 
         // 1. 點擊 Boss 卡片
         dom.bossListContainer.addEventListener('click', (e) => {
+            // 阻止 quick-ch-input 觸發卡片選取
+            if (e.target.classList.contains('quick-ch-input')) {
+                e.stopPropagation();
+                return;
+            }
+            // 最愛按鈕
+            const favBtn = e.target.closest('.fav-toggle-btn');
+            if (favBtn) {
+                e.stopPropagation();
+                actions.toggleFavorite(favBtn.dataset.bossId);
+                return;
+            }
+            // 快速紀錄按鈕（使用內嵌頻道輸入）
             const quickBtn = e.target.closest('.quick-kill-btn');
             if (quickBtn) {
+                e.stopPropagation();
                 const bid = quickBtn.dataset.bossId;
-                actions.recordKillQuick(bid, parseInt(dom.channelInput.value) || 1, { autoinc: true });
+                const panel = quickBtn.closest('[data-quick-panel]');
+                const chInput = panel ? panel.querySelector('.quick-ch-input') : null;
+                const ch = chInput ? (parseInt(chInput.value) || 1) : (parseInt(dom.channelInput.value) || 1);
+                actions.recordKillQuick(bid, ch, { autoinc: false });
+                // 自動遞增內嵌輸入
+                if (chInput) chInput.value = Math.min(3000, ch + 1);
                 return;
             }
             const card = e.target.closest('.boss-card');
@@ -151,6 +170,65 @@
             });
         }
 
+        // 最愛芯片點擊（事件委派）
+        if (dom.favChipsContainer) {
+            dom.favChipsContainer.addEventListener('click', (e) => {
+                const chip = e.target.closest('.fav-boss-chip');
+                if (chip) {
+                    actions.selectBoss(chip.dataset.bossId);
+                    if (window.innerWidth < 900) {
+                        dom.sidebar.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        }
+
+        // 下拉選單快選 Boss
+        if (dom.bossSelectorDropdown) {
+            dom.bossSelectorDropdown.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    actions.selectBoss(e.target.value);
+                    e.target.value = '';
+                }
+            });
+        }
+
+        // 分享按鈕
+        if (dom.shareStatusBtn) {
+            dom.shareStatusBtn.addEventListener('click', actions.openShareModal);
+        }
+
+        // 分享 Modal 事件
+        if (dom.shareModalClose) {
+            dom.shareModalClose.addEventListener('click', () => { dom.shareModal.style.display = 'none'; });
+        }
+        if (dom.shareCloseBtn2) {
+            dom.shareCloseBtn2.addEventListener('click', () => { dom.shareModal.style.display = 'none'; });
+        }
+        if (dom.shareCopyBtn) {
+            dom.shareCopyBtn.addEventListener('click', () => {
+                const text = dom.shareTextContent ? dom.shareTextContent.textContent : '';
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => actions.showToast('已複製到剪貼簿！', { timeout: 1500 }))
+                        .catch(() => actions.showToast('複製失敗，請手動選取', { timeout: 2000 }));
+                } else {
+                    const el = document.createElement('textarea');
+                    el.value = text;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    actions.showToast('已複製到剪貼簿！', { timeout: 1500 });
+                }
+            });
+        }
+        if (dom.shareModal) {
+            dom.shareModal.addEventListener('click', (e) => {
+                if (e.target === dom.shareModal) dom.shareModal.style.display = 'none';
+            });
+        }
+
         // Search Input focus and sync
         if (dom.searchInput) {
             dom.searchInput.addEventListener('input', (e) => {
@@ -226,6 +304,13 @@
         const actions = window.App.Logic.Actions;
         const active = document.activeElement;
         const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+
+        // Target Lock Mode Shortcuts (Non-typing)
+        if (!isTyping && state.focusedBossId) {
+            if (e.key === '1') { e.preventDefault(); dom.focusDropEquip.checked = !dom.focusDropEquip.checked; return; }
+            if (e.key === '2') { e.preventDefault(); dom.focusDropScroll.checked = !dom.focusDropScroll.checked; return; }
+            if (e.key === '3') { e.preventDefault(); dom.focusDropStar.checked = !dom.focusDropStar.checked; return; }
+        }
 
         if (!isTyping && /^[1-9]$/.test(e.key)) {
             actions.setChannel(parseInt(e.key));

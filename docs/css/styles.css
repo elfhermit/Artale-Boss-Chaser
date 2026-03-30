@@ -261,7 +261,17 @@ body.light-mode .sidebar {
 }
 
 .boss-card.status-alive::before { background-color: var(--color-success); }
-.boss-card.status-warning::before { background-color: var(--color-warning); }
+.boss-card.status-warning::before { 
+    background-color: var(--color-warning); 
+    animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; box-shadow: 0 0 10px var(--color-warning); }
+    100% { opacity: 1; }
+}
+
 .boss-card.status-cooldown::before { background-color: var(--color-danger); }
 
 .boss-card-header {
@@ -621,6 +631,11 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.4s;
+}
+
+.target-lock-panel.flash-success {
+    background-color: rgba(105, 240, 174, 0.3);
 }
 
 @keyframes slideDown {
@@ -848,3 +863,536 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+/* =============================================
+   Phase 1a — 最愛 Boss 芯片 & 下拉快選
+   ============================================= */
+
+.fav-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.fav-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.fav-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 36px;
+    align-items: center;
+}
+
+.fav-placeholder {
+    font-size: 0.8rem;
+    color: var(--color-text-disabled);
+    font-style: italic;
+}
+
+.fav-boss-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 8px;
+    background: rgba(187, 134, 252, 0.12);
+    border: 1px solid rgba(187, 134, 252, 0.35);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: var(--font-family);
+    color: var(--color-text-primary);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.fav-boss-chip:hover {
+    background: rgba(187, 134, 252, 0.25);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(187, 134, 252, 0.25);
+}
+
+.fav-chip-abbr {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(187, 134, 252, 0.2);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.fav-chip-name {
+    font-weight: 500;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.boss-selector-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23aaa'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 36px;
+    transition: border-color 0.2s;
+}
+
+.boss-selector-dropdown:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+}
+
+.boss-selector-dropdown option, 
+.boss-selector-dropdown optgroup {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+}
+
+/* 最愛切換按鈕（在 Boss 卡片上） */
+.fav-toggle-btn {
+    margin-left: auto;
+    padding: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-disabled);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.fav-toggle-btn:hover {
+    color: var(--color-warning);
+    background: rgba(253, 216, 53, 0.1);
+    transform: scale(1.2);
+}
+
+.fav-toggle-btn.is-fav {
+    color: var(--color-warning);
+}
+
+.fav-toggle-btn .material-icons-outlined {
+    font-size: 20px;
+}
+
+/* =============================================
+   Phase 1b — 側邊欄摺疊區塊
+   ============================================= */
+
+.sidebar-collapsible {
+    border: none;
+    background: transparent;
+}
+
+.sidebar-collapsible summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 4px 0;
+    user-select: none;
+    list-style: none;
+    transition: color 0.2s;
+}
+
+.sidebar-collapsible summary::-webkit-details-marker { display: none; }
+
+.sidebar-collapsible summary::before {
+    content: '▶';
+    font-size: 0.7rem;
+    color: var(--color-text-disabled);
+    transition: transform 0.2s;
+    display: inline-block;
+    margin-right: 2px;
+}
+
+.sidebar-collapsible[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.sidebar-collapsible summary:hover {
+    color: var(--color-primary);
+}
+
+.collapsible-content {
+    padding-top: 4px;
+}
+
+/* =============================================
+   Phase 1c — 分享 Modal
+   ============================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.share-text-pre {
+    font-family: var(--font-family-mono);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--color-text-primary);
+    margin: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    user-select: all;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* =============================================
+   Phase 2b — 卡片內嵌快速紀錄面板
+   ============================================= */
+
+.card-quick-panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+.quick-ch-input {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    font-family: var(--font-family-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+    min-width: 0;
+}
+
+.quick-ch-input::-webkit-outer-spin-button,
+.quick-ch-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.quick-ch-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+}
+
+.quick-kill-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, var(--color-primary), #9c27b0);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: var(--font-family);
+    font-weight: 700;
+    gap: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-height: 38px;
+    min-width: 44px;
+}
+
+.quick-kill-btn:hover {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(187, 134, 252, 0.4);
+}
+
+.quick-kill-btn:active {
+    transform: scale(0.97);
+}
+
+.quick-kill-btn .material-icons-outlined {
+    font-size: 18px;
+}
+
+/* =============================================
+   Phase 2a — 歷史表格行動端緊湊化
+   ============================================= */
+
+/* 行動端：卡片式紀錄（代替橫向捲動表格） */
+@media (max-width: 700px) {
+    .table-container { overflow-x: unset; background: transparent; border: none; }
+    #kill-history-table { display: block; min-width: unset; }
+    #kill-history-table thead { display: none; }
+    #kill-history-table tbody { display: flex; flex-direction: column; gap: 10px; }
+    #kill-history-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 4px 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        cursor: pointer;
+        border-left: 4px solid var(--color-border);
+        transition: background-color 0.2s;
+    }
+    #kill-history-table tbody tr:hover { background: var(--color-surface-hover); }
+
+    /* 欄位重新排列 */
+    #kill-history-table tbody td { padding: 0; border: none; }
+
+    /* Boss 名稱（col 1, row 1） */
+    #kill-history-table tbody td:nth-child(1) {
+        grid-column: 1; grid-row: 1;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    /* 擊殺時間（col 2, row 1） */
+    #kill-history-table tbody td:nth-child(2) {
+        grid-column: 2; grid-row: 1;
+        text-align: right;
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+    }
+    /* 頻道 + 掉寶 + 備註 合一行（col 1, row 2） */
+    #kill-history-table tbody td:nth-child(3) {
+        grid-column: 1; grid-row: 2;
+        font-size: 0.88rem;
+    }
+    #kill-history-table tbody td:nth-child(4) {
+        grid-column: 1; grid-row: 2;
+        display: inline;
+    }
+    #kill-history-table tbody td:nth-child(5) {
+        display: none;
+    }
+    /* 預計重生（col 2, row 2） */
+    #kill-history-table tbody td:nth-child(6) {
+        grid-column: 2; grid-row: 2;
+        text-align: right;
+        font-size: 0.82rem;
+        color: var(--color-warning);
+        white-space: nowrap;
+    }
+    /* 操作按鈕（右下） */
+    #kill-history-table tbody td:nth-child(7) {
+        grid-column: 2; grid-row: 1;
+        text-align: right;
+    }
+    /* Boss+時間 放在同一行 */
+    #kill-history-table tbody tr {
+        grid-template-columns: 1fr auto auto;
+    }
+}
+
+/* =============================================
+   Phase 2c — 篩選動畫與觸控優化
+   ============================================= */
+
+/* Boss 卡片出現動畫 */
+.boss-card {
+    animation: cardAppear 0.25s ease both;
+}
+
+@keyframes cardAppear {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 觸控友善化：增大最小點擊面積 */
+.stepper-btn {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.focus-ch-sub, .focus-ch-add,
+#focus-ch-sub, #focus-ch-add {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* 進度條顏色 */
+.boss-card-progress {
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.boss-card-progress .bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    border-radius: 2px;
+    transition: width 1s linear;
+}
+
+/* 相鄰 Boss 卡片動畫延遲（視覺豐富感） */
+.boss-card:nth-child(1) { animation-delay: 0.02s; }
+.boss-card:nth-child(2) { animation-delay: 0.04s; }
+.boss-card:nth-child(3) { animation-delay: 0.06s; }
+.boss-card:nth-child(4) { animation-delay: 0.08s; }
+.boss-card:nth-child(5) { animation-delay: 0.10s; }
+
+/* Toast 樣式補充 */
+.toast {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    animation: slideUp 0.3s ease;
+    margin-top: 8px;
+    min-width: 220px;
+    max-width: 400px;
+}
+
+.toast-msg {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.toast-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.toast-actions button {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: var(--font-family);
+    transition: all 0.2s;
+}
+
+.toast-actions button:hover {
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    border-color: var(--color-primary);
+}
+
+/* 行動版額外優化 */
+@media (max-width: 900px) {
+    .fav-boss-chip { font-size: 0.8rem; padding: 6px 10px 6px 7px; }
+    .card-quick-panel { padding-top: 8px; margin-top: 8px; }
+    .quick-ch-input { font-size: 0.95rem; padding: 10px; }
+    .quick-kill-btn { padding: 10px 14px; min-height: 44px; }
+    .modal-panel { padding: 16px; max-height: 90vh; }
+    .share-text-pre { font-size: 0.78rem; }
+}

@@ -8,7 +8,7 @@
         // App Parts
         const { initDOM } = window.App.UI.DOM;
         const { loadHistory, loadPresets, loadLastChannel, loadTheme } = window.App.Core.State;
-        const { renderBossCards, renderHistoryTable, updateAllTimers, renderPresets } = window.App.UI.Render;
+        const { renderBossCards, renderHistoryTable, updateAllTimers, renderPresets, renderFavoriteChips, updateFilterCounts } = window.App.UI.Render;
         const { setupEventListeners } = window.App.UI.Events;
         const { setChannel } = window.App.Logic.Actions;
 
@@ -22,6 +22,8 @@
         renderBossCards();
         renderHistoryTable();
         renderPresets();
+        renderFavoriteChips();
+        updateFilterCounts();
 
         setupEventListeners();
         startTimerLoop();

@@ -59,7 +59,25 @@
         viewIcon: null,
         soundToggleBtn: null,
         soundIcon: null,
-        smartSortBtn: null
+        smartSortBtn: null,
+
+        // 最愛 & 快選
+        favChipsContainer: null,
+        bossSelectorDropdown: null,
+
+        // 分享 Modal
+        shareStatusBtn: null,
+        shareModal: null,
+        shareTextContent: null,
+        shareCopyBtn: null,
+        shareModalClose: null,
+        shareCloseBtn2: null,
+
+        // 篩選計數
+        filterChipAll: null,
+        filterChipAlive: null,
+        filterChipWarning: null,
+        filterChipCooldown: null
     };
 
     function initDOM() {
@@ -120,6 +138,24 @@
         dom.soundToggleBtn = document.getElementById('sound-toggle-btn');
         dom.soundIcon = document.getElementById('sound-toggle-icon');
         dom.smartSortBtn = document.getElementById('smart-sort-btn');
+
+        // 最愛 & 快選
+        dom.favChipsContainer = document.getElementById('fav-chips-container');
+        dom.bossSelectorDropdown = document.getElementById('boss-selector-dropdown');
+
+        // 分享 Modal
+        dom.shareStatusBtn = document.getElementById('share-status-btn');
+        dom.shareModal = document.getElementById('share-modal');
+        dom.shareTextContent = document.getElementById('share-text-content');
+        dom.shareCopyBtn = document.getElementById('share-copy-btn');
+        dom.shareModalClose = document.getElementById('share-modal-close');
+        dom.shareCloseBtn2 = document.getElementById('share-close-btn2');
+
+        // 篩選計數
+        dom.filterChipAll = document.querySelector('.filter-chips .chip[data-filter="all"]');
+        dom.filterChipAlive = document.querySelector('.filter-chips .chip[data-filter="alive"]');
+        dom.filterChipWarning = document.querySelector('.filter-chips .chip[data-filter="warning"]');
+        dom.filterChipCooldown = document.querySelector('.filter-chips .chip[data-filter="cooldown"]');
     }
 
     // Export

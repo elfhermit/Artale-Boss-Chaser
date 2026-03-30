@@ -29,5 +29,10 @@ yarn-error.log*
 *.swp
 *.swo
 
+# IDEs
+.agent/
+.gemini/
+.github/
+
 # OS
 Thumbs.db

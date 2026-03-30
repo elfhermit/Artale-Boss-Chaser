@@ -18,6 +18,20 @@
                 <h2>紀錄擊殺</h2>
             </div>
             <div class="sidebar-content">
+                <!-- 最愛 & 快選區 -->
+                <div id="fav-section" class="fav-section">
+                    <div class="fav-section-header">
+                        <span class="material-icons-outlined" style="font-size:15px; color:var(--color-warning)">star</span>
+                        <span>常用 Boss</span>
+                    </div>
+                    <div id="fav-chips-container" class="fav-chips-container">
+                        <span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>
+                    </div>
+                    <select id="boss-selector-dropdown" class="boss-selector-dropdown">
+                        <option value="">🔍 快速選擇 Boss...</option>
+                    </select>
+                </div>
+
                 <!-- Target Lock Mode Panel (New) -->
                 <div id="target-lock-panel" class="target-lock-panel" style="display: none;">
                     <div class="target-boss-header">
@@ -123,23 +137,37 @@
                     <button type="submit" class="submit-btn btn-primary" id="submit-kill-btn" disabled>請先選擇 Boss</button>
 
                     <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
-                        <label style="font-size:0.9rem; color:var(--color-text-secondary);">快速範本 (Presets)</label>
-                        <div style="display:flex; gap:8px; margin-bottom:8px;">
-                            <button type="button" class="btn btn-secondary btn-small"
-                                id="save-preset-btn">儲存當前設定</button>
-                        </div>
-                        <div id="presets-list" class="presets-list"></div>
+                        <details class="sidebar-collapsible" id="presets-details">
+                            <summary>
+                                <span class="material-icons-outlined" style="font-size:16px">bookmark</span>
+                                快速範本 (Presets)
+                            </summary>
+                            <div class="collapsible-content">
+                                <div style="display:flex; gap:8px; margin-bottom:8px; margin-top:8px;">
+                                    <button type="button" class="btn btn-secondary btn-small"
+                                        id="save-preset-btn">儲存當前設定</button>
+                                </div>
+                                <div id="presets-list" class="presets-list"></div>
+                            </div>
+                        </details>
                     </div>
 
-                    <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
-                        <label style="font-size:0.9rem; color:var(--color-text-secondary);">批次輸入 (Batch)</label>
-                        <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
-                            style="margin-bottom:8px;">
-                        <div style="display:flex; gap:8px;">
-                            <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
-                            <button type="button" class="btn btn-secondary btn-small"
-                                id="save-batch-preset-btn">存為批次範本</button>
-                        </div>
+                    <div style="margin-top: 8px; border-top: 1px solid var(--color-border); padding-top:12px;">
+                        <details class="sidebar-collapsible" id="batch-details">
+                            <summary>
+                                <span class="material-icons-outlined" style="font-size:16px">playlist_add</span>
+                                批次輸入 (Batch)
+                            </summary>
+                            <div class="collapsible-content" style="margin-top:8px;">
+                                <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
+                                    style="margin-bottom:8px;" class="form-input">
+                                <div style="display:flex; gap:8px;">
+                                    <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
+                                    <button type="button" class="btn btn-secondary btn-small"
+                                        id="save-batch-preset-btn">存為批次範本</button>
+                                </div>
+                            </div>
+                        </details>
                     </div>
                 </form>
             </div>
@@ -190,7 +218,12 @@
             <section class="history-section" id="kill-history-section">
                 <div class="section-header">
                     <h2 id="history-table-title">各頻道狀態紀錄</h2>
-                    <button class="btn btn-danger btn-small" id="clear-history-btn">清空所有紀錄</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary btn-small" id="share-status-btn">
+                            <span class="material-icons-outlined" style="font-size:15px">share</span> 分享狀態
+                        </button>
+                        <button class="btn btn-danger btn-small" id="clear-history-btn">清空所有紀錄</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="kill-history-table">
@@ -218,6 +251,27 @@
 
     <!-- Toast container for non-blocking messages / undo -->
     <div id="toast-container" aria-live="polite" style="position:fixed; right:16px; bottom:16px; z-index:1000;"></div>
+
+    <!-- 分享 Modal -->
+    <div id="share-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3><span class="material-icons-outlined" style="vertical-align:middle; margin-right:6px;">share</span>快速分享 Boss 狀態</h3>
+                <button id="share-modal-close" class="btn-icon" title="關閉">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="share-text-content" class="share-text-pre"></pre>
+            </div>
+            <div class="modal-actions">
+                <button id="share-copy-btn" class="btn btn-primary">
+                    <span class="material-icons-outlined" style="font-size:16px">content_copy</span> 複製到剪貼簿
+                </button>
+                <button id="share-close-btn2" class="btn btn-secondary">關閉</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 引入 JavaScript (Sequential Loading for file:// compatibility) -->
     <script src="js/namespace.js"></script>

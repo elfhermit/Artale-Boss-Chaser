@@ -94,10 +94,17 @@
 
     function createBossCard(boss, isRecent) {
         const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
         const card = document.createElement('div');
         card.className = 'boss-card';
         if (isRecent) card.classList.add('is-recent');
         card.dataset.bossId = boss.id;
+
+        const isFav = state.favorites.includes(boss.id);
+        // Get last used channel for this boss from history
+        const bossRecords = state.killHistory.filter(k => k.bossId === boss.id)
+            .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
+        const lastCh = bossRecords.length > 0 ? bossRecords[0].channel : 1;
 
         card.innerHTML = `
             <div class="boss-card-header">
@@ -106,6 +113,9 @@
                     <h3>${boss.name}</h3>
                     <p>${boss.respawn}</p>
                 </div>
+                <button class="fav-toggle-btn${isFav ? ' is-fav' : ''}" data-boss-id="${boss.id}" title="${isFav ? '移除常用' : '加入常用'}">
+                    <span class="material-icons-outlined">${isFav ? 'star' : 'star_border'}</span>
+                </button>
             </div>
             <div class="boss-card-timer-block">
                 <span class="boss-card-status-text" data-status="text">偵測中...</span>
@@ -114,7 +124,12 @@
                 <div class="boss-card-progress" data-progress><div class="bar" style="width:0%"></div></div>
                 <div class="boss-card-channels" data-channels></div>
             </div>
-            <button class="quick-kill-btn" data-boss-id="${boss.id}" title="一鍵紀錄">Quick</button>
+            <div class="card-quick-panel" data-quick-panel>
+                <input type="number" class="quick-ch-input" min="1" max="3000" placeholder="Ch." value="${lastCh}" data-boss-id="${boss.id}" title="輸入頻道">
+                <button class="quick-kill-btn" data-boss-id="${boss.id}" title="快速紀錄此頻道">
+                    <span class="material-icons-outlined">bolt</span>
+                </button>
+            </div>
         `;
         dom.bossListContainer.appendChild(card);
         updateBossCard(boss.id);
@@ -472,20 +487,19 @@
                     if (ts.secondsToMin < minSeconds) minSeconds = ts.secondsToMin;
                 });
 
-                // Alert if entering warning zone (e.g. 120s to 121s was boundary, now < 120)
-                // or just < 2 mins (120s) and not yet alerted.
                 if (minSeconds < 120 && minSeconds > 0) {
                     if (!state.alertedBosses.has(boss.id)) {
                         playNotificationSound();
                         state.alertedBosses.add(boss.id);
                     }
                 } else if (minSeconds > 120) {
-                    // Reset alert if time > 2 mins (e.g. wrong entry deleted or just initialized)
                     state.alertedBosses.delete(boss.id);
                 }
             }
         });
 
+        // 更新篩選計數
+        updateFilterCounts();
     }
 
     function renderPresets() {
@@ -505,7 +519,101 @@
         });
     }
 
+    // =============================================
+    // 最愛芯片 & 下拉選單渲染
+    // =============================================
+    function renderFavoriteChips() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+
+        if (!dom.favChipsContainer) return;
+        dom.favChipsContainer.innerHTML = '';
+
+        if (state.favorites.length === 0) {
+            dom.favChipsContainer.innerHTML = '<span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>';
+        } else {
+            state.favorites.forEach(bossId => {
+                const boss = getBossById(bossId);
+                if (!boss) return;
+                const chip = document.createElement('button');
+                chip.className = 'fav-boss-chip';
+                chip.dataset.bossId = bossId;
+                chip.title = `${boss.name}（${boss.respawn}）`;
+                chip.innerHTML = `<span class="fav-chip-abbr">${boss.name.substring(0, 2)}</span><span class="fav-chip-name">${boss.name}</span>`;
+                dom.favChipsContainer.appendChild(chip);
+            });
+        }
+
+        renderBossSelectorDropdown();
+    }
+
+    function renderBossSelectorDropdown() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        const BOSSES_JSON = window.App.Data.Bosses;
+
+        if (!dom.bossSelectorDropdown) return;
+        dom.bossSelectorDropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
+
+        const favBosses = state.favorites.map(id => getBossById(id)).filter(Boolean);
+        const allBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+
+        if (favBosses.length > 0) {
+            const favGroup = document.createElement('optgroup');
+            favGroup.label = '⭐ 常用 Boss';
+            favBosses.forEach(boss => {
+                const opt = document.createElement('option');
+                opt.value = boss.id;
+                opt.textContent = boss.name;
+                favGroup.appendChild(opt);
+            });
+            dom.bossSelectorDropdown.appendChild(favGroup);
+        }
+
+        const allGroup = document.createElement('optgroup');
+        allGroup.label = '── 全部 Boss ──';
+        allBosses.forEach(boss => {
+            const opt = document.createElement('option');
+            opt.value = boss.id;
+            opt.textContent = `${boss.name}（${boss.respawn}）`;
+            allGroup.appendChild(opt);
+        });
+        dom.bossSelectorDropdown.appendChild(allGroup);
+    }
+
+    // =============================================
+    // 更新篩選計數標籤
+    // =============================================
+    function updateFilterCounts() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        const BOSSES_JSON = window.App.Data.Bosses;
+        const { calculateTimerState } = window.App.Core.Utils;
+
+        let alive = 0, warning = 0, cooldown = 0;
+        BOSSES_JSON.forEach(boss => {
+            const records = state.killHistory.filter(k => k.bossId === boss.id);
+            if (records.length === 0) { alive++; return; }
+            let bestStatus = 'cooldown';
+            records.forEach(r => {
+                const ts = calculateTimerState(boss, r.killTime);
+                if (ts.status === 'alive') bestStatus = 'alive';
+                else if (ts.status === 'warning' && bestStatus === 'cooldown') bestStatus = 'warning';
+            });
+            if (bestStatus === 'alive') alive++;
+            else if (bestStatus === 'warning') warning++;
+            else cooldown++;
+        });
+
+        const total = BOSSES_JSON.length;
+        if (dom.filterChipAll) dom.filterChipAll.textContent = `全部 (${total})`;
+        if (dom.filterChipAlive) dom.filterChipAlive.textContent = `🟢 可擊殺 (${alive})`;
+        if (dom.filterChipWarning) dom.filterChipWarning.textContent = `🟡 即將重生 (${warning})`;
+        if (dom.filterChipCooldown) dom.filterChipCooldown.textContent = `🔴 冷卻中 (${cooldown})`;
+    }
+
     window.App.UI.Render = {
-        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, renderPresets
+        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, renderPresets,
+        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts
     };
 })();

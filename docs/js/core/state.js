@@ -17,7 +17,8 @@
         soundEnabled: false,
         alertedBosses: new Set(), // Set<bossId> to track played sounds for current cycle
         recentBossIds: JSON.parse(localStorage.getItem('recentBossIds') || '[]'),
-        smartSortActive: localStorage.getItem('smartSortActive') === 'true'
+        smartSortActive: localStorage.getItem('smartSortActive') === 'true',
+        favorites: JSON.parse(localStorage.getItem('abt_favorites_v1') || '[]')
     };
 
     function loadHistory() {
@@ -38,6 +39,10 @@
     function saveSmartSort(active) {
         state.smartSortActive = active;
         localStorage.setItem('smartSortActive', String(active));
+    }
+
+    function saveFavorites() {
+        localStorage.setItem('abt_favorites_v1', JSON.stringify(state.favorites));
     }
 
     function loadPresets() {
@@ -98,6 +103,7 @@
         loadTheme, saveTheme,
         saveViewMode, saveSoundEnabled,
         loadLastChannel, saveLastChannel,
-        updateRecentBoss, saveSmartSort
+        saveFavorites, updateRecentBoss,
+        saveSmartSort
     };
 })();
