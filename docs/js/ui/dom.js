@@ -50,6 +50,12 @@
         focusDropScroll: null,
         focusDropStar: null,
 
+        // Stats
+        statKills: null,
+        statEquip: null,
+        statScroll: null,
+        statStar: null,
+
         // Batch
         batchInput: null,
         batchBtn: null,
@@ -128,6 +134,11 @@
         dom.focusDropEquip = document.getElementById('focus-drop-equip');
         dom.focusDropScroll = document.getElementById('focus-drop-scroll');
         dom.focusDropStar = document.getElementById('focus-drop-star');
+
+        dom.statKills = document.getElementById('stat-kills');
+        dom.statEquip = document.getElementById('stat-equip');
+        dom.statScroll = document.getElementById('stat-scroll');
+        dom.statStar = document.getElementById('stat-star');
 
         dom.batchInput = document.getElementById('batch-channels-input');
         dom.batchBtn = document.getElementById('apply-batch-btn');

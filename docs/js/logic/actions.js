@@ -77,7 +77,17 @@
         if (dom.focusDropStar) dom.focusDropStar.checked = false;
         if (dom.notesInput) dom.notesInput.value = '';
 
-        showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400 });
+        // UX Feedback: Make input area flash slightly to show submission success
+        if (state.focusedBossId === bossId && dom.focusChannelInput) {
+            const inputGroup = dom.focusChannelInput.parentElement;
+            inputGroup.style.transition = 'background-color 0.3s';
+            inputGroup.style.backgroundColor = 'rgba(25, 135, 84, 0.3)'; // Success green tint
+            setTimeout(() => {
+                inputGroup.style.backgroundColor = '';
+            }, 300);
+        }
+
+        showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400, type: 'success' });
         
         // Feedback animation on the history table row if it exists
         setTimeout(() => {
