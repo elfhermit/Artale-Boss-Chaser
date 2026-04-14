@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boss 獵人儀表板 (Pro)</title>
+    <meta name="description" content="Artale Boss Chaser - 追蹤 Boss 重生時間的最佳工具">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -12,7 +13,7 @@
 <body class="dark-mode">
     <div class="app-container">
 
-        <!-- Sidebar / Mobile Drawer -->
+        <!-- Sidebar (Desktop Only) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>紀錄擊殺</h2>
@@ -32,7 +33,7 @@
                     </select>
                 </div>
 
-                <!-- Target Lock Mode Panel (New) -->
+                <!-- Target Lock Mode Panel -->
                 <div id="target-lock-panel" class="target-lock-panel" style="display: none;">
                     <div class="target-boss-header">
                         <div id="target-boss-img" class="boss-card-img"></div>
@@ -98,8 +99,9 @@
                     </div>
                 </div>
 
+                <!-- Old form (hidden when Target Lock is active) -->
                 <div id="selected-boss-info" class="selected-boss-info">
-                    <span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或點擊下方列表列</span>
+                    <span id="boss-placeholder">請從左側點擊 Boss 卡片<br>或使用上方下拉選單</span>
                 </div>
 
                 <form id="kill-form" class="kill-form">
@@ -136,38 +138,41 @@
 
                     <button type="submit" class="submit-btn btn-primary" id="submit-kill-btn" disabled>請先選擇 Boss</button>
 
-                    <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
-                        <details class="sidebar-collapsible" id="presets-details">
-                            <summary>
-                                <span class="material-icons-outlined" style="font-size:16px">bookmark</span>
-                                快速範本 (Presets)
-                            </summary>
-                            <div class="collapsible-content">
-                                <div style="display:flex; gap:8px; margin-bottom:8px; margin-top:8px;">
-                                    <button type="button" class="btn btn-secondary btn-small"
-                                        id="save-preset-btn">儲存當前設定</button>
+                    <!-- Desktop-only: Presets -->
+                    <div class="desktop-only-tools">
+                        <div style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top:12px;">
+                            <details class="sidebar-collapsible" id="presets-details">
+                                <summary>
+                                    <span class="material-icons-outlined" style="font-size:16px">bookmark</span>
+                                    快速範本 (Presets)
+                                </summary>
+                                <div class="collapsible-content">
+                                    <div style="display:flex; gap:8px; margin-bottom:8px; margin-top:8px;">
+                                        <button type="button" class="btn btn-secondary btn-small"
+                                            id="save-preset-btn">儲存當前設定</button>
+                                    </div>
+                                    <div id="presets-list" class="presets-list"></div>
                                 </div>
-                                <div id="presets-list" class="presets-list"></div>
-                            </div>
-                        </details>
-                    </div>
+                            </details>
+                        </div>
 
-                    <div style="margin-top: 8px; border-top: 1px solid var(--color-border); padding-top:12px;">
-                        <details class="sidebar-collapsible" id="batch-details">
-                            <summary>
-                                <span class="material-icons-outlined" style="font-size:16px">playlist_add</span>
-                                批次輸入 (Batch)
-                            </summary>
-                            <div class="collapsible-content" style="margin-top:8px;">
-                                <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
-                                    style="margin-bottom:8px;" class="form-input">
-                                <div style="display:flex; gap:8px;">
-                                    <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
-                                    <button type="button" class="btn btn-secondary btn-small"
-                                        id="save-batch-preset-btn">存為批次範本</button>
+                        <div style="margin-top: 8px; border-top: 1px solid var(--color-border); padding-top:12px;">
+                            <details class="sidebar-collapsible" id="batch-details">
+                                <summary>
+                                    <span class="material-icons-outlined" style="font-size:16px">playlist_add</span>
+                                    批次輸入 (Batch)
+                                </summary>
+                                <div class="collapsible-content" style="margin-top:8px;">
+                                    <input type="text" id="batch-channels-input" placeholder="例如: 1, 3, 5-7"
+                                        style="margin-bottom:8px;" class="form-input">
+                                    <div style="display:flex; gap:8px;">
+                                        <button type="button" class="btn btn-secondary btn-small" id="apply-batch-btn">批次新增</button>
+                                        <button type="button" class="btn btn-secondary btn-small"
+                                            id="save-batch-preset-btn">存為批次範本</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </details>
+                            </details>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -192,65 +197,185 @@
                 </div>
             </header>
 
-            <!-- Search & Filter -->
-            <div class="filter-bar">
-                <div class="search-box">
-                    <span class="material-icons-outlined">search</span>
-                    <input type="text" id="boss-search-input" placeholder="搜尋 Boss (例如: 蘑菇王, 紅寶王)...">
+            <!-- ===== Tab Panel: Boss 列表 ===== -->
+            <div class="tab-panel active" id="panel-bosses" data-panel="bosses">
+                <!-- Search & Filter -->
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <span class="material-icons-outlined">search</span>
+                        <input type="text" id="boss-search-input" placeholder="搜尋 Boss (例如: 蘑菇王, 紅寶王)...">
+                    </div>
+                    <div class="filter-chips">
+                        <div class="chip active" data-filter="all">全部</div>
+                        <div class="chip" data-filter="alive">🟢 可擊殺</div>
+                        <div class="chip" data-filter="warning">🟡 即將重生</div>
+                        <div class="chip" data-filter="cooldown">🔴 冷卻中</div>
+                        <div class="smart-sort-btn" id="smart-sort-btn" title="優先顯示即將重生的 Boss">
+                            <span class="material-icons-outlined" style="font-size:16px">sort</span> 智慧排序
+                        </div>
+                    </div>
                 </div>
-                <div class="filter-chips">
-                    <div class="chip active" data-filter="all">全部</div>
-                    <div class="chip" data-filter="alive">🟢 可擊殺</div>
-                    <div class="chip" data-filter="warning">🟡 即將重生</div>
-                    <div class="chip" data-filter="cooldown">🔴 冷卻中</div>
-                    <div class="smart-sort-btn" id="smart-sort-btn" title="優先顯示即將重生的 Boss">
-                        <span class="material-icons-outlined" style="font-size:16px">sort</span> 智慧排序
+
+                <!-- Boss Monitoring List -->
+                <section class="boss-list" id="boss-monitoring-list">
+                    <!-- Boss Cards will be injected here via JS -->
+                </section>
+            </div>
+
+            <!-- ===== Tab Panel: 紀錄擊殺 (Mobile) ===== -->
+            <div class="tab-panel" id="panel-record" data-panel="record">
+                <div class="mobile-record-panel">
+                    <!-- 常用 Boss 快選 -->
+                    <div class="mobile-fav-section">
+                        <div class="fav-section-header">
+                            <span class="material-icons-outlined" style="font-size:15px; color:var(--color-warning)">star</span>
+                            <span>常用 Boss</span>
+                        </div>
+                        <div id="mobile-fav-chips" class="fav-chips-container">
+                            <span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>
+                        </div>
+                    </div>
+
+                    <!-- Boss 下拉選單 (突出) -->
+                    <div class="mobile-boss-select">
+                        <label class="input-label">
+                            <span class="material-icons-outlined" style="font-size:18px; vertical-align:middle;">pets</span>
+                            選擇 Boss
+                        </label>
+                        <select id="mobile-boss-dropdown" class="boss-selector-dropdown boss-selector-large">
+                            <option value="">🔍 點此選擇 Boss...</option>
+                        </select>
+                    </div>
+
+                    <!-- Target Lock (Mobile version) -->
+                    <div id="mobile-target-lock" class="target-lock-panel mobile-target-lock" style="display: none;">
+                        <div class="target-boss-header">
+                            <div id="mobile-target-img" class="boss-card-img"></div>
+                            <div class="target-boss-info">
+                                <h2 id="mobile-target-name">Boss Name</h2>
+                                <p id="mobile-target-respawn">Respawn info</p>
+                            </div>
+                            <button id="mobile-unlock-btn" class="btn-icon" title="取消鎖定">
+                                <span class="material-icons-outlined">close</span>
+                            </button>
+                        </div>
+                        
+                        <div class="focus-input-area">
+                            <div class="form-group">
+                                <label class="input-label">頻道</label>
+                                <div class="large-channel-input-wrapper">
+                                    <input type="number" id="mobile-channel-input" class="large-channel-input" 
+                                           min="1" max="3000" placeholder="Ch." 
+                                           inputmode="numeric" pattern="[0-9]*">
+                                    <div class="input-actions">
+                                        <button type="button" class="btn-icon" id="mobile-ch-sub"><span class="material-icons-outlined">remove</span></button>
+                                        <button type="button" class="btn-icon" id="mobile-ch-add"><span class="material-icons-outlined">add</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="focus-actions">
+                                <div class="drop-type-selector">
+                                    <label class="drop-chip" title="掉落裝備">
+                                        <input type="checkbox" id="mobile-drop-equip">
+                                        <span class="chip-content"><span class="material-icons-outlined">shield</span> 裝備</span>
+                                    </label>
+                                    <label class="drop-chip" title="掉落卷軸">
+                                        <input type="checkbox" id="mobile-drop-scroll">
+                                        <span class="chip-content"><span class="material-icons-outlined">description</span> 卷軸</span>
+                                    </label>
+                                    <label class="drop-chip star-chip" title="大寶物/幸運頻道">
+                                        <input type="checkbox" id="mobile-drop-star">
+                                        <span class="chip-content"><span class="material-icons-outlined">stars</span> 星星</span>
+                                    </label>
+                                </div>
+                                <button type="button" id="mobile-submit-btn" class="btn btn-primary btn-large">
+                                    <span class="material-icons-outlined">bolt</span> 立即紀錄擊殺
+                                </button>
+                            </div>
+
+                            <div class="auto-inc-toggle">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="mobile-auto-inc" checked>
+                                    <span class="slider"></span>
+                                </label>
+                                <span>紀錄後自動 +1 頻道</span>
+                            </div>
+                        </div>
+                        
+                        <div class="target-history-section">
+                            <div class="channel-grid-header">
+                                <span>此 Boss 的最近紀錄</span>
+                            </div>
+                            <div id="mobile-target-history" class="target-history-list">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 尚未選擇 Boss 時的提示 -->
+                    <div id="mobile-no-boss-hint" class="mobile-no-boss-hint">
+                        <span class="material-icons-outlined" style="font-size:48px; color:var(--color-text-disabled);">gps_fixed</span>
+                        <p>請先從上方選擇一隻 Boss<br>或前往 Boss 列表點擊卡片</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Boss Monitoring List -->
-            <section class="boss-list" id="boss-monitoring-list">
-                <!-- Boss Cards will be injected here via JS -->
-            </section>
-
-            <!-- Kill History Table -->
-            <section class="history-section" id="kill-history-section">
-                <div class="section-header">
-                    <h2 id="history-table-title">各頻道狀態紀錄</h2>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button class="btn btn-secondary btn-small" id="share-status-btn">
-                            <span class="material-icons-outlined" style="font-size:15px">share</span> 分享狀態
-                        </button>
-                        <button class="btn btn-danger btn-small" id="clear-history-btn">清空所有紀錄</button>
+            <!-- ===== Tab Panel: 歷史紀錄 ===== -->
+            <div class="tab-panel" id="panel-history" data-panel="history">
+                <!-- Kill History Table -->
+                <section class="history-section" id="kill-history-section">
+                    <div class="section-header">
+                        <h2 id="history-table-title">各頻道狀態紀錄</h2>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-small" id="share-status-btn">
+                                <span class="material-icons-outlined" style="font-size:15px">share</span> 分享狀態
+                            </button>
+                            <button class="btn btn-danger btn-small" id="clear-history-btn">清空所有紀錄</button>
+                        </div>
                     </div>
-                </div>
-                <div class="table-container">
-                    <table id="kill-history-table">
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-sort="name">Boss <span class="sort-icon"></span></th>
-                                <th class="sortable" data-sort="killTime">擊殺時間 <span class="sort-icon">▼</span></th>
-                                <th class="sortable" data-sort="channel">頻道 <span class="sort-icon"></span></th>
-                                <th class="sortable" data-sort="hasDrop">掉寶 <span class="sort-icon"></span></th>
-                                <th>備註</th>
-                                <th class="sortable" data-sort="respawn">預計重生 <span class="sort-icon"></span></th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Rows injected via JS -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="history-pagination" class="pagination-controls"></div>
-            </section>
+                    <div class="table-container">
+                        <table id="kill-history-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="name">Boss <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="killTime">擊殺時間 <span class="sort-icon">▼</span></th>
+                                    <th class="sortable" data-sort="channel">頻道 <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="hasDrop">掉寶 <span class="sort-icon"></span></th>
+                                    <th>備註</th>
+                                    <th class="sortable" data-sort="respawn">預計重生 <span class="sort-icon"></span></th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="history-pagination" class="pagination-controls"></div>
+                </section>
+            </div>
         </main>
 
     </div>
 
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <button class="bottom-nav-btn active" data-tab="bosses" id="tab-btn-bosses">
+            <span class="material-icons-outlined">grid_view</span>
+            <span class="bottom-nav-label">Boss 列表</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="record" id="tab-btn-record">
+            <span class="material-icons-outlined">bolt</span>
+            <span class="bottom-nav-label">紀錄擊殺</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="history" id="tab-btn-history">
+            <span class="material-icons-outlined">history</span>
+            <span class="bottom-nav-label">歷史紀錄</span>
+        </button>
+    </nav>
+
     <!-- Toast container for non-blocking messages / undo -->
-    <div id="toast-container" aria-live="polite" style="position:fixed; right:16px; bottom:16px; z-index:1000;"></div>
+    <div id="toast-container" aria-live="polite" style="position:fixed; right:16px; bottom:80px; z-index:1000;"></div>
 
     <!-- 分享 Modal -->
     <div id="share-modal" class="modal-overlay" style="display:none;">

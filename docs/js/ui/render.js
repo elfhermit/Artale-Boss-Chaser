@@ -81,14 +81,13 @@
             if (card) card.classList.add('selected');
             renderTargetLock(state.focusedBossId);
         } else {
-            dom.targetLockPanel.style.display = 'none';
-            dom.selectedBossInfo.style.display = 'flex';
-            dom.killForm.style.display = 'block';
+            if (dom.targetLockPanel) dom.targetLockPanel.style.display = 'none';
+            if (dom.selectedBossInfo) dom.selectedBossInfo.style.display = 'flex';
+            if (dom.killForm) dom.killForm.style.display = 'block';
             
-            // Auto-focus search if no boss selected and on desktop
-            if (window.innerWidth > 900 && !state.currentSearch) {
-                setTimeout(() => dom.searchInput.focus(), 100);
-            }
+            // Mobile: hide target lock, show hint
+            if (dom.mobileTargetLock) dom.mobileTargetLock.style.display = 'none';
+            if (dom.mobileNoBossHint) dom.mobileNoBossHint.style.display = 'block';
         }
     }
 
@@ -140,20 +139,39 @@
         const boss = getBossById(bossId);
         if (!boss) return;
 
-        dom.targetLockPanel.style.display = 'block';
-        dom.selectedBossInfo.style.display = 'none';
-        dom.killForm.style.display = 'none';
+        // Desktop Target Lock
+        if (dom.targetLockPanel) {
+            dom.targetLockPanel.style.display = 'block';
+        }
+        if (dom.selectedBossInfo) dom.selectedBossInfo.style.display = 'none';
+        if (dom.killForm) dom.killForm.style.display = 'none';
 
-        dom.targetBossImg.textContent = boss.name.substring(0, 2);
-        dom.targetBossName.textContent = boss.name;
-        dom.targetBossRespawn.textContent = `重生週期: ${boss.respawn}`;
+        if (dom.targetBossImg) dom.targetBossImg.textContent = boss.name.substring(0, 2);
+        if (dom.targetBossName) dom.targetBossName.textContent = boss.name;
+        if (dom.targetBossRespawn) dom.targetBossRespawn.textContent = `重生週期: ${boss.respawn}`;
 
         // Initialize input with current state if needed
-        if (!dom.focusChannelInput.value) {
+        if (dom.focusChannelInput && !dom.focusChannelInput.value) {
             dom.focusChannelInput.value = window.App.Core.State.state.lastChannel || 1;
         }
 
         renderTargetHistory(bossId);
+
+        // === V2: Mobile Target Lock ===
+        if (dom.mobileTargetLock) {
+            dom.mobileTargetLock.style.display = 'block';
+            dom.mobileNoBossHint.style.display = 'none';
+        }
+        if (dom.mobileTargetImg) dom.mobileTargetImg.textContent = boss.name.substring(0, 2);
+        if (dom.mobileTargetName) dom.mobileTargetName.textContent = boss.name;
+        if (dom.mobileTargetRespawn) dom.mobileTargetRespawn.textContent = `重生週期: ${boss.respawn}`;
+
+        // Sync channel input
+        if (dom.mobileChannelInput && !dom.mobileChannelInput.value) {
+            dom.mobileChannelInput.value = window.App.Core.State.state.lastChannel || 1;
+        }
+
+        renderMobileTargetHistory(bossId);
     }
 
     function renderTargetHistory(bossId) {
@@ -162,6 +180,7 @@
         const { calculateTimerState } = window.App.Core.Utils;
         const boss = getBossById(bossId);
 
+        if (!dom.targetHistoryList) return;
         dom.targetHistoryList.innerHTML = '';
 
         // Filter history for this specific boss, sorted by time desc
@@ -175,29 +194,58 @@
         }
 
         relevant.forEach(record => {
-            const ts = calculateTimerState(boss, record.killTime);
-            const item = document.createElement('div');
-            item.className = 'target-history-item';
-            
-            let dropHtml = '';
-            if (record.drops) {
-                if (record.drops.equip) dropHtml += '<span class="material-icons-outlined drop-icon equip" title="裝備">shield</span>';
-                if (record.drops.scroll) dropHtml += '<span class="material-icons-outlined drop-icon scroll" title="卷軸">description</span>';
-                if (record.drops.star) dropHtml += '<span class="material-icons-outlined drop-icon star" title="大寶物">stars</span>';
-            }
-
-            item.innerHTML = `
-                <div class="history-ch-badge">
-                    CH.${record.channel}
-                    <div class="history-drops">${dropHtml}</div>
-                </div>
-                <div class="history-time-info">
-                    <span class="history-status-tag tag-${ts.status}">${ts.text}</span>
-                    <span class="history-countdown">${ts.timer}</span>
-                </div>
-            `;
-            dom.targetHistoryList.appendChild(item);
+            dom.targetHistoryList.appendChild(createHistoryItem(boss, record));
         });
+    }
+
+    // V2: Render mobile target history (mirrors desktop)
+    function renderMobileTargetHistory(bossId) {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        const boss = getBossById(bossId);
+
+        if (!dom.mobileTargetHistory) return;
+        dom.mobileTargetHistory.innerHTML = '';
+
+        const relevant = state.killHistory
+            .filter(k => k.bossId === bossId)
+            .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
+
+        if (relevant.length === 0) {
+            dom.mobileTargetHistory.innerHTML = '<div style="text-align:center; padding:20px; color:var(--color-text-disabled); font-style:italic;">尚無此 Boss 的紀錄</div>';
+            return;
+        }
+
+        relevant.forEach(record => {
+            dom.mobileTargetHistory.appendChild(createHistoryItem(boss, record));
+        });
+    }
+
+    // Shared helper to create a target history item element
+    function createHistoryItem(boss, record) {
+        const { calculateTimerState } = window.App.Core.Utils;
+        const ts = calculateTimerState(boss, record.killTime);
+        const item = document.createElement('div');
+        item.className = 'target-history-item';
+        
+        let dropHtml = '';
+        if (record.drops) {
+            if (record.drops.equip) dropHtml += '<span class="material-icons-outlined drop-icon equip" title="裝備">shield</span>';
+            if (record.drops.scroll) dropHtml += '<span class="material-icons-outlined drop-icon scroll" title="卷軸">description</span>';
+            if (record.drops.star) dropHtml += '<span class="material-icons-outlined drop-icon star" title="大寶物">stars</span>';
+        }
+
+        item.innerHTML = `
+            <div class="history-ch-badge">
+                CH.${record.channel}
+                <div class="history-drops">${dropHtml}</div>
+            </div>
+            <div class="history-time-info">
+                <span class="history-status-tag tag-${ts.status}">${ts.text}</span>
+                <span class="history-countdown">${ts.timer}</span>
+            </div>
+        `;
+        return item;
     }
 
     function updateBossCard(bossId) {
@@ -299,7 +347,9 @@
                 else status = 'cooldown';
             }
 
-            const bossName = getBossById(card.dataset.bossId).name.toLowerCase();
+            const bossData = getBossById(card.dataset.bossId);
+            if (!bossData) return;
+            const bossName = bossData.name.toLowerCase();
             const matchesSearch = bossName.includes(state.currentSearch.toLowerCase());
             const matchesFilter = state.currentFilter === 'all' || state.currentFilter === status;
 
@@ -316,7 +366,6 @@
         let displayData = [...state.killHistory];
         
         // UX Improvement: If a boss is focused, show that boss's history. 
-        // But also provide a way to see "Recent Global" if there's no data for this boss.
         if (state.focusedBossId) {
             const filtered = displayData.filter(k => k.bossId === state.focusedBossId);
             const boss = getBossById(state.focusedBossId);
@@ -325,26 +374,28 @@
                 displayData = filtered;
                 dom.historyTableTitle.innerHTML = `<span class="material-icons-outlined" style="vertical-align:middle; margin-right:4px;">target</span> ${boss.name} - 頻道紀錄`;
             } else {
-                // If focused boss has no history, show everything but dim the title or indicate it
                 dom.historyTableTitle.innerHTML = `<span style="color:var(--color-text-disabled)">${boss.name} (尚無紀錄) - 顯示全部</span>`;
             }
         } else {
             dom.historyTableTitle.innerHTML = `<span class="material-icons-outlined" style="vertical-align:middle; margin-right:4px;">history</span> 全域擊殺流水帳`;
         }
 
-        // 2. 執行排序
+        // 2. 執行排序 (加入 null 防禦，避免孤兒紀錄造成 TypeError)
+        displayData = displayData.filter(k => !!getBossById(k.bossId)); // 過濾孤兒紀錄
         displayData.sort((a, b) => {
             let valA, valB;
+            const bossA = getBossById(a.bossId);
+            const bossB = getBossById(b.bossId);
             switch (state.currentSort.col) {
                 case 'name':
-                    valA = getBossById(a.bossId).name;
-                    valB = getBossById(b.bossId).name;
+                    valA = bossA ? bossA.name : '';
+                    valB = bossB ? bossB.name : '';
                     break;
                 case 'channel': valA = a.channel; valB = b.channel; break;
                 case 'hasDrop': valA = a.hasDrop ? 1 : 0; valB = b.hasDrop ? 1 : 0; break;
                 case 'respawn':
-                    valA = new Date(a.killTime).getTime() + getBossById(a.bossId).minMinutes * 60000;
-                    valB = new Date(b.killTime).getTime() + getBossById(b.bossId).minMinutes * 60000;
+                    valA = new Date(a.killTime).getTime() + (bossA ? bossA.minMinutes * 60000 : 0);
+                    valB = new Date(b.killTime).getTime() + (bossB ? bossB.minMinutes * 60000 : 0);
                     break;
                 case 'killTime':
                 default:
@@ -472,10 +523,7 @@
         const { playNotificationSound, calculateTimerState } = window.App.Core.Utils;
         const BOSSES_JSON = window.App.Data.Bosses;
 
-        let shouldSort = false;
-
         BOSSES_JSON.forEach(boss => {
-            // Only update UI for visible cards to save perf? No, need to check audio for all.
             updateBossCard(boss.id);
 
             // Check Audio Alert
@@ -500,6 +548,12 @@
 
         // 更新篩選計數
         updateFilterCounts();
+
+        // V2: Update mobile target history if boss is focused
+        if (state.focusedBossId) {
+            renderMobileTargetHistory(state.focusedBossId);
+            renderTargetHistory(state.focusedBossId);
+        }
     }
 
     function renderPresets() {
@@ -526,25 +580,44 @@
         const { dom } = window.App.UI.DOM;
         const { state } = window.App.Core.State;
 
-        if (!dom.favChipsContainer) return;
-        dom.favChipsContainer.innerHTML = '';
+        // Render Desktop Chips
+        if (dom.favChipsContainer) {
+            dom.favChipsContainer.innerHTML = '';
+            if (state.favorites.length === 0) {
+                dom.favChipsContainer.innerHTML = '<span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>';
+            } else {
+                state.favorites.forEach(bossId => {
+                    const boss = getBossById(bossId);
+                    if (!boss) return;
+                    dom.favChipsContainer.appendChild(createFavChip(boss));
+                });
+            }
+        }
 
-        if (state.favorites.length === 0) {
-            dom.favChipsContainer.innerHTML = '<span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>';
-        } else {
-            state.favorites.forEach(bossId => {
-                const boss = getBossById(bossId);
-                if (!boss) return;
-                const chip = document.createElement('button');
-                chip.className = 'fav-boss-chip';
-                chip.dataset.bossId = bossId;
-                chip.title = `${boss.name}（${boss.respawn}）`;
-                chip.innerHTML = `<span class="fav-chip-abbr">${boss.name.substring(0, 2)}</span><span class="fav-chip-name">${boss.name}</span>`;
-                dom.favChipsContainer.appendChild(chip);
-            });
+        // V2: Render Mobile Chips
+        if (dom.mobileFavChips) {
+            dom.mobileFavChips.innerHTML = '';
+            if (state.favorites.length === 0) {
+                dom.mobileFavChips.innerHTML = '<span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>';
+            } else {
+                state.favorites.forEach(bossId => {
+                    const boss = getBossById(bossId);
+                    if (!boss) return;
+                    dom.mobileFavChips.appendChild(createFavChip(boss));
+                });
+            }
         }
 
         renderBossSelectorDropdown();
+    }
+
+    function createFavChip(boss) {
+        const chip = document.createElement('button');
+        chip.className = 'fav-boss-chip';
+        chip.dataset.bossId = boss.id;
+        chip.title = `${boss.name}（${boss.respawn}）`;
+        chip.innerHTML = `<span class="fav-chip-abbr">${boss.name.substring(0, 2)}</span><span class="fav-chip-name">${boss.name}</span>`;
+        return chip;
     }
 
     function renderBossSelectorDropdown() {
@@ -552,33 +625,36 @@
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
 
-        if (!dom.bossSelectorDropdown) return;
-        dom.bossSelectorDropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
+        const dropdowns = [dom.bossSelectorDropdown, dom.mobileBossDropdown].filter(Boolean);
+        
+        dropdowns.forEach(dropdown => {
+            dropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
 
-        const favBosses = state.favorites.map(id => getBossById(id)).filter(Boolean);
-        const allBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+            const favBosses = state.favorites.map(id => getBossById(id)).filter(Boolean);
+            const allBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
-        if (favBosses.length > 0) {
-            const favGroup = document.createElement('optgroup');
-            favGroup.label = '⭐ 常用 Boss';
-            favBosses.forEach(boss => {
+            if (favBosses.length > 0) {
+                const favGroup = document.createElement('optgroup');
+                favGroup.label = '⭐ 常用 Boss';
+                favBosses.forEach(boss => {
+                    const opt = document.createElement('option');
+                    opt.value = boss.id;
+                    opt.textContent = boss.name;
+                    favGroup.appendChild(opt);
+                });
+                dropdown.appendChild(favGroup);
+            }
+
+            const allGroup = document.createElement('optgroup');
+            allGroup.label = '── 全部 Boss ──';
+            allBosses.forEach(boss => {
                 const opt = document.createElement('option');
                 opt.value = boss.id;
-                opt.textContent = boss.name;
-                favGroup.appendChild(opt);
+                opt.textContent = `${boss.name}（${boss.respawn}）`;
+                allGroup.appendChild(opt);
             });
-            dom.bossSelectorDropdown.appendChild(favGroup);
-        }
-
-        const allGroup = document.createElement('optgroup');
-        allGroup.label = '── 全部 Boss ──';
-        allBosses.forEach(boss => {
-            const opt = document.createElement('option');
-            opt.value = boss.id;
-            opt.textContent = `${boss.name}（${boss.respawn}）`;
-            allGroup.appendChild(opt);
+            dropdown.appendChild(allGroup);
         });
-        dom.bossSelectorDropdown.appendChild(allGroup);
     }
 
     // =============================================
@@ -614,6 +690,6 @@
 
     window.App.UI.Render = {
         renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, renderPresets,
-        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts
+        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderTargetLock, renderMobileTargetHistory
     };
 })();

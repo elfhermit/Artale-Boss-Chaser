@@ -51,16 +51,29 @@
 
         if (state.focusedBossId === bossId) {
             renderBossCards(); // Fully refresh to update list
-            if (dom.focusChannelInput) {
-                dom.focusChannelInput.focus();
-                dom.focusChannelInput.select();
+
+            // Refresh target history lists
+            if (window.App.UI.Render.renderTargetHistory) {
+                window.App.UI.Render.renderTargetHistory(bossId);
+            }
+            if (window.App.UI.Render.renderMobileTargetHistory) {
+                window.App.UI.Render.renderMobileTargetHistory(bossId);
+            }
+
+            // Focus the active channel input
+            const isMobile = window.innerWidth < 900;
+            const activeInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
+            if (activeInput) {
+                activeInput.focus();
+                activeInput.select();
             }
             
             // Visual Feedback: Flash the panel
-            if (dom.targetLockPanel) {
-                dom.targetLockPanel.classList.add('flash-success');
+            const activePanel = isMobile ? dom.mobileTargetLock : dom.targetLockPanel;
+            if (activePanel) {
+                activePanel.classList.add('flash-success');
                 setTimeout(() => {
-                    dom.targetLockPanel.classList.remove('flash-success');
+                    activePanel.classList.remove('flash-success');
                 }, 400);
             }
         }
@@ -75,6 +88,10 @@
         if (dom.focusDropEquip) dom.focusDropEquip.checked = false;
         if (dom.focusDropScroll) dom.focusDropScroll.checked = false;
         if (dom.focusDropStar) dom.focusDropStar.checked = false;
+        // Mobile drop resets
+        if (dom.mobileDropEquip) dom.mobileDropEquip.checked = false;
+        if (dom.mobileDropScroll) dom.mobileDropScroll.checked = false;
+        if (dom.mobileDropStar) dom.mobileDropStar.checked = false;
         if (dom.notesInput) dom.notesInput.value = '';
 
         showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400 });
@@ -95,12 +112,19 @@
         const { dom } = window.App.UI.DOM;
         if (!state.focusedBossId) return;
         
-        const ch = parseInt(dom.focusChannelInput.value) || 1;
-        const autoInc = dom.autoIncCheckbox ? dom.autoIncCheckbox.checked : false;
+        const isMobile = window.innerWidth < 900;
+        const channelInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
+        const autoIncCheckbox = isMobile ? dom.mobileAutoInc : dom.autoIncCheckbox;
+        const dropEquip = isMobile ? dom.mobileDropEquip : dom.focusDropEquip;
+        const dropScroll = isMobile ? dom.mobileDropScroll : dom.focusDropScroll;
+        const dropStar = isMobile ? dom.mobileDropStar : dom.focusDropStar;
         
-        const equip = dom.focusDropEquip ? dom.focusDropEquip.checked : false;
-        const scroll = dom.focusDropScroll ? dom.focusDropScroll.checked : false;
-        const star = dom.focusDropStar ? dom.focusDropStar.checked : false;
+        const ch = parseInt(channelInput ? channelInput.value : 1) || 1;
+        const autoInc = autoIncCheckbox ? autoIncCheckbox.checked : false;
+        
+        const equip = dropEquip ? dropEquip.checked : false;
+        const scroll = dropScroll ? dropScroll.checked : false;
+        const star = dropStar ? dropStar.checked : false;
         
         recordKillQuick(state.focusedBossId, ch, { autoinc: autoInc, equip, scroll, star });
     }
@@ -146,17 +170,33 @@
         renderHistoryTable();
 
         if (state.focusedBossId) {
-            if (window.innerWidth < 900) {
-                dom.sidebar.scrollIntoView({ behavior: 'smooth' });
+            const isMobile = window.innerWidth < 900;
+            if (isMobile) {
+                // V2: Switch to record tab on mobile
+                switchTab('record');
             }
             // UX Improvement: Auto-focus the channel input in Target Lock Mode
             setTimeout(() => {
-                if (dom.focusChannelInput) {
-                    dom.focusChannelInput.focus();
-                    dom.focusChannelInput.select();
+                const activeInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
+                if (activeInput) {
+                    activeInput.focus();
+                    activeInput.select();
                 }
-            }, 100);
+            }, 150);
         }
+    }
+
+    // V2: Tab Switching
+    function switchTab(tabId) {
+        const { dom } = window.App.UI.DOM;
+        if (!dom.tabPanels || !dom.tabButtons) return;
+
+        dom.tabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.panel === tabId);
+        });
+        dom.tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
     }
 
     function loadEntryToForm(entry) {
@@ -166,7 +206,6 @@
             selectBoss(entry.bossId);
         }
         setChannel(entry.channel);
-        if (dom.focusChannelInput) dom.focusChannelInput.value = entry.channel;
         
         dom.notesInput.value = entry.notes || "";
         dom.hasDropInput.checked = entry.hasDrop || false;
@@ -175,9 +214,10 @@
         if (dom.focusDropScroll) dom.focusDropScroll.checked = entry.drops ? entry.drops.scroll : false;
         if (dom.focusDropStar) dom.focusDropStar.checked = entry.drops ? entry.drops.star : false;
 
-        if (window.innerWidth < 900) {
-            dom.sidebar.scrollIntoView({ behavior: 'smooth' });
-        }
+        // Also sync mobile
+        if (dom.mobileDropEquip) dom.mobileDropEquip.checked = entry.drops ? entry.drops.equip : false;
+        if (dom.mobileDropScroll) dom.mobileDropScroll.checked = entry.drops ? entry.drops.scroll : false;
+        if (dom.mobileDropStar) dom.mobileDropStar.checked = entry.drops ? entry.drops.star : false;
     }
 
     function deleteHistoryEntry(id) {
@@ -208,7 +248,7 @@
             saveHistory();
             renderHistoryTable();
             document.querySelectorAll('.boss-card').forEach(card => updateBossCard(card.dataset.bossId));
-            dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">已清空</span>`;
+            if (dom.selectedBossInfo) dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">已清空</span>`;
         }
     }
 
@@ -292,6 +332,8 @@
         if (num > 3000) num = 3000;
         if (dom.channelInput) dom.channelInput.value = num;
         if (dom.focusChannelInput) dom.focusChannelInput.value = num;
+        // V2: Sync mobile channel input
+        if (dom.mobileChannelInput) dom.mobileChannelInput.value = num;
     }
 
     function showToast(message, opts = {}) {
@@ -462,6 +504,7 @@
         saveInlineChannel, saveInlineNotes, handleSavePreset, handleSaveBatchPreset, applyPreset, handleBatchApply,
         updateChannel, setChannel, showToast, showUndoToast,
         toggleViewMode, toggleSound, toggleSmartSort,
-        toggleFavorite, generateShareText, openShareModal
+        toggleFavorite, generateShareText, openShareModal,
+        switchTab
     };
 })();

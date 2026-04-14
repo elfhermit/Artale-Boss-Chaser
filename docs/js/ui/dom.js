@@ -32,14 +32,14 @@
 
         sidebar: null,
 
-        // Target Lock Mode
+        // Target Lock Mode (Desktop)
         targetLockPanel: null,
         targetBossImg: null,
         targetBossName: null,
         targetBossRespawn: null,
         unlockBossBtn: null,
         
-        // Focus Mode Elements
+        // Focus Mode Elements (Desktop)
         focusChannelInput: null,
         focusChSubBtn: null,
         focusChAddBtn: null,
@@ -61,7 +61,7 @@
         soundIcon: null,
         smartSortBtn: null,
 
-        // 最愛 & 快選
+        // 最愛 & 快選 (Desktop)
         favChipsContainer: null,
         bossSelectorDropdown: null,
 
@@ -77,7 +77,31 @@
         filterChipAll: null,
         filterChipAlive: null,
         filterChipWarning: null,
-        filterChipCooldown: null
+        filterChipCooldown: null,
+
+        // === V2: Bottom Nav & Tab System ===
+        bottomNav: null,
+        tabButtons: [],
+        tabPanels: [],
+
+        // === V2: Mobile Record Panel ===
+        mobileFavChips: null,
+        mobileBossDropdown: null,
+        mobileTargetLock: null,
+        mobileTargetImg: null,
+        mobileTargetName: null,
+        mobileTargetRespawn: null,
+        mobileUnlockBtn: null,
+        mobileChannelInput: null,
+        mobileChSubBtn: null,
+        mobileChAddBtn: null,
+        mobileSubmitBtn: null,
+        mobileAutoInc: null,
+        mobileDropEquip: null,
+        mobileDropScroll: null,
+        mobileDropStar: null,
+        mobileTargetHistory: null,
+        mobileNoBossHint: null
     };
 
     function initDOM() {
@@ -109,16 +133,16 @@
         dom.channelAddBtn = document.getElementById('channel-add');
         dom.quickChannels = document.querySelectorAll('.quick-chip');
 
-        dom.sidebar = document.getElementById('sidebar'); // ensure sidebar reference for scrolling on mobile
+        dom.sidebar = document.getElementById('sidebar');
 
-        // Init Target Lock Mode Elements
+        // Init Target Lock Mode Elements (Desktop)
         dom.targetLockPanel = document.getElementById('target-lock-panel');
         dom.targetBossImg = document.getElementById('target-boss-img');
         dom.targetBossName = document.getElementById('target-boss-name');
         dom.targetBossRespawn = document.getElementById('target-boss-respawn');
         dom.unlockBossBtn = document.getElementById('unlock-boss-btn');
         
-        // Focus Mode Init
+        // Focus Mode Init (Desktop)
         dom.focusChannelInput = document.getElementById('focus-channel-input');
         dom.focusChSubBtn = document.getElementById('focus-ch-sub');
         dom.focusChAddBtn = document.getElementById('focus-ch-add');
@@ -139,7 +163,7 @@
         dom.soundIcon = document.getElementById('sound-toggle-icon');
         dom.smartSortBtn = document.getElementById('smart-sort-btn');
 
-        // 最愛 & 快選
+        // 最愛 & 快選 (Desktop)
         dom.favChipsContainer = document.getElementById('fav-chips-container');
         dom.bossSelectorDropdown = document.getElementById('boss-selector-dropdown');
 
@@ -156,6 +180,30 @@
         dom.filterChipAlive = document.querySelector('.filter-chips .chip[data-filter="alive"]');
         dom.filterChipWarning = document.querySelector('.filter-chips .chip[data-filter="warning"]');
         dom.filterChipCooldown = document.querySelector('.filter-chips .chip[data-filter="cooldown"]');
+
+        // === V2: Bottom Nav & Tab System ===
+        dom.bottomNav = document.getElementById('bottom-nav');
+        dom.tabButtons = document.querySelectorAll('.bottom-nav-btn');
+        dom.tabPanels = document.querySelectorAll('.tab-panel');
+
+        // === V2: Mobile Record Panel ===
+        dom.mobileFavChips = document.getElementById('mobile-fav-chips');
+        dom.mobileBossDropdown = document.getElementById('mobile-boss-dropdown');
+        dom.mobileTargetLock = document.getElementById('mobile-target-lock');
+        dom.mobileTargetImg = document.getElementById('mobile-target-img');
+        dom.mobileTargetName = document.getElementById('mobile-target-name');
+        dom.mobileTargetRespawn = document.getElementById('mobile-target-respawn');
+        dom.mobileUnlockBtn = document.getElementById('mobile-unlock-btn');
+        dom.mobileChannelInput = document.getElementById('mobile-channel-input');
+        dom.mobileChSubBtn = document.getElementById('mobile-ch-sub');
+        dom.mobileChAddBtn = document.getElementById('mobile-ch-add');
+        dom.mobileSubmitBtn = document.getElementById('mobile-submit-btn');
+        dom.mobileAutoInc = document.getElementById('mobile-auto-inc');
+        dom.mobileDropEquip = document.getElementById('mobile-drop-equip');
+        dom.mobileDropScroll = document.getElementById('mobile-drop-scroll');
+        dom.mobileDropStar = document.getElementById('mobile-drop-star');
+        dom.mobileTargetHistory = document.getElementById('mobile-target-history');
+        dom.mobileNoBossHint = document.getElementById('mobile-no-boss-hint');
     }
 
     // Export

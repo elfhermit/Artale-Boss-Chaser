@@ -1,7 +1,5 @@
 
 (function () {
-    // Shortcuts
-
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
@@ -27,7 +25,11 @@
 
         setupEventListeners();
         startTimerLoop();
-        console.log("Boss 獵人儀表板 (Pro) - Namespace Refactored - 已啟動");
+
+        // V2: Show default tab on mobile
+        initMobileDefaults();
+
+        console.log("Boss 獵人儀表板 (Pro) V2 — Mobile-First Refactored — 已啟動");
     }
 
     let timerInterval = null;
@@ -38,5 +40,27 @@
         timerInterval = setInterval(() => {
             updateAllTimers();
         }, 1000);
+    }
+
+    // V2: 設定手機版初始狀態
+    function initMobileDefaults() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+
+        // 如果有已選擇的 Boss (from previous session)，初始化手機版 target lock
+        if (state.focusedBossId && dom.mobileTargetLock) {
+            const { renderTargetLock } = window.App.UI.Render;
+            renderTargetLock(state.focusedBossId);
+        }
+
+        // Apply view mode icon
+        if (dom.viewIcon) {
+            dom.viewIcon.textContent = state.viewMode === 'compact' ? 'view_list' : 'grid_view';
+        }
+
+        // Apply sound icon
+        if (dom.soundIcon) {
+            dom.soundIcon.textContent = state.soundEnabled ? 'volume_up' : 'volume_off';
+        }
     }
 })();

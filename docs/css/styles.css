@@ -28,6 +28,7 @@
     --border-radius: 12px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     --header-height: 64px;
+    --bottom-nav-height: 64px;
 }
 
 /* 淺色主題 */
@@ -107,7 +108,8 @@ body.light-mode .main-header {
     box-shadow: 0 2px 6px rgba(187, 134, 252, 0.4);
 }
 
-.header-actions { display: flex; gap: 8px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.secondary-header-actions { display: flex; gap: 4px; }
 
 /* --- 3. 主佈局 --- */
 .app-container {
@@ -126,6 +128,7 @@ body.light-mode .main-header {
     max-height: calc(100vh - var(--header-height) - 48px);
     overflow-y: auto;
     flex-basis: 360px;
+    flex-shrink: 0;
     position: sticky;
     top: calc(var(--header-height) + 24px);
     transition: top 0.3s;
@@ -164,6 +167,45 @@ body.light-mode .sidebar {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+/* --- Tab Panel System --- */
+.tab-panel {
+    display: none;
+    animation: fadeTabIn 0.25s ease;
+}
+.tab-panel.active {
+    display: block;
+}
+@keyframes fadeTabIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* On desktop: all panels visible (no tab switching) */
+@media (min-width: 901px) {
+    .tab-panel {
+        display: block !important;
+        animation: none;
+    }
+    .bottom-nav {
+        display: none !important;
+    }
+}
+
+/* Boss card grid layout */
+.boss-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.boss-list.compact {
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+.boss-list-divider {
+    grid-column: 1 / -1;
 }
 
 /* --- 4. 按鈕與互動元件 --- */
@@ -219,15 +261,56 @@ body.light-mode .sidebar {
     color: #000;
 }
 
-.btn-icon { padding: 8px; min-width: 36px; border-radius: 50%; }
-
-/* --- 5. Boss 監控卡片 --- */
-.boss-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+.btn-icon {
+    padding: 8px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-icon:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
 }
 
+.btn-small { font-size: 0.82rem; padding: 6px 12px; }
+
+.feature-btn {
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+.feature-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.icon-btn {
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+.icon-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* --- 5. Boss 監控卡片 --- */
 .boss-card {
     background-color: var(--color-surface);
     border-radius: var(--border-radius);
@@ -237,6 +320,7 @@ body.light-mode .sidebar {
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    animation: cardAppear 0.25s ease both;
 }
 
 .boss-card:hover {
@@ -424,9 +508,26 @@ body.light-mode #kill-history-table th {
 
 .drop-yes { color: var(--color-success); font-weight: 700; }
 .drop-no { color: var(--color-text-disabled); opacity: 0.5; }
+.mini-boss-img {
+    width: 28px; height: 28px;
+    background: var(--color-bg);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+.respawn-range { white-space: nowrap; font-family: var(--font-family-mono); font-size: 0.85rem; }
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    flex-wrap: wrap;
+}
 
-
-/* --- 7. 右側表單 --- */
+/* --- 7. 表單 --- */
 .selected-boss-info {
     background-color: var(--color-bg);
     border-radius: 8px;
@@ -480,6 +581,8 @@ body.light-mode #kill-history-table th {
 }
 .stepper-btn {
     width: 48px;
+    min-height: 44px;
+    min-width: 44px;
     background-color: var(--color-surface-hover);
     border: none;
     color: var(--color-text-primary);
@@ -552,6 +655,7 @@ input:checked + .slider { background-color: var(--color-primary); border-color: 
 input:checked + .slider:before { transform: translateX(22px); background-color: #fff; }
 
 /* 篩選與搜尋 */
+.filter-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
 .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .chip {
     padding: 6px 12px;
@@ -652,6 +756,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
+.target-boss-info { flex: 1; }
 .target-boss-info h2 {
     font-size: 1.25rem;
     margin: 0;
@@ -666,12 +771,12 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     margin: 4px 0 0 0;
 }
 
-#unlock-boss-btn {
+#unlock-boss-btn, #mobile-unlock-btn {
     margin-left: auto;
     background: rgba(255,255,255,0.05);
     color: var(--color-text-secondary);
 }
-#unlock-boss-btn:hover {
+#unlock-boss-btn:hover, #mobile-unlock-btn:hover {
     background: var(--color-danger);
     color: #fff;
 }
@@ -704,7 +809,10 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     font-family: var(--font-family-mono);
     width: 100%;
     transition: all 0.3s;
+    -moz-appearance: textfield;
 }
+.large-channel-input::-webkit-outer-spin-button,
+.large-channel-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 .large-channel-input:focus {
     outline: none;
@@ -779,7 +887,15 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     box-shadow: 0 0 12px rgba(253, 216, 53, 0.3);
 }
 
+.focus-actions { margin-top: 0; }
+
 /* --- History List inside Panel --- */
+.channel-grid-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
 .target-history-list {
     display: flex;
     flex-direction: column;
@@ -834,38 +950,123 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     margin-top: 2px;
 }
 
-/* --- RWD --- */
-@media (max-width: 900px) {
-    .app-container { padding: 0 16px; gap: 16px; margin: 16px auto; flex-direction: column; }
-    .sidebar { 
-        padding: 12px; 
-        margin-bottom: 16px; 
-        max-height: none; 
-        position: relative; 
-        top: 0;
-        order: -1;
-        width: 100%;
-        flex-basis: auto;
-    }
-    .sidebar-header { margin-bottom: 12px; }
-    .sidebar-header h2 { font-size: 1.1rem; }
-    
-    .large-channel-input { font-size: 2rem; padding: 12px; }
-    .drop-chip .chip-content { padding: 12px 8px; font-size: 0.8rem; }
-    .filter-bar { flex-direction: column; gap: 12px; }
-    .search-box { width: 100%; }
-    .table-container { border-radius:12px; }
-    #kill-history-table { min-width: 700px; }
+/* =============================================
+   Bottom Navigation (Mobile App-Style)
+   ============================================= */
+
+.bottom-nav {
+    display: none; /* Hidden on desktop */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-height);
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    z-index: 200;
+    padding: 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+}
+body.light-mode .bottom-nav {
+    background: rgba(255, 255, 255, 0.85);
+    border-top: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+.bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-disabled);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 8px 0;
+    font-family: var(--font-family);
+}
+.bottom-nav-btn .material-icons-outlined {
+    font-size: 24px;
+    transition: all 0.2s;
+}
+.bottom-nav-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.bottom-nav-btn.active {
+    color: var(--color-primary);
+}
+.bottom-nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: var(--color-primary);
+    border-radius: 0 0 4px 4px;
+}
+
+.bottom-nav-btn:active {
+    transform: scale(0.92);
+}
 
 /* =============================================
-   Phase 1a — 最愛 Boss 芯片 & 下拉快選
+   Mobile Record Panel
+   ============================================= */
+
+.mobile-record-panel {
+    padding: 0;
+}
+
+.mobile-fav-section {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mobile-boss-select {
+    margin-bottom: 20px;
+}
+
+.boss-selector-large {
+    width: 100%;
+    padding: 14px 36px 14px 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: 2px solid var(--color-primary);
+    border-radius: 12px;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    box-shadow: 0 4px 12px rgba(187, 134, 252, 0.15);
+    margin-top: 8px;
+}
+.boss-selector-large:focus {
+    box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.3);
+}
+
+.mobile-no-boss-hint {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-text-disabled);
+}
+.mobile-no-boss-hint p {
+    margin-top: 16px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+/* =============================================
+   最愛 Boss 芯片 & 下拉快選
    ============================================= */
 
 .fav-section {
@@ -1009,7 +1210,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 }
 
 /* =============================================
-   Phase 1b — 側邊欄摺疊區塊
+   側邊欄摺疊區塊
    ============================================= */
 
 .sidebar-collapsible {
@@ -1055,7 +1256,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 }
 
 /* =============================================
-   Phase 1c — 分享 Modal
+   分享 Modal
    ============================================= */
 
 .modal-overlay {
@@ -1144,7 +1345,7 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
 }
 
 /* =============================================
-   Phase 2b — 卡片內嵌快速紀錄面板
+   卡片內嵌快速紀錄面板
    ============================================= */
 
 .card-quick-panel {
@@ -1215,110 +1416,6 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     font-size: 18px;
 }
 
-/* =============================================
-   Phase 2a — 歷史表格行動端緊湊化
-   ============================================= */
-
-/* 行動端：卡片式紀錄（代替橫向捲動表格） */
-@media (max-width: 700px) {
-    .table-container { overflow-x: unset; background: transparent; border: none; }
-    #kill-history-table { display: block; min-width: unset; }
-    #kill-history-table thead { display: none; }
-    #kill-history-table tbody { display: flex; flex-direction: column; gap: 10px; }
-    #kill-history-table tbody tr {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        gap: 4px 12px;
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 10px;
-        padding: 12px 14px;
-        cursor: pointer;
-        border-left: 4px solid var(--color-border);
-        transition: background-color 0.2s;
-    }
-    #kill-history-table tbody tr:hover { background: var(--color-surface-hover); }
-
-    /* 欄位重新排列 */
-    #kill-history-table tbody td { padding: 0; border: none; }
-
-    /* Boss 名稱（col 1, row 1） */
-    #kill-history-table tbody td:nth-child(1) {
-        grid-column: 1; grid-row: 1;
-        font-weight: 700;
-        font-size: 0.95rem;
-    }
-    /* 擊殺時間（col 2, row 1） */
-    #kill-history-table tbody td:nth-child(2) {
-        grid-column: 2; grid-row: 1;
-        text-align: right;
-        font-size: 0.85rem;
-        color: var(--color-text-secondary);
-        white-space: nowrap;
-    }
-    /* 頻道 + 掉寶 + 備註 合一行（col 1, row 2） */
-    #kill-history-table tbody td:nth-child(3) {
-        grid-column: 1; grid-row: 2;
-        font-size: 0.88rem;
-    }
-    #kill-history-table tbody td:nth-child(4) {
-        grid-column: 1; grid-row: 2;
-        display: inline;
-    }
-    #kill-history-table tbody td:nth-child(5) {
-        display: none;
-    }
-    /* 預計重生（col 2, row 2） */
-    #kill-history-table tbody td:nth-child(6) {
-        grid-column: 2; grid-row: 2;
-        text-align: right;
-        font-size: 0.82rem;
-        color: var(--color-warning);
-        white-space: nowrap;
-    }
-    /* 操作按鈕（右下） */
-    #kill-history-table tbody td:nth-child(7) {
-        grid-column: 2; grid-row: 1;
-        text-align: right;
-    }
-    /* Boss+時間 放在同一行 */
-    #kill-history-table tbody tr {
-        grid-template-columns: 1fr auto auto;
-    }
-}
-
-/* =============================================
-   Phase 2c — 篩選動畫與觸控優化
-   ============================================= */
-
-/* Boss 卡片出現動畫 */
-.boss-card {
-    animation: cardAppear 0.25s ease both;
-}
-
-@keyframes cardAppear {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* 觸控友善化：增大最小點擊面積 */
-.stepper-btn {
-    min-height: 44px;
-    min-width: 44px;
-}
-
-.btn-icon {
-    min-width: 44px;
-    min-height: 44px;
-}
-
-.focus-ch-sub, .focus-ch-add,
-#focus-ch-sub, #focus-ch-add {
-    min-width: 44px;
-    min-height: 44px;
-}
-
 /* 進度條顏色 */
 .boss-card-progress {
     height: 4px;
@@ -1335,14 +1432,30 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     transition: width 1s linear;
 }
 
-/* 相鄰 Boss 卡片動畫延遲（視覺豐富感） */
+/* Boss 卡片出現動畫延遲 */
+@keyframes cardAppear {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .boss-card:nth-child(1) { animation-delay: 0.02s; }
 .boss-card:nth-child(2) { animation-delay: 0.04s; }
 .boss-card:nth-child(3) { animation-delay: 0.06s; }
 .boss-card:nth-child(4) { animation-delay: 0.08s; }
 .boss-card:nth-child(5) { animation-delay: 0.10s; }
 
-/* Toast 樣式補充 */
+/* Boss 卡片頻道標籤 */
+.boss-card-channels { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; justify-content: center; }
+.ch-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: rgba(187, 134, 252, 0.12);
+    border: 1px solid rgba(187, 134, 252, 0.25);
+    border-radius: 12px;
+    color: var(--color-primary);
+}
+
+/* Toast 樣式 */
 .toast {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -1387,12 +1500,159 @@ input:checked + .slider:before { transform: translateX(22px); background-color: 
     border-color: var(--color-primary);
 }
 
-/* 行動版額外優化 */
+/* Preset Items */
+.preset-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+/* =============================================
+   RWD: Mobile (< 900px)
+   ============================================= */
+
 @media (max-width: 900px) {
-    .fav-boss-chip { font-size: 0.8rem; padding: 6px 10px 6px 7px; }
+    body {
+        padding-bottom: var(--bottom-nav-height);
+    }
+
+    .app-container {
+        padding: 0 12px;
+        gap: 0;
+        margin: 8px auto;
+        flex-direction: column;
+    }
+
+    /* Hide sidebar on mobile — replaced by Tab 2 (record panel) */
+    .sidebar {
+        display: none;
+    }
+
+    .main-header {
+        margin-bottom: 12px;
+        padding: 0 16px;
+        border-radius: 0 0 12px 12px;
+        height: 52px;
+    }
+    .main-header h1 { font-size: 1.15rem; }
+    .badge { font-size: 0.6rem; padding: 2px 6px; }
+
+    /* Show Bottom Navigation */
+    .bottom-nav {
+        display: flex;
+    }
+
+    /* Filter bar mobile */
+    .filter-bar { gap: 8px; }
+    .search-box { width: 100%; min-width: unset; }
+
+    /* Tab Panels fill screen */
+    .tab-panel {
+        min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height) - 40px);
+    }
+
+    /* History table mobile: card style */
+    .table-container { overflow-x: unset; background: transparent; border: none; }
+    #kill-history-table { display: block; min-width: unset; }
+    #kill-history-table thead { display: none; }
+    #kill-history-table tbody { display: flex; flex-direction: column; gap: 10px; }
+    #kill-history-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        grid-template-rows: auto auto;
+        gap: 4px 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        cursor: pointer;
+        border-left: 4px solid var(--color-border);
+        transition: background-color 0.2s;
+    }
+    #kill-history-table tbody tr:hover { background: var(--color-surface-hover); }
+
+    /* 欄位重新排列 */
+    #kill-history-table tbody td { padding: 0; border: none; }
+    /* Boss 名稱 */
+    #kill-history-table tbody td:nth-child(1) {
+        grid-column: 1; grid-row: 1;
+        font-weight: 700; font-size: 0.95rem;
+    }
+    /* 擊殺時間 */
+    #kill-history-table tbody td:nth-child(2) {
+        grid-column: 2; grid-row: 1;
+        text-align: right; font-size: 0.85rem;
+        color: var(--color-text-secondary); white-space: nowrap;
+    }
+    /* 頻道 */
+    #kill-history-table tbody td:nth-child(3) {
+        grid-column: 1; grid-row: 2; font-size: 0.88rem;
+    }
+    /* 掉寶 */
+    #kill-history-table tbody td:nth-child(4) {
+        grid-column: 1; grid-row: 2; display: inline;
+    }
+    /* 備註 (隱藏) */
+    #kill-history-table tbody td:nth-child(5) { display: none; }
+    /* 預計重生 */
+    #kill-history-table tbody td:nth-child(6) {
+        grid-column: 2; grid-row: 2;
+        text-align: right; font-size: 0.82rem;
+        color: var(--color-warning); white-space: nowrap;
+    }
+    /* 操作按鈕 */
+    #kill-history-table tbody td:nth-child(7) {
+        grid-column: 3; grid-row: 1 / 3;
+        display: flex; align-items: center;
+    }
+
+    /* Mobile record panel spacing */
+    .large-channel-input { font-size: 2rem; padding: 12px; }
+    .drop-chip .chip-content { padding: 12px 8px; font-size: 0.8rem; }
+
+    /* Cards quick panel */
     .card-quick-panel { padding-top: 8px; margin-top: 8px; }
     .quick-ch-input { font-size: 0.95rem; padding: 10px; }
     .quick-kill-btn { padding: 10px 14px; min-height: 44px; }
+
+    /* Fav chip mobile */
+    .fav-boss-chip { font-size: 0.8rem; padding: 6px 10px 6px 7px; }
+
+    /* Modal panel mobile */
     .modal-panel { padding: 16px; max-height: 90vh; }
     .share-text-pre { font-size: 0.78rem; }
+
+    /* Header actions mobile */
+    .secondary-header-actions { display: none; }
+
+    /* Toast position above bottom nav */
+    #toast-container { bottom: calc(var(--bottom-nav-height) + 12px) !important; }
+}
+
+/* Desktop only tools (presets/batch) — hide on mobile */
+@media (max-width: 900px) {
+    .desktop-only-tools { display: none; }
+}
+
+/* =============================================
+   觸控友善化：增大最小點擊面積
+   ============================================= */
+
+.btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+#focus-ch-sub, #focus-ch-add,
+#mobile-ch-sub, #mobile-ch-add {
+    min-width: 44px;
+    min-height: 44px;
 }
