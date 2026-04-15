@@ -79,15 +79,10 @@
         if (state.focusedBossId) {
             const card = dom.bossListContainer.querySelector(`.boss-card[data-boss-id="${state.focusedBossId}"]`);
             if (card) card.classList.add('selected');
-            renderTargetLock(state.focusedBossId);
+            renderActionBar(state.focusedBossId);
         } else {
-            if (dom.targetLockPanel) dom.targetLockPanel.style.display = 'none';
-            if (dom.selectedBossInfo) dom.selectedBossInfo.style.display = 'flex';
-            if (dom.killForm) dom.killForm.style.display = 'block';
-            
-            // Mobile: hide target lock, show hint
-            if (dom.mobileTargetLock) dom.mobileTargetLock.style.display = 'none';
-            if (dom.mobileNoBossHint) dom.mobileNoBossHint.style.display = 'block';
+            if (dom.actionBar) dom.actionBar.style.display = 'none';
+            document.body.classList.remove('has-action-bar');
         }
     }
 
@@ -134,44 +129,26 @@
         updateBossCard(boss.id);
     }
 
-    function renderTargetLock(bossId) {
+    function renderActionBar(bossId) {
         const { dom } = window.App.UI.DOM;
         const boss = getBossById(bossId);
         if (!boss) return;
 
-        // Desktop Target Lock
-        if (dom.targetLockPanel) {
-            dom.targetLockPanel.style.display = 'block';
+        if (dom.actionBar) {
+            dom.actionBar.style.display = 'block';
+            document.body.classList.add('has-action-bar');
         }
-        if (dom.selectedBossInfo) dom.selectedBossInfo.style.display = 'none';
-        if (dom.killForm) dom.killForm.style.display = 'none';
 
-        if (dom.targetBossImg) dom.targetBossImg.textContent = boss.name.substring(0, 2);
-        if (dom.targetBossName) dom.targetBossName.textContent = boss.name;
-        if (dom.targetBossRespawn) dom.targetBossRespawn.textContent = `重生週期: ${boss.respawn}`;
+        if (dom.actionTargetImg) dom.actionTargetImg.textContent = boss.name.substring(0, 2);
+        if (dom.actionTargetName) dom.actionTargetName.textContent = boss.name;
+        if (dom.actionTargetRespawn) dom.actionTargetRespawn.textContent = `重生週期: ${boss.respawn}`;
 
-        // Initialize input with current state if needed
-        if (dom.focusChannelInput && !dom.focusChannelInput.value) {
-            dom.focusChannelInput.value = window.App.Core.State.state.lastChannel || 1;
+        // Sync channel input
+        if (dom.actionChannelInput && !dom.actionChannelInput.value) {
+            dom.actionChannelInput.value = window.App.Core.State.state.lastChannel || 1;
         }
 
         renderTargetHistory(bossId);
-
-        // === V2: Mobile Target Lock ===
-        if (dom.mobileTargetLock) {
-            dom.mobileTargetLock.style.display = 'block';
-            dom.mobileNoBossHint.style.display = 'none';
-        }
-        if (dom.mobileTargetImg) dom.mobileTargetImg.textContent = boss.name.substring(0, 2);
-        if (dom.mobileTargetName) dom.mobileTargetName.textContent = boss.name;
-        if (dom.mobileTargetRespawn) dom.mobileTargetRespawn.textContent = `重生週期: ${boss.respawn}`;
-
-        // Sync channel input
-        if (dom.mobileChannelInput && !dom.mobileChannelInput.value) {
-            dom.mobileChannelInput.value = window.App.Core.State.state.lastChannel || 1;
-        }
-
-        renderMobileTargetHistory(bossId);
     }
 
     function renderTargetHistory(bossId) {
@@ -180,8 +157,8 @@
         const { calculateTimerState } = window.App.Core.Utils;
         const boss = getBossById(bossId);
 
-        if (!dom.targetHistoryList) return;
-        dom.targetHistoryList.innerHTML = '';
+        if (!dom.actionHistoryList) return;
+        dom.actionHistoryList.innerHTML = '';
 
         // Filter history for this specific boss, sorted by time desc
         const relevant = state.killHistory
@@ -189,35 +166,12 @@
             .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
 
         if (relevant.length === 0) {
-            dom.targetHistoryList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--color-text-disabled); font-style:italic;">尚無此 Boss 的紀錄</div>';
+            dom.actionHistoryList.innerHTML = '<div style="text-align:center; padding:10px; color:var(--color-text-disabled); font-style:italic;">尚無紀錄</div>';
             return;
         }
 
         relevant.forEach(record => {
-            dom.targetHistoryList.appendChild(createHistoryItem(boss, record));
-        });
-    }
-
-    // V2: Render mobile target history (mirrors desktop)
-    function renderMobileTargetHistory(bossId) {
-        const { dom } = window.App.UI.DOM;
-        const { state } = window.App.Core.State;
-        const boss = getBossById(bossId);
-
-        if (!dom.mobileTargetHistory) return;
-        dom.mobileTargetHistory.innerHTML = '';
-
-        const relevant = state.killHistory
-            .filter(k => k.bossId === bossId)
-            .sort((a, b) => new Date(b.killTime) - new Date(a.killTime));
-
-        if (relevant.length === 0) {
-            dom.mobileTargetHistory.innerHTML = '<div style="text-align:center; padding:20px; color:var(--color-text-disabled); font-style:italic;">尚無此 Boss 的紀錄</div>';
-            return;
-        }
-
-        relevant.forEach(record => {
-            dom.mobileTargetHistory.appendChild(createHistoryItem(boss, record));
+            dom.actionHistoryList.appendChild(createHistoryItem(boss, record));
         });
     }
 
@@ -549,28 +503,10 @@
         // 更新篩選計數
         updateFilterCounts();
 
-        // V2: Update mobile target history if boss is focused
+        // Update target history if boss is focused
         if (state.focusedBossId) {
-            renderMobileTargetHistory(state.focusedBossId);
             renderTargetHistory(state.focusedBossId);
         }
-    }
-
-    function renderPresets() {
-        const { dom } = window.App.UI.DOM;
-        const { state } = window.App.Core.State;
-        if (!dom.presetsList) return;
-        dom.presetsList.innerHTML = '';
-        if (state.presets.length === 0) {
-            dom.presetsList.innerHTML = '<div style="color:var(--color-text-disabled);">尚無範本</div>';
-            return;
-        }
-        state.presets.forEach(p => {
-            const el = document.createElement('div');
-            el.className = 'preset-item';
-            el.innerHTML = `<div style="font-size:0.95rem">${p.name}</div><div style="display:flex; gap:8px"><button class="btn btn-secondary btn-small apply-preset" data-preset-id="${p.id}">套用</button><button class="btn btn-danger btn-small del-preset" data-preset-id="${p.id}">刪除</button></div>`;
-            dom.presetsList.appendChild(el);
-        });
     }
 
     // =============================================
@@ -594,20 +530,6 @@
             }
         }
 
-        // V2: Render Mobile Chips
-        if (dom.mobileFavChips) {
-            dom.mobileFavChips.innerHTML = '';
-            if (state.favorites.length === 0) {
-                dom.mobileFavChips.innerHTML = '<span class="fav-placeholder">點 Boss 卡片上的 ☆ 可加入常用</span>';
-            } else {
-                state.favorites.forEach(bossId => {
-                    const boss = getBossById(bossId);
-                    if (!boss) return;
-                    dom.mobileFavChips.appendChild(createFavChip(boss));
-                });
-            }
-        }
-
         renderBossSelectorDropdown();
     }
 
@@ -625,7 +547,7 @@
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
 
-        const dropdowns = [dom.bossSelectorDropdown, dom.mobileBossDropdown].filter(Boolean);
+        const dropdowns = [dom.bossSelectorDropdown].filter(Boolean);
         
         dropdowns.forEach(dropdown => {
             dropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
@@ -720,8 +642,8 @@
     }
 
     window.App.UI.Render = {
-        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, renderPresets,
-        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderTargetLock, renderMobileTargetHistory,
+        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, 
+        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderActionBar,
         renderShareModalOptions
     };
 })();

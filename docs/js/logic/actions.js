@@ -29,13 +29,13 @@
             bossId: bossId,
             killTime: nowISO,
             channel: safeChannel,
-            hasDrop: ((dom.hasDropInput && dom.hasDropInput.checked) || opts.equip || opts.scroll || opts.star) && (!opts.viaKeyboard || (opts.equip || opts.scroll || opts.star)),
+            hasDrop: opts.equip || opts.scroll || opts.star || false,
             drops: {
                 equip: opts.equip || false,
                 scroll: opts.scroll || false,
                 star: opts.star || false
             },
-            notes: (dom.notesInput ? dom.notesInput.value.trim() : '') || ''
+            notes: ''
         };
 
         state.killHistory.push(entry);
@@ -56,24 +56,18 @@
             if (window.App.UI.Render.renderTargetHistory) {
                 window.App.UI.Render.renderTargetHistory(bossId);
             }
-            if (window.App.UI.Render.renderMobileTargetHistory) {
-                window.App.UI.Render.renderMobileTargetHistory(bossId);
-            }
 
             // Focus the active channel input
-            const isMobile = window.innerWidth < 900;
-            const activeInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
-            if (activeInput) {
-                activeInput.focus();
-                activeInput.select();
+            if (dom.actionChannelInput) {
+                dom.actionChannelInput.focus();
+                dom.actionChannelInput.select();
             }
             
             // Visual Feedback: Flash the panel
-            const activePanel = isMobile ? dom.mobileTargetLock : dom.targetLockPanel;
-            if (activePanel) {
-                activePanel.classList.add('flash-success');
+            if (dom.actionBar) {
+                dom.actionBar.classList.add('flash-success');
                 setTimeout(() => {
-                    activePanel.classList.remove('flash-success');
+                    dom.actionBar.classList.remove('flash-success');
                 }, 400);
             }
         }
@@ -84,15 +78,9 @@
         }
         
         // Safety checks for resetting UI
-        if (dom.hasDropInput) dom.hasDropInput.checked = false;
-        if (dom.focusDropEquip) dom.focusDropEquip.checked = false;
-        if (dom.focusDropScroll) dom.focusDropScroll.checked = false;
-        if (dom.focusDropStar) dom.focusDropStar.checked = false;
-        // Mobile drop resets
-        if (dom.mobileDropEquip) dom.mobileDropEquip.checked = false;
-        if (dom.mobileDropScroll) dom.mobileDropScroll.checked = false;
-        if (dom.mobileDropStar) dom.mobileDropStar.checked = false;
-        if (dom.notesInput) dom.notesInput.value = '';
+        if (dom.actionDropEquip) dom.actionDropEquip.checked = false;
+        if (dom.actionDropScroll) dom.actionDropScroll.checked = false;
+        if (dom.actionDropStar) dom.actionDropStar.checked = false;
 
         showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400 });
         
@@ -112,33 +100,14 @@
         const { dom } = window.App.UI.DOM;
         if (!state.focusedBossId) return;
         
-        const isMobile = window.innerWidth < 900;
-        const channelInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
-        const autoIncCheckbox = isMobile ? dom.mobileAutoInc : dom.autoIncCheckbox;
-        const dropEquip = isMobile ? dom.mobileDropEquip : dom.focusDropEquip;
-        const dropScroll = isMobile ? dom.mobileDropScroll : dom.focusDropScroll;
-        const dropStar = isMobile ? dom.mobileDropStar : dom.focusDropStar;
+        const ch = parseInt(dom.actionChannelInput ? dom.actionChannelInput.value : 1) || 1;
+        const autoInc = dom.actionAutoInc ? dom.actionAutoInc.checked : false;
         
-        const ch = parseInt(channelInput ? channelInput.value : 1) || 1;
-        const autoInc = autoIncCheckbox ? autoIncCheckbox.checked : false;
-        
-        const equip = dropEquip ? dropEquip.checked : false;
-        const scroll = dropScroll ? dropScroll.checked : false;
-        const star = dropStar ? dropStar.checked : false;
+        const equip = dom.actionDropEquip ? dom.actionDropEquip.checked : false;
+        const scroll = dom.actionDropScroll ? dom.actionDropScroll.checked : false;
+        const star = dom.actionDropStar ? dom.actionDropStar.checked : false;
         
         recordKillQuick(state.focusedBossId, ch, { autoinc: autoInc, equip, scroll, star });
-    }
-
-    function handleFormSubmit(e) {
-        if (e) e.preventDefault();
-        const { state } = window.App.Core.State;
-        const { dom } = window.App.UI.DOM;
-        if (!state.focusedBossId) {
-            alert("請先選擇一個 Boss");
-            return;
-        }
-        const currentChannel = parseInt(dom.channelInput.value) || 1;
-        recordKillQuick(state.focusedBossId, currentChannel, { autoinc: true });
     }
 
     function selectBoss(bossId) {
@@ -155,34 +124,17 @@
             window.App.Core.State.updateRecentBoss(bossId);
         }
 
-        // Enable/Disable Submit Button
-        if (dom.submitKillBtn) {
-            if (state.focusedBossId) {
-                dom.submitKillBtn.disabled = false;
-                dom.submitKillBtn.textContent = '立即紀錄擊殺';
-            } else {
-                dom.submitKillBtn.disabled = true;
-                dom.submitKillBtn.textContent = '請先選擇 Boss';
-            }
-        }
-
         renderBossCards();
         renderHistoryTable();
 
         if (state.focusedBossId) {
-            const isMobile = window.innerWidth < 900;
-            if (isMobile) {
-                // V2: Switch to record tab on mobile
-                switchTab('record');
-            }
-            // UX Improvement: Auto-focus the channel input in Target Lock Mode
+            // UX Improvement: Auto-focus the channel input in Action Bar
             setTimeout(() => {
-                const activeInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
-                if (activeInput) {
-                    activeInput.focus();
-                    activeInput.select();
+                if (dom.actionChannelInput) {
+                    dom.actionChannelInput.focus();
+                    dom.actionChannelInput.select();
                 }
-            }, 150);
+            }, 100);
         }
     }
 
@@ -207,17 +159,9 @@
         }
         setChannel(entry.channel);
         
-        dom.notesInput.value = entry.notes || "";
-        dom.hasDropInput.checked = entry.hasDrop || false;
-
-        if (dom.focusDropEquip) dom.focusDropEquip.checked = entry.drops ? entry.drops.equip : false;
-        if (dom.focusDropScroll) dom.focusDropScroll.checked = entry.drops ? entry.drops.scroll : false;
-        if (dom.focusDropStar) dom.focusDropStar.checked = entry.drops ? entry.drops.star : false;
-
-        // Also sync mobile
-        if (dom.mobileDropEquip) dom.mobileDropEquip.checked = entry.drops ? entry.drops.equip : false;
-        if (dom.mobileDropScroll) dom.mobileDropScroll.checked = entry.drops ? entry.drops.scroll : false;
-        if (dom.mobileDropStar) dom.mobileDropStar.checked = entry.drops ? entry.drops.star : false;
+        if (dom.actionDropEquip) dom.actionDropEquip.checked = entry.drops ? entry.drops.equip : false;
+        if (dom.actionDropScroll) dom.actionDropScroll.checked = entry.drops ? entry.drops.scroll : false;
+        if (dom.actionDropStar) dom.actionDropStar.checked = entry.drops ? entry.drops.star : false;
     }
 
     function deleteHistoryEntry(id) {
@@ -266,62 +210,11 @@
         entry.notes = String(val).trim(); saveHistory(); renderHistoryTable();
     }
 
-    function handleSavePreset() {
-        const { state, savePresets } = window.App.Core.State;
-        const { dom } = window.App.UI.DOM;
-        const { renderPresets } = window.App.UI.Render;
-        const BOSSES_JSON = window.App.Data.Bosses;
-        if (!state.focusedBossId) return alert('請先選擇 Boss 再儲存範本');
-        const channel = parseInt(dom.channelInput.value) || 1;
-        const boss = getBossById(state.focusedBossId);
-        const preset = { id: `preset-${Date.now()}`, bossId: state.focusedBossId, channel, name: `${boss.name} Ch.${channel}` };
-        state.presets.unshift(preset);
-        savePresets();
-        renderPresets();
-        showToast('已儲存範本', { timeout: 1200 });
-    }
 
-    function handleSaveBatchPreset() {
-        const { state, savePresets } = window.App.Core.State;
-        const { dom } = window.App.UI.DOM;
-        const { renderPresets } = window.App.UI.Render;
-        const BOSSES_JSON = window.App.Data.Bosses;
-        if (!state.focusedBossId) return alert('請先選擇 Boss 再儲存批次範本');
-        const raw = (dom.batchInput && dom.batchInput.value) ? dom.batchInput.value.trim() : '';
-        const channels = parseChannelList(raw);
-        if (!channels || channels.length === 0) return alert('請輸入正確的頻道或範圍');
-        const boss = getBossById(state.focusedBossId);
-        const preset = { id: `preset-${Date.now()}`, bossId: state.focusedBossId, channels, name: `${boss.name} x${channels.length}` };
-        state.presets.unshift(preset);
-        savePresets(); renderPresets();
-        showToast('已儲存批次範本', { timeout: 1200 });
-    }
-
-    function applyPreset(preset) {
-        if (!preset) return;
-        selectBoss(preset.bossId);
-        if (preset.channels) {
-            preset.channels.forEach(ch => recordKillQuick(preset.bossId, ch, { autoinc: false }));
-            showToast(`已批次新增 ${preset.channels.length} 筆紀錄`, { timeout: 1600 });
-        } else {
-            setChannel(preset.channel);
-        }
-    }
-
-    function handleBatchApply() {
-        const { state } = window.App.Core.State;
-        const { dom } = window.App.UI.DOM;
-        if (!state.focusedBossId) return alert('請先選擇 Boss');
-        const raw = dom.batchInput.value.trim();
-        const channels = parseChannelList(raw);
-        if (!channels || channels.length === 0) return alert('請輸入正確的頻道或範圍');
-        channels.forEach(ch => recordKillQuick(state.focusedBossId, ch, { autoinc: false }));
-        showToast(`已批次新增 ${channels.length} 筆紀錄`, { timeout: 1600 });
-    }
 
     function updateChannel(delta) {
         const { dom } = window.App.UI.DOM;
-        let val = parseInt(dom.channelInput.value) || 1;
+        let val = parseInt(dom.actionChannelInput ? dom.actionChannelInput.value : 1) || 1;
         setChannel(val + delta);
     }
 
@@ -330,10 +223,7 @@
         let num = parseInt(val);
         if (num < 1) num = 1;
         if (num > 3000) num = 3000;
-        if (dom.channelInput) dom.channelInput.value = num;
-        if (dom.focusChannelInput) dom.focusChannelInput.value = num;
-        // V2: Sync mobile channel input
-        if (dom.mobileChannelInput) dom.mobileChannelInput.value = num;
+        if (dom.actionChannelInput) dom.actionChannelInput.value = num;
     }
 
     function showToast(message, opts = {}) {
@@ -544,8 +434,8 @@
     }
 
     window.App.Logic.Actions = {
-        recordKillQuick, handleFormSubmit, handleFocusSubmit, selectBoss, loadEntryToForm, deleteHistoryEntry, clearAllHistory,
-        saveInlineChannel, saveInlineNotes, handleSavePreset, handleSaveBatchPreset, applyPreset, handleBatchApply,
+        recordKillQuick, handleFocusSubmit, selectBoss, loadEntryToForm, deleteHistoryEntry, clearAllHistory,
+        saveInlineChannel, saveInlineNotes,
         updateChannel, setChannel, showToast, showUndoToast,
         toggleViewMode, toggleSound, toggleSmartSort,
         toggleFavorite, generateShareText, openShareModal, shareBossStatus,

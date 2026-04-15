@@ -6,7 +6,6 @@
         currentFilter: 'all', // 當前篩選器
         currentSearch: '', // 搜尋關鍵字
         currentSort: { col: 'killTime', dir: 'desc' }, // 預設排序：擊殺時間 (新->舊)
-        presets: [], // quick presets
         currentPage: 1,
         pageSize: 50, // default rows per page for history table
         timerInterval: null,
@@ -43,17 +42,6 @@
 
     function saveFavorites() {
         localStorage.setItem('abt_favorites_v1', JSON.stringify(state.favorites));
-    }
-
-    function loadPresets() {
-        try {
-            const raw = localStorage.getItem('quickPresets');
-            state.presets = raw ? JSON.parse(raw) : [];
-        } catch (e) { state.presets = []; }
-    }
-
-    function savePresets() {
-        try { localStorage.setItem('quickPresets', JSON.stringify(state.presets)); } catch (e) { }
     }
 
     function loadTheme() {
@@ -99,7 +87,6 @@
     window.App.Core.State = {
         state,
         loadHistory, saveHistory,
-        loadPresets, savePresets,
         loadTheme, saveTheme,
         saveViewMode, saveSoundEnabled,
         loadLastChannel, saveLastChannel,

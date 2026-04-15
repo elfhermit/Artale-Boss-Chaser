@@ -5,8 +5,8 @@
     function init() {
         // App Parts
         const { initDOM } = window.App.UI.DOM;
-        const { loadHistory, loadPresets, loadLastChannel, loadTheme } = window.App.Core.State;
-        const { renderBossCards, renderHistoryTable, updateAllTimers, renderPresets, renderFavoriteChips, updateFilterCounts } = window.App.UI.Render;
+        const { loadHistory, loadLastChannel, loadTheme } = window.App.Core.State;
+        const { renderBossCards, renderHistoryTable, updateAllTimers, renderFavoriteChips, updateFilterCounts } = window.App.UI.Render;
         const { setupEventListeners } = window.App.UI.Events;
         const { setChannel } = window.App.Logic.Actions;
 
@@ -15,11 +15,9 @@
         loadHistory();
         const lastCh = loadLastChannel();
         if (lastCh) setChannel(lastCh);
-        loadPresets();
 
         renderBossCards();
         renderHistoryTable();
-        renderPresets();
         renderFavoriteChips();
         updateFilterCounts();
 
@@ -47,10 +45,10 @@
         const { dom } = window.App.UI.DOM;
         const { state } = window.App.Core.State;
 
-        // 如果有已選擇的 Boss (from previous session)，初始化手機版 target lock
-        if (state.focusedBossId && dom.mobileTargetLock) {
-            const { renderTargetLock } = window.App.UI.Render;
-            renderTargetLock(state.focusedBossId);
+        // 如果有已選擇的 Boss (from previous session)，初始化 Action Bar
+        if (state.focusedBossId && dom.actionBar) {
+            const { renderActionBar } = window.App.UI.Render;
+            renderActionBar(state.focusedBossId);
         }
 
         // Apply view mode icon

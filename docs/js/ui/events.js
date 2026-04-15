@@ -40,15 +40,7 @@
             }
         });
 
-        // 2. 表單提交
-        if (dom.killForm) dom.killForm.addEventListener('submit', actions.handleFormSubmit);
 
-        // 3. 頻道操作 (Desktop)
-        if (dom.channelSubBtn) dom.channelSubBtn.addEventListener('click', () => actions.updateChannel(-1));
-        if (dom.channelAddBtn) dom.channelAddBtn.addEventListener('click', () => actions.updateChannel(1));
-        dom.quickChannels.forEach(chip => {
-            chip.addEventListener('click', () => actions.setChannel(chip.dataset.channel));
-        });
 
         // 4. 篩選
         dom.filterChips.forEach(chip => {
@@ -109,9 +101,6 @@
         dom.clearHistoryBtn.addEventListener('click', actions.clearAllHistory);
         document.addEventListener('keydown', handleGlobalKeydown);
 
-        if (dom.savePresetBtn) dom.savePresetBtn.addEventListener('click', actions.handleSavePreset);
-        if (dom.saveBatchPresetBtn) dom.saveBatchPresetBtn.addEventListener('click', actions.handleSaveBatchPreset);
-
         // Inline edit
         dom.historyTableBody.addEventListener('dblclick', (e) => {
             const td = e.target.closest('td');
@@ -141,29 +130,6 @@
             }
         });
 
-        if (dom.batchBtn) dom.batchBtn.addEventListener('click', actions.handleBatchApply);
-
-        if (dom.presetsList) {
-            dom.presetsList.addEventListener('click', (e) => {
-                const applyBtn = e.target.closest('.apply-preset');
-                const delBtn = e.target.closest('.del-preset');
-
-                if (applyBtn) {
-                    const id = applyBtn.dataset.presetId;
-                    const p = state.presets.find(x => x.id === id);
-                    if (p) actions.applyPreset(p);
-                }
-                if (delBtn) {
-                    const id = delBtn.dataset.presetId;
-                    const idx = state.presets.findIndex(x => x.id === id);
-                    if (idx !== -1) {
-                        state.presets.splice(idx, 1);
-                        savePresets();
-                        renderPresets();
-                    }
-                }
-            });
-        }
 
         // New Features
         if (dom.viewToggleBtn) dom.viewToggleBtn.addEventListener('click', actions.toggleViewMode);
@@ -286,160 +252,42 @@
              observer.observe(dom.shareModal, { attributes: true });
         }
 
-        // Desktop Target Lock Mode Events
-        if (dom.unlockBossBtn) {
-            dom.unlockBossBtn.addEventListener('click', (e) => {
+        // === Unified Action Bar Events ===
+        if (dom.actionUnlockBtn) {
+            dom.actionUnlockBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 actions.selectBoss(null);
             });
         }
-        
-        if (dom.targetShareBtn) {
-            dom.targetShareBtn.addEventListener('click', (e) => {
+        if (dom.actionShareBtn) {
+            dom.actionShareBtn.addEventListener('click', (e) => {
                e.stopPropagation();
                if (!state.focusedBossId) return;
                const text = actions.generateShareText([state.focusedBossId], 'simple');
                actions.shareBossStatus(text);
             });
         }
-
-        // Desktop Focus Mode Events
-        if (dom.focusSubmitBtn) {
-            dom.focusSubmitBtn.addEventListener('click', () => {
-                actions.handleFocusSubmit();
+        if (dom.actionSubmitBtn) {
+            dom.actionSubmitBtn.addEventListener('click', () => actions.handleFocusSubmit());
+        }
+        if (dom.actionChSubBtn) {
+            dom.actionChSubBtn.addEventListener('click', () => actions.updateChannel(-1));
+        }
+        if (dom.actionChAddBtn) {
+            dom.actionChAddBtn.addEventListener('click', () => actions.updateChannel(1));
+        }
+        if (dom.actionChannelInput) {
+            dom.actionChannelInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') actions.handleFocusSubmit();
             });
         }
 
-        // Desktop channel sync
-        if (dom.focusChannelInput) {
-            dom.focusChannelInput.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (dom.channelInput) dom.channelInput.value = val;
-                if (dom.mobileChannelInput) dom.mobileChannelInput.value = val;
-            });
-        }
-        if (dom.channelInput) {
-            dom.channelInput.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (dom.focusChannelInput) dom.focusChannelInput.value = val;
-                if (dom.mobileChannelInput) dom.mobileChannelInput.value = val;
-            });
-        }
-
-        if (dom.focusChSubBtn) {
-            dom.focusChSubBtn.addEventListener('click', () => {
-                const val = parseInt(dom.focusChannelInput.value) || 1;
-                const newVal = Math.max(1, val - 1);
-                dom.focusChannelInput.value = newVal;
-                if (dom.mobileChannelInput) dom.mobileChannelInput.value = newVal;
-            });
-        }
-
-        if (dom.focusChAddBtn) {
-            dom.focusChAddBtn.addEventListener('click', () => {
-                const val = parseInt(dom.focusChannelInput.value) || 1;
-                const newVal = Math.min(3000, val + 1);
-                dom.focusChannelInput.value = newVal;
-                if (dom.mobileChannelInput) dom.mobileChannelInput.value = newVal;
-            });
-        }
-
-        if (dom.focusChannelInput) {
-            dom.focusChannelInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    actions.handleFocusSubmit();
-                }
-            });
-        }
-
-        // =============================================
-        // V2: Bottom Nav Tab Switching
-        // =============================================
+        // === Bottom Nav Tab Switching ===
         if (dom.bottomNav) {
             dom.bottomNav.addEventListener('click', (e) => {
                 const btn = e.target.closest('.bottom-nav-btn');
                 if (btn && btn.dataset.tab) {
                     actions.switchTab(btn.dataset.tab);
-                }
-            });
-        }
-
-        // =============================================
-        // V2: Mobile Record Panel Events
-        // =============================================
-
-        // Mobile 最愛芯片點擊
-        if (dom.mobileFavChips) {
-            dom.mobileFavChips.addEventListener('click', (e) => {
-                const chip = e.target.closest('.fav-boss-chip');
-                if (chip) {
-                    actions.selectBoss(chip.dataset.bossId);
-                }
-            });
-        }
-
-        // Mobile 下拉選單
-        if (dom.mobileBossDropdown) {
-            dom.mobileBossDropdown.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    actions.selectBoss(e.target.value);
-                    e.target.value = '';
-                }
-            });
-        }
-
-        // Mobile Unlock Boss
-        if (dom.mobileUnlockBtn) {
-            dom.mobileUnlockBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                actions.selectBoss(null);
-            });
-        }
-        
-        if (dom.mobileTargetShareBtn) {
-            dom.mobileTargetShareBtn.addEventListener('click', (e) => {
-               e.stopPropagation();
-               if (!state.focusedBossId) return;
-               const text = actions.generateShareText([state.focusedBossId], 'simple');
-               actions.shareBossStatus(text);
-            });
-        }
-
-        // Mobile Submit
-        if (dom.mobileSubmitBtn) {
-            dom.mobileSubmitBtn.addEventListener('click', () => {
-                actions.handleFocusSubmit();
-            });
-        }
-
-        // Mobile Channel +/- buttons
-        if (dom.mobileChSubBtn) {
-            dom.mobileChSubBtn.addEventListener('click', () => {
-                const val = parseInt(dom.mobileChannelInput.value) || 1;
-                const newVal = Math.max(1, val - 1);
-                dom.mobileChannelInput.value = newVal;
-                if (dom.focusChannelInput) dom.focusChannelInput.value = newVal;
-            });
-        }
-        if (dom.mobileChAddBtn) {
-            dom.mobileChAddBtn.addEventListener('click', () => {
-                const val = parseInt(dom.mobileChannelInput.value) || 1;
-                const newVal = Math.min(3000, val + 1);
-                dom.mobileChannelInput.value = newVal;
-                if (dom.focusChannelInput) dom.focusChannelInput.value = newVal;
-            });
-        }
-
-        // Mobile Channel input sync & Enter key
-        if (dom.mobileChannelInput) {
-            dom.mobileChannelInput.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (dom.focusChannelInput) dom.focusChannelInput.value = val;
-                if (dom.channelInput) dom.channelInput.value = val;
-            });
-            dom.mobileChannelInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    actions.handleFocusSubmit();
                 }
             });
         }
@@ -463,10 +311,9 @@
 
         // Target Lock Mode Shortcuts (Non-typing)
         if (!isTyping && state.focusedBossId) {
-            const isMobile = window.innerWidth < 900;
-            const dropEquip = isMobile ? dom.mobileDropEquip : dom.focusDropEquip;
-            const dropScroll = isMobile ? dom.mobileDropScroll : dom.focusDropScroll;
-            const dropStar = isMobile ? dom.mobileDropStar : dom.focusDropStar;
+            const dropEquip = dom.actionDropEquip;
+            const dropScroll = dom.actionDropScroll;
+            const dropStar = dom.actionDropStar;
 
             if (e.key === '1' && dropEquip) { e.preventDefault(); dropEquip.checked = !dropEquip.checked; return; }
             if (e.key === '2' && dropScroll) { e.preventDefault(); dropScroll.checked = !dropScroll.checked; return; }
@@ -484,17 +331,13 @@
         if (e.key === 'Enter' && !isTyping) {
             if (state.focusedBossId) {
                 actions.handleFocusSubmit();
-            } else if (dom.killForm) {
-                dom.killForm.requestSubmit();
             }
             return;
         }
 
         if (!isTyping && (e.key === 'k' || e.key === 'K')) {
             if (state.focusedBossId) {
-                const isMobile = window.innerWidth < 900;
-                const channelInput = isMobile ? dom.mobileChannelInput : dom.focusChannelInput;
-                const ch = channelInput ? (parseInt(channelInput.value) || 1) : (parseInt(dom.channelInput.value) || 1);
+                const ch = dom.actionChannelInput ? (parseInt(dom.actionChannelInput.value) || 1) : 1;
                 actions.recordKillQuick(state.focusedBossId, ch, { autoinc: true, viaKeyboard: true });
             }
         }
