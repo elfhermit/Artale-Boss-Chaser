@@ -688,8 +688,40 @@
         if (dom.filterChipCooldown) dom.filterChipCooldown.textContent = `🔴 冷卻中 (${cooldown})`;
     }
 
+    function renderShareModalOptions() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        const BOSSES_JSON = window.App.Data.Bosses;
+        const { getBossById } = window.App.Core.Utils;
+
+        if (!dom.shareBossList) return;
+        dom.shareBossList.innerHTML = '';
+
+        // Get unique boss IDs from history
+        const activeBossIds = new Set(state.killHistory.map(k => k.bossId));
+        
+        if (activeBossIds.size === 0) {
+            dom.shareBossList.innerHTML = '<div style="color:var(--color-text-disabled); grid-column:1/-1;">無資料</div>';
+            return;
+        }
+
+        const activeBosses = Array.from(activeBossIds).map(id => getBossById(BOSSES_JSON, id)).filter(Boolean);
+        activeBosses.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+
+        activeBosses.forEach(boss => {
+            const label = document.createElement('label');
+            label.className = 'share-boss-item';
+            label.innerHTML = `
+                <input type="checkbox" class="share-boss-checkbox" value="${boss.id}" checked>
+                <span class="share-boss-name">${boss.name}</span>
+            `;
+            dom.shareBossList.appendChild(label);
+        });
+    }
+
     window.App.UI.Render = {
         renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, renderPresets,
-        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderTargetLock, renderMobileTargetHistory
+        renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderTargetLock, renderMobileTargetHistory,
+        renderShareModalOptions
     };
 })();

@@ -37,6 +37,7 @@
         targetBossImg: null,
         targetBossName: null,
         targetBossRespawn: null,
+        targetShareBtn: null,
         unlockBossBtn: null,
         
         // Focus Mode Elements (Desktop)
@@ -70,8 +71,12 @@
         shareModal: null,
         shareTextContent: null,
         shareCopyBtn: null,
+        shareNativeBtn: null,
         shareModalClose: null,
         shareCloseBtn2: null,
+        shareFormatRadios: null,
+        shareBossList: null,
+        shareSelectAllBtn: null,
 
         // 篩選計數
         filterChipAll: null,
@@ -91,6 +96,7 @@
         mobileTargetImg: null,
         mobileTargetName: null,
         mobileTargetRespawn: null,
+        mobileTargetShareBtn: null,
         mobileUnlockBtn: null,
         mobileChannelInput: null,
         mobileChSubBtn: null,
@@ -140,6 +146,7 @@
         dom.targetBossImg = document.getElementById('target-boss-img');
         dom.targetBossName = document.getElementById('target-boss-name');
         dom.targetBossRespawn = document.getElementById('target-boss-respawn');
+        dom.targetShareBtn = document.getElementById('target-share-btn');
         dom.unlockBossBtn = document.getElementById('unlock-boss-btn');
         
         // Focus Mode Init (Desktop)
@@ -172,8 +179,12 @@
         dom.shareModal = document.getElementById('share-modal');
         dom.shareTextContent = document.getElementById('share-text-content');
         dom.shareCopyBtn = document.getElementById('share-copy-btn');
+        dom.shareNativeBtn = document.getElementById('share-native-btn');
         dom.shareModalClose = document.getElementById('share-modal-close');
         dom.shareCloseBtn2 = document.getElementById('share-close-btn2');
+        dom.shareFormatRadios = document.querySelectorAll('input[name="share-format"]');
+        dom.shareBossList = document.getElementById('share-boss-list');
+        dom.shareSelectAllBtn = document.getElementById('share-select-all-btn');
 
         // 篩選計數
         dom.filterChipAll = document.querySelector('.filter-chips .chip[data-filter="all"]');
@@ -193,6 +204,7 @@
         dom.mobileTargetImg = document.getElementById('mobile-target-img');
         dom.mobileTargetName = document.getElementById('mobile-target-name');
         dom.mobileTargetRespawn = document.getElementById('mobile-target-respawn');
+        dom.mobileTargetShareBtn = document.getElementById('mobile-target-share-btn');
         dom.mobileUnlockBtn = document.getElementById('mobile-unlock-btn');
         dom.mobileChannelInput = document.getElementById('mobile-channel-input');
         dom.mobileChSubBtn = document.getElementById('mobile-ch-sub');

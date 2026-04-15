@@ -412,10 +412,11 @@
     // =============================================
     // 分享功能
     // =============================================
-    function generateShareText() {
+    function generateShareText(selectedBossIds = null, format = 'detailed') {
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
         const { calculateTimerState, formatTime } = window.App.Core.Utils;
+        const { getBossById } = window.App.Core.Utils;
 
         const now = new Date();
         const pad = (s, len) => String(s).padEnd(len, ' ');
@@ -423,7 +424,8 @@
         // Group records by boss
         const bossMap = new Map();
         state.killHistory.forEach(record => {
-            const boss = getBossById(record.bossId);
+            if (selectedBossIds && selectedBossIds.length > 0 && !selectedBossIds.includes(record.bossId)) return;
+            const boss = getBossById(BOSSES_JSON, record.bossId);
             if (!boss) return;
             if (!bossMap.has(record.bossId)) {
                 bossMap.set(record.bossId, { boss, records: [] });
@@ -436,38 +438,80 @@
         });
 
         if (bossMap.size === 0) {
-            return '[ Artale Boss Chaser ]\n目前沒有任何追蹤紀錄。';
+            return '[ Artale Boss Chaser ]\n目前選擇的 Boss 沒有任何追蹤紀錄。';
         }
 
         const hh = String(now.getHours()).padStart(2, '0');
         const mm = String(now.getMinutes()).padStart(2, '0');
-        let text = `[ Artale Boss Chaser — ${hh}:${mm} 狀態速報 ]\n`;
-        text += '─'.repeat(44) + '\n';
+        
+        let text = `[ Artale Boss Chaser — ${hh}:${mm} 速報 ]\n`;
+        
+        if (format === 'simple') {
+            text += '─'.repeat(30) + '\n';
+            bossMap.forEach(({ boss, records }) => {
+                records
+                    .sort((a, b) => a.record.channel - b.record.channel)
+                    .forEach(({ record, ts }) => {
+                        let statusText = '';
+                        if (ts.status === 'alive') statusText = '已出';
+                        else if (ts.status === 'warning') statusText = ts.timer.replace('剩 ', '剩');
+                        else statusText = '冷卻中';
+                        text += `${boss.name}(Ch${record.channel}) ${statusText}\n`;
+                    });
+            });
+        } else {
+            text += '─'.repeat(44) + '\n';
+            bossMap.forEach(({ boss, records }) => {
+                text += `\n🔥 ${boss.name}（${boss.respawn}）\n`;
+                text += `  CH   擊殺     預估復活\n`;
+                records
+                    .sort((a, b) => a.record.channel - b.record.channel)
+                    .forEach(({ record, ts, minRespawn, maxRespawn }) => {
+                        const chStr = pad(record.channel, 5);
+                        const killStr = pad(formatTime(new Date(record.killTime)), 7);
+                        const respawnStr = `${formatTime(minRespawn)}~${formatTime(maxRespawn)}`;
+                        const statusMark = ts.status === 'alive' ? '🟢' : ts.status === 'warning' ? '🟡' : '🔴';
+                        text += `  ${chStr}${killStr}${respawnStr} ${statusMark}\n`;
+                    });
+            });
+            text += '\n' + '─'.repeat(44) + '\n';
+            text += '分享自 Artale Boss Chaser PRO 🎮';
+        }
 
-        bossMap.forEach(({ boss, records }) => {
-            text += `\n🔥 ${boss.name}（${boss.respawn}）\n`;
-            text += `  CH   擊殺     預估復活\n`;
-            records
-                .sort((a, b) => a.record.channel - b.record.channel)
-                .forEach(({ record, ts, minRespawn, maxRespawn }) => {
-                    const chStr = pad(record.channel, 5);
-                    const killStr = pad(formatTime(new Date(record.killTime)), 7);
-                    const respawnStr = `${formatTime(minRespawn)}~${formatTime(maxRespawn)}`;
-                    const statusMark = ts.status === 'alive' ? '🟢' : ts.status === 'warning' ? '🟡' : '🔴';
-                    text += `  ${chStr}${killStr}${respawnStr} ${statusMark}\n`;
-                });
-        });
-
-        text += '\n' + '─'.repeat(44) + '\n';
-        text += '分享自 Artale Boss Chaser PRO 🎮';
         return text;
+    }
+
+    function shareBossStatus(text) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Artale Boss Chaser',
+                text: text
+            }).then(() => {
+                showToast("分享成功");
+            }).catch((err) => {
+                console.log('分享取消或失敗', err);
+            });
+        } else {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("已複製到剪貼簿", { timeout: 1500 });
+            });
+        }
     }
 
     function openShareModal() {
         const { dom } = window.App.UI.DOM;
+        const { renderShareModalOptions } = window.App.UI.Render;
         if (!dom.shareModal) return;
-        const text = generateShareText();
-        if (dom.shareTextContent) dom.shareTextContent.textContent = text;
+        
+        renderShareModalOptions();
+        
+        // Check if Native Share is perfectly supported
+        if (navigator.share && dom.shareNativeBtn) {
+            dom.shareNativeBtn.style.display = 'inline-flex';
+        } else if (dom.shareNativeBtn) {
+            dom.shareNativeBtn.style.display = 'none';
+        }
+        
         dom.shareModal.style.display = 'flex';
     }
 
@@ -504,7 +548,7 @@
         saveInlineChannel, saveInlineNotes, handleSavePreset, handleSaveBatchPreset, applyPreset, handleBatchApply,
         updateChannel, setChannel, showToast, showUndoToast,
         toggleViewMode, toggleSound, toggleSmartSort,
-        toggleFavorite, generateShareText, openShareModal,
+        toggleFavorite, generateShareText, openShareModal, shareBossStatus,
         switchTab
     };
 })();

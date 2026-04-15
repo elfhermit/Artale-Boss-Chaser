@@ -127,7 +127,8 @@ body.light-mode .main-header {
 .sidebar {
     max-height: calc(100vh - var(--header-height) - 48px);
     overflow-y: auto;
-    flex-basis: 360px;
+    flex-basis: 30%;
+    max-width: 400px;
     flex-shrink: 0;
     position: sticky;
     top: calc(var(--header-height) + 24px);
@@ -1342,6 +1343,55 @@ body.light-mode .bottom-nav {
     gap: 8px;
     justify-content: flex-end;
     flex-wrap: wrap;
+}
+
+/* =============================================
+   分享 選項樣式
+   ============================================= */
+.share-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.share-boss-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    background: rgba(0,0,0,0.1);
+}
+
+.share-boss-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.share-boss-item:hover {
+    background-color: var(--color-surface-hover);
+}
+
+.share-boss-item input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.share-boss-name {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    user-select: none;
 }
 
 /* =============================================

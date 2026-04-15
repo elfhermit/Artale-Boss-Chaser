@@ -206,6 +206,43 @@
         if (dom.shareCloseBtn2) {
             dom.shareCloseBtn2.addEventListener('click', () => { dom.shareModal.style.display = 'none'; });
         }
+        
+        function updateSharePreview() {
+            if (!dom.shareTextContent) return;
+            let format = 'detailed';
+            dom.shareFormatRadios.forEach(r => { if (r.checked) format = r.value; });
+            
+            const selectedBossIds = [];
+            if (dom.shareBossList) {
+                const checkboxes = dom.shareBossList.querySelectorAll('.share-boss-checkbox');
+                checkboxes.forEach(cb => {
+                    if (cb.checked) selectedBossIds.push(cb.value);
+                });
+            }
+            
+            dom.shareTextContent.textContent = actions.generateShareText(selectedBossIds, format);
+        }
+
+        if (dom.shareFormatRadios) {
+            dom.shareFormatRadios.forEach(radio => {
+                radio.addEventListener('change', updateSharePreview);
+            });
+        }
+        
+        if (dom.shareBossList) {
+            dom.shareBossList.addEventListener('change', updateSharePreview);
+        }
+
+        if (dom.shareSelectAllBtn) {
+            dom.shareSelectAllBtn.addEventListener('click', () => {
+                if (!dom.shareBossList) return;
+                const checkboxes = dom.shareBossList.querySelectorAll('.share-boss-checkbox');
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked);
+                updateSharePreview();
+            });
+        }
+
         if (dom.shareCopyBtn) {
             dom.shareCopyBtn.addEventListener('click', () => {
                 const text = dom.shareTextContent ? dom.shareTextContent.textContent : '';
@@ -224,10 +261,29 @@
                 }
             });
         }
+        
+        if (dom.shareNativeBtn) {
+            dom.shareNativeBtn.addEventListener('click', () => {
+                const text = dom.shareTextContent ? dom.shareTextContent.textContent : '';
+                actions.shareBossStatus(text);
+            });
+        }
+
         if (dom.shareModal) {
             dom.shareModal.addEventListener('click', (e) => {
                 if (e.target === dom.shareModal) dom.shareModal.style.display = 'none';
             });
+            // Update preview right after the modal becomes visible
+            const observer = new MutationObserver((mutations) => {
+                 mutations.forEach((mutation) => {
+                     if (mutation.attributeName === 'style') {
+                         if (dom.shareModal.style.display !== 'none') {
+                             updateSharePreview();
+                         }
+                     }
+                 });
+             });
+             observer.observe(dom.shareModal, { attributes: true });
         }
 
         // Desktop Target Lock Mode Events
@@ -235,6 +291,15 @@
             dom.unlockBossBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 actions.selectBoss(null);
+            });
+        }
+        
+        if (dom.targetShareBtn) {
+            dom.targetShareBtn.addEventListener('click', (e) => {
+               e.stopPropagation();
+               if (!state.focusedBossId) return;
+               const text = actions.generateShareText([state.focusedBossId], 'simple');
+               actions.shareBossStatus(text);
             });
         }
 
@@ -328,6 +393,15 @@
             dom.mobileUnlockBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 actions.selectBoss(null);
+            });
+        }
+        
+        if (dom.mobileTargetShareBtn) {
+            dom.mobileTargetShareBtn.addEventListener('click', (e) => {
+               e.stopPropagation();
+               if (!state.focusedBossId) return;
+               const text = actions.generateShareText([state.focusedBossId], 'simple');
+               actions.shareBossStatus(text);
             });
         }
 

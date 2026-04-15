@@ -41,9 +41,14 @@
                             <h2 id="target-boss-name">Boss Name</h2>
                             <p id="target-boss-respawn">Respawn info</p>
                         </div>
-                        <button id="unlock-boss-btn" class="btn-icon" title="取消鎖定">
-                            <span class="material-icons-outlined">close</span>
-                        </button>
+                        <div style="display: flex; gap: 4px;">
+                            <button id="target-share-btn" class="btn-icon" title="分享此 Boss">
+                                <span class="material-icons-outlined">share</span>
+                            </button>
+                            <button id="unlock-boss-btn" class="btn-icon" title="取消鎖定">
+                                <span class="material-icons-outlined">close</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="focus-input-area">
@@ -255,9 +260,14 @@
                                 <h2 id="mobile-target-name">Boss Name</h2>
                                 <p id="mobile-target-respawn">Respawn info</p>
                             </div>
-                            <button id="mobile-unlock-btn" class="btn-icon" title="取消鎖定">
-                                <span class="material-icons-outlined">close</span>
-                            </button>
+                            <div style="display: flex; gap: 4px;">
+                                <button id="mobile-target-share-btn" class="btn-icon" title="分享此 Boss">
+                                    <span class="material-icons-outlined">share</span>
+                                </button>
+                                <button id="mobile-unlock-btn" class="btn-icon" title="取消鎖定">
+                                    <span class="material-icons-outlined">close</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="focus-input-area">
@@ -387,9 +397,37 @@
                 </button>
             </div>
             <div class="modal-body">
+                <div class="share-options">
+                    <div class="share-format-selector">
+                        <label class="input-label">分享格式</label>
+                        <div class="drop-type-selector">
+                            <label class="drop-chip">
+                                <input type="radio" name="share-format" value="simple" checked>
+                                <span class="chip-content">精簡模式</span>
+                            </label>
+                            <label class="drop-chip">
+                                <input type="radio" name="share-format" value="detailed">
+                                <span class="chip-content">詳細模式</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="share-boss-selector">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label class="input-label" style="margin: 0;">選擇要分享的 Boss</label>
+                            <button type="button" id="share-select-all-btn" class="btn btn-secondary btn-small">全選 / 全不選</button>
+                        </div>
+                        <div id="share-boss-list" class="share-boss-list">
+                            <!-- Checkboxes injected via JS -->
+                        </div>
+                    </div>
+                </div>
+                <label class="input-label" style="margin-top: 16px;">預覽</label>
                 <pre id="share-text-content" class="share-text-pre"></pre>
             </div>
             <div class="modal-actions">
+                <button id="share-native-btn" class="btn btn-secondary" style="display: none;">
+                    <span class="material-icons-outlined" style="font-size:16px">ios_share</span> 系統分享
+                </button>
                 <button id="share-copy-btn" class="btn btn-primary">
                     <span class="material-icons-outlined" style="font-size:16px">content_copy</span> 複製到剪貼簿
                 </button>
