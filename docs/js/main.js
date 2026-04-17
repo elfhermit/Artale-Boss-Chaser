@@ -6,7 +6,7 @@
         // App Parts
         const { initDOM } = window.App.UI.DOM;
         const { loadHistory, loadLastChannel, loadTheme } = window.App.Core.State;
-        const { renderBossCards, renderHistoryTable, updateAllTimers, renderFavoriteChips, updateFilterCounts } = window.App.UI.Render;
+        const { renderBossCards, renderHistoryTable, updateAllTimers, renderFavoriteChips, updateFilterCounts, renderTodaySummary } = window.App.UI.Render;
         const { setupEventListeners } = window.App.UI.Events;
         const { setChannel } = window.App.Logic.Actions;
 
@@ -20,6 +20,8 @@
         renderHistoryTable();
         renderFavoriteChips();
         updateFilterCounts();
+        renderTodaySummary();
+        restoreTodaySummaryCollapse();
 
         setupEventListeners();
         startTimerLoop();
@@ -38,6 +40,16 @@
         timerInterval = setInterval(() => {
             updateAllTimers();
         }, 1000);
+    }
+
+    function restoreTodaySummaryCollapse() {
+        const { dom } = window.App.UI.DOM;
+        if (!dom.todaySummary) return;
+        const collapsed = localStorage.getItem('todaySummaryCollapsed') === 'true';
+        if (collapsed) {
+            dom.todaySummary.classList.add('collapsed');
+            if (dom.todaySummaryToggleIcon) dom.todaySummaryToggleIcon.textContent = 'expand_more';
+        }
     }
 
     // V2: 設定手機版初始狀態

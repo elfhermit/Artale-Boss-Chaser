@@ -8,7 +8,7 @@
         if (!bossId) return;
         const { state, saveHistory, saveLastChannel } = window.App.Core.State;
         const { dom } = window.App.UI.DOM;
-        const { renderHistoryTable, updateBossCard, renderBossCards } = window.App.UI.Render;
+        const { renderHistoryTable, updateBossCard, renderBossCards, renderTodaySummary } = window.App.UI.Render;
         const BOSSES_JSON = window.App.Data.Bosses;
 
         // Prevent rapid double-clicking
@@ -29,7 +29,6 @@
             bossId: bossId,
             killTime: nowISO,
             channel: safeChannel,
-            hasDrop: opts.equip || opts.scroll || opts.star || false,
             drops: {
                 equip: opts.equip || false,
                 scroll: opts.scroll || false,
@@ -47,6 +46,7 @@
         renderHistoryTable();
         updateBossCard(bossId);
         saveLastChannel(safeChannel);
+        if (renderTodaySummary) renderTodaySummary();
         window.App.Core.State.updateRecentBoss(bossId);
 
         if (state.focusedBossId === bossId) {
@@ -166,7 +166,7 @@
 
     function deleteHistoryEntry(id) {
         const { state, saveHistory } = window.App.Core.State;
-        const { renderHistoryTable, updateBossCard } = window.App.UI.Render;
+        const { renderHistoryTable, updateBossCard, renderTodaySummary } = window.App.UI.Render;
 
         const index = state.killHistory.findIndex(k => k.id === id);
         if (index === -1) return;
@@ -174,24 +174,27 @@
         saveHistory();
         renderHistoryTable();
         updateBossCard(removed.bossId);
+        if (renderTodaySummary) renderTodaySummary();
 
         showUndoToast('已刪除一筆紀錄', () => {
             state.killHistory.push(removed);
             saveHistory();
             renderHistoryTable();
             updateBossCard(removed.bossId);
+            if (renderTodaySummary) renderTodaySummary();
         }, { timeout: 6000 });
     }
 
     function clearAllHistory() {
         if (confirm("確定要清空所有紀錄嗎？")) {
             const { state, saveHistory } = window.App.Core.State;
-            const { renderHistoryTable, updateBossCard } = window.App.UI.Render;
+            const { renderHistoryTable, updateBossCard, renderTodaySummary } = window.App.UI.Render;
             const { dom } = window.App.UI.DOM;
             state.killHistory = [];
             saveHistory();
             renderHistoryTable();
             document.querySelectorAll('.boss-card').forEach(card => updateBossCard(card.dataset.bossId));
+            if (renderTodaySummary) renderTodaySummary();
             if (dom.selectedBossInfo) dom.selectedBossInfo.innerHTML = `<span id="boss-placeholder">已清空</span>`;
         }
     }
@@ -300,16 +303,101 @@
     }
 
     // =============================================
-    // 分享功能
+    // 分享功能 — 純複製剪貼簿，良好 LINE/Discord 排版
     // =============================================
+
+    function _copyToClipboard(text, successMsg) {
+        const msg = successMsg || '已複製！貼到 LINE / Discord 分享吧 📋';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text)
+                .then(() => showToast(msg, { timeout: 2000 }))
+                .catch(() => {
+                    _fallbackCopy(text);
+                    showToast(msg, { timeout: 2000 });
+                });
+        } else {
+            _fallbackCopy(text);
+            showToast(msg, { timeout: 2000 });
+        }
+    }
+
+    function _fallbackCopy(text) {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    }
+
+    function generateDailyReport() {
+        const { state } = window.App.Core.State;
+        const BOSSES_JSON = window.App.Data.Bosses;
+        const { formatTime, getBossById } = window.App.Core.Utils;
+
+        const now = new Date();
+        const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+        const records = state.killHistory.filter(k => new Date(k.killTime) >= startOfDay);
+
+        const M = now.getMonth() + 1, D = now.getDate();
+        const timeStr = formatTime(now);
+
+        if (records.length === 0) {
+            return `🎮 Artale 今日戰報｜${M}/${D} ${timeStr}\n今天尚無任何擊殺紀錄。出發吧！⚔️`;
+        }
+
+        const bossCounter = new Map();
+        let equip = 0, scroll = 0, star = 0;
+        records.forEach(r => {
+            bossCounter.set(r.bossId, (bossCounter.get(r.bossId) || 0) + 1);
+            if (r.drops) {
+                if (r.drops.equip) equip++;
+                if (r.drops.scroll) scroll++;
+                if (r.drops.star) star++;
+            }
+        });
+        const totalDrops = equip + scroll + star;
+
+        const sep = '━'.repeat(22);
+        let text = `🎮 Artale 今日戰報｜${M}/${D} ${timeStr}\n${sep}\n`;
+        text += `⚔️  擊殺：${records.length} 次\n`;
+        text += `👾 Boss：${bossCounter.size} 種\n`;
+        if (totalDrops > 0) {
+            const parts = [];
+            if (equip)  parts.push(`🛡️×${equip}`);
+            if (scroll) parts.push(`📜×${scroll}`);
+            if (star)   parts.push(`⭐×${star}`);
+            text += `💎 爆寶：${totalDrops} 次（${parts.join(' ')}）\n`;
+        } else {
+            text += `💎 爆寶：0 次\n`;
+        }
+
+        text += `\n🏆 擊殺排行\n`;
+        const medals = ['🥇', '🥈', '🥉'];
+        const ranked = Array.from(bossCounter.entries()).sort((a, b) => b[1] - a[1]);
+        ranked.forEach(([bossId, count], i) => {
+            const boss = getBossById(BOSSES_JSON, bossId);
+            if (!boss) return;
+            const prefix = medals[i] || `${i + 1}.`;
+            text += `${prefix} ${boss.name} ×${count}\n`;
+        });
+
+        text += `${sep}\n📲 Artale Boss Chaser PRO`;
+        return text;
+    }
+
     function generateShareText(selectedBossIds = null, format = 'detailed') {
+        if (format === 'daily') return generateDailyReport();
+
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
         const { calculateTimerState, formatTime } = window.App.Core.Utils;
         const { getBossById } = window.App.Core.Utils;
 
         const now = new Date();
-        const pad = (s, len) => String(s).padEnd(len, ' ');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
 
         // Group records by boss
         const bossMap = new Map();
@@ -317,9 +405,7 @@
             if (selectedBossIds && selectedBossIds.length > 0 && !selectedBossIds.includes(record.bossId)) return;
             const boss = getBossById(BOSSES_JSON, record.bossId);
             if (!boss) return;
-            if (!bossMap.has(record.bossId)) {
-                bossMap.set(record.bossId, { boss, records: [] });
-            }
+            if (!bossMap.has(record.bossId)) bossMap.set(record.bossId, { boss, records: [] });
             const killDate = new Date(record.killTime);
             const minRespawn = new Date(killDate.getTime() + boss.minMinutes * 60000);
             const maxRespawn = new Date(killDate.getTime() + boss.maxMinutes * 60000);
@@ -328,80 +414,61 @@
         });
 
         if (bossMap.size === 0) {
-            return '[ Artale Boss Chaser ]\n目前選擇的 Boss 沒有任何追蹤紀錄。';
+            return '🎮 Artale Boss Chaser\n目前選擇的 Boss 沒有任何追蹤紀錄。';
         }
 
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        
-        let text = `[ Artale Boss Chaser — ${hh}:${mm} 速報 ]\n`;
-        
+        const sep = '━'.repeat(22);
+
         if (format === 'simple') {
-            text += '─'.repeat(30) + '\n';
+            // 精簡：一行一筆，狀態 emoji 讓人掃一眼就知道
+            let text = `⚡ Artale 速報｜${hh}:${mm}\n${sep}\n`;
             bossMap.forEach(({ boss, records }) => {
                 records
                     .sort((a, b) => a.record.channel - b.record.channel)
                     .forEach(({ record, ts }) => {
-                        let statusText = '';
-                        if (ts.status === 'alive') statusText = '已出';
-                        else if (ts.status === 'warning') statusText = ts.timer.replace('剩 ', '剩');
-                        else statusText = '冷卻中';
-                        text += `${boss.name}(Ch${record.channel}) ${statusText}\n`;
+                        let mark, statusText;
+                        if (ts.status === 'alive') {
+                            mark = '🟢'; statusText = '✅ 已出現';
+                        } else if (ts.status === 'warning') {
+                            mark = '🟡'; statusText = `⏳ 剩 ${ts.timer}`;
+                        } else {
+                            mark = '🔴'; statusText = '❌ 冷卻中';
+                        }
+                        text += `${mark} ${boss.name}  Ch.${record.channel}  ${statusText}\n`;
                     });
             });
-        } else {
-            text += '─'.repeat(44) + '\n';
-            bossMap.forEach(({ boss, records }) => {
-                text += `\n🔥 ${boss.name}（${boss.respawn}）\n`;
-                text += `  CH   擊殺     預估復活\n`;
-                records
-                    .sort((a, b) => a.record.channel - b.record.channel)
-                    .forEach(({ record, ts, minRespawn, maxRespawn }) => {
-                        const chStr = pad(record.channel, 5);
-                        const killStr = pad(formatTime(new Date(record.killTime)), 7);
-                        const respawnStr = `${formatTime(minRespawn)}~${formatTime(maxRespawn)}`;
-                        const statusMark = ts.status === 'alive' ? '🟢' : ts.status === 'warning' ? '🟡' : '🔴';
-                        text += `  ${chStr}${killStr}${respawnStr} ${statusMark}\n`;
-                    });
-            });
-            text += '\n' + '─'.repeat(44) + '\n';
-            text += '分享自 Artale Boss Chaser PRO 🎮';
+            text += `${sep}\n📲 Artale Boss Chaser PRO`;
+            return text;
         }
 
+        // 詳細：分 Boss 段落，含擊殺時間與預估重生
+        let text = `📋 Artale 狀態速報｜${hh}:${mm}\n${sep}\n`;
+        bossMap.forEach(({ boss, records }) => {
+            text += `\n🔥 ${boss.name}（${boss.respawn}）\n`;
+            records
+                .sort((a, b) => a.record.channel - b.record.channel)
+                .forEach(({ record, ts, minRespawn, maxRespawn }) => {
+                    const statusMark = ts.status === 'alive' ? '🟢' : ts.status === 'warning' ? '🟡' : '🔴';
+                    const killStr  = formatTime(new Date(record.killTime));
+                    const respawnStr = `${formatTime(minRespawn)}~${formatTime(maxRespawn)}`;
+                    const dropStr = (record.drops && (record.drops.equip || record.drops.scroll || record.drops.star))
+                        ? ' 💎' : '';
+                    text += `  ${statusMark} Ch.${String(record.channel).padEnd(4)} ⚔️${killStr}  🕐${respawnStr}${dropStr}\n`;
+                });
+        });
+        text += `\n${sep}\n📲 Artale Boss Chaser PRO`;
         return text;
     }
 
     function shareBossStatus(text) {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Artale Boss Chaser',
-                text: text
-            }).then(() => {
-                showToast("分享成功");
-            }).catch((err) => {
-                console.log('分享取消或失敗', err);
-            });
-        } else {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("已複製到剪貼簿", { timeout: 1500 });
-            });
-        }
+        _copyToClipboard(text);
     }
 
     function openShareModal() {
         const { dom } = window.App.UI.DOM;
         const { renderShareModalOptions } = window.App.UI.Render;
         if (!dom.shareModal) return;
-        
         renderShareModalOptions();
-        
-        // Check if Native Share is perfectly supported
-        if (navigator.share && dom.shareNativeBtn) {
-            dom.shareNativeBtn.style.display = 'inline-flex';
-        } else if (dom.shareNativeBtn) {
-            dom.shareNativeBtn.style.display = 'none';
-        }
-        
         dom.shareModal.style.display = 'flex';
     }
 
@@ -425,12 +492,26 @@
     }
 
     function toggleSmartSort() {
-        const { state } = window.App.Core.State;
+        const { state, saveSmartSort } = window.App.Core.State;
         const { renderBossCards } = window.App.UI.Render;
-        state.smartSortActive = !state.smartSortActive;
+        saveSmartSort(!state.smartSortActive);
         renderBossCards();
         if (state.smartSortActive) showToast("已啟用智慧排序 (即將重生優先)", { timeout: 1000 });
         else showToast("已還原預設排序", { timeout: 1000 });
+    }
+
+    function shareDailyReport() {
+        _copyToClipboard(generateDailyReport(), '今日戰報已複製 📋 貼到 LINE / Discord 分享吧！');
+    }
+
+    function toggleTodaySummary() {
+        const { dom } = window.App.UI.DOM;
+        if (!dom.todaySummary) return;
+        const collapsed = dom.todaySummary.classList.toggle('collapsed');
+        if (dom.todaySummaryToggleIcon) {
+            dom.todaySummaryToggleIcon.textContent = collapsed ? 'expand_more' : 'expand_less';
+        }
+        try { localStorage.setItem('todaySummaryCollapsed', String(collapsed)); } catch (e) {}
     }
 
     window.App.Logic.Actions = {
@@ -438,7 +519,8 @@
         saveInlineChannel, saveInlineNotes,
         updateChannel, setChannel, showToast, showUndoToast,
         toggleViewMode, toggleSound, toggleSmartSort,
-        toggleFavorite, generateShareText, openShareModal, shareBossStatus,
+        toggleFavorite, generateShareText, generateDailyReport, openShareModal, shareBossStatus,
+        shareDailyReport, toggleTodaySummary,
         switchTab
     };
 })();

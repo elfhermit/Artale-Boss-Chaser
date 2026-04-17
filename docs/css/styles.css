@@ -1952,3 +1952,302 @@ body.has-action-bar {
         padding-bottom: calc(var(--bottom-nav-height) + 240px);
     }
 }
+
+/* --- 今日戰況 Summary --- */
+.today-summary {
+    background: linear-gradient(135deg, rgba(187, 134, 252, 0.08), rgba(3, 218, 198, 0.04));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.today-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.today-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+}
+.today-summary-title .material-icons-outlined {
+    font-size: 18px;
+    color: var(--color-primary);
+}
+.today-summary-date {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin-left: 4px;
+}
+.today-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.today-summary-actions .btn-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+}
+.today-summary-toggle {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+.today-summary-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.today-summary-body {
+    padding: 14px;
+    transition: all 0.3s ease;
+}
+.today-summary.collapsed .today-summary-body {
+    display: none;
+}
+.today-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.today-stat {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    position: relative;
+}
+.today-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    font-family: var(--font-family-mono);
+    line-height: 1.2;
+}
+.today-stat-time {
+    font-size: 1.2rem;
+    color: var(--color-secondary);
+}
+.today-stat-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+}
+.today-drop-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+}
+.today-drop-breakdown span {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+.today-drop-breakdown .material-icons-outlined {
+    font-size: 12px;
+}
+.today-top-bosses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.today-boss-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(187, 134, 252, 0.12);
+    border: 1px solid rgba(187, 134, 252, 0.25);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: var(--color-text-primary);
+}
+.today-boss-abbr {
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.today-boss-count {
+    font-weight: 700;
+    color: var(--color-warning);
+    font-family: var(--font-family-mono);
+}
+.today-empty {
+    width: 100%;
+    text-align: center;
+    color: var(--color-text-disabled);
+    font-size: 0.9rem;
+    padding: 10px;
+}
+
+@media (max-width: 600px) {
+    .today-stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    .today-stat {
+        padding: 8px 4px;
+    }
+    .today-stat-value {
+        font-size: 1.2rem;
+    }
+    .today-stat-time {
+        font-size: 1rem;
+    }
+    .today-stat-label {
+        font-size: 0.68rem;
+    }
+    .today-boss-chip {
+        font-size: 0.78rem;
+        padding: 3px 8px;
+    }
+    .today-boss-name {
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* --- PR#2: History Table → Card List on Mobile (<768px) --- */
+.drops-cell {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+.notes-cell {
+    color: var(--color-text-secondary);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    /* Hide the table-header so rows can be rendered as cards */
+    #kill-history-table thead {
+        display: none;
+    }
+    #kill-history-table,
+    #kill-history-table tbody,
+    #kill-history-table tr,
+    #kill-history-table td {
+        display: block;
+        width: 100%;
+    }
+    #kill-history-table tr {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    }
+    #kill-history-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border: none;
+        text-align: right;
+        gap: 12px;
+    }
+    #kill-history-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+    /* Hide the auto-injected label for cells that don't need it */
+    #kill-history-table td[data-label="Boss"] {
+        justify-content: flex-start;
+        font-weight: 700;
+        font-size: 1rem;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 6px;
+        padding-bottom: 8px;
+    }
+    #kill-history-table td[data-label="Boss"]::before {
+        display: none;
+    }
+    #kill-history-table td[data-label="操作"] {
+        justify-content: flex-end;
+        padding-top: 8px;
+    }
+    #kill-history-table .drops-cell {
+        justify-content: flex-end;
+    }
+    #kill-history-table .notes-cell {
+        max-width: 60%;
+        text-align: right;
+    }
+    #kill-history-table .respawn-range {
+        font-family: var(--font-family-mono);
+        color: var(--color-secondary);
+    }
+    /* Empty-state full-width colspan fix */
+    #kill-history-table td[colspan] {
+        text-align: center !important;
+        justify-content: center;
+    }
+    #kill-history-table td[colspan]::before {
+        display: none;
+    }
+
+    /* Share Modal: full-screen on mobile */
+    #share-modal .modal-panel {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    #share-modal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+    }
+    #share-modal .modal-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    #share-modal .modal-actions .btn {
+        flex: 1;
+        min-width: 40%;
+    }
+    #share-modal .share-text-pre {
+        max-height: 40vh;
+    }
+
+    /* Ensure last card isn't hidden behind bottom nav / action bar */
+    .boss-list {
+        padding-bottom: 12px;
+    }
+    .history-section {
+        padding-bottom: 12px;
+    }
+}

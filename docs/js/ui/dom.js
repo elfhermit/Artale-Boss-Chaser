@@ -62,7 +62,21 @@
         // === Tab System ===
         bottomNav: null,
         tabButtons: [],
-        tabPanels: []
+        tabPanels: [],
+
+        // 今日戰況
+        todaySummary: null,
+        todaySummaryBody: null,
+        todaySummaryDate: null,
+        todaySummaryToggle: null,
+        todaySummaryToggleIcon: null,
+        todayKills: null,
+        todayBosses: null,
+        todayDrops: null,
+        todayDropBreakdown: null,
+        todayLastTime: null,
+        todayTopBosses: null,
+        todayShareBtn: null
     };
 
     function initDOM() {
@@ -124,6 +138,20 @@
         dom.filterChipAlive = document.querySelector('.filter-chips .chip[data-filter="alive"]');
         dom.filterChipWarning = document.querySelector('.filter-chips .chip[data-filter="warning"]');
         dom.filterChipCooldown = document.querySelector('.filter-chips .chip[data-filter="cooldown"]');
+
+        // 今日戰況
+        dom.todaySummary = document.getElementById('today-summary');
+        dom.todaySummaryBody = document.getElementById('today-summary-body');
+        dom.todaySummaryDate = document.getElementById('today-summary-date');
+        dom.todaySummaryToggle = document.getElementById('today-summary-toggle');
+        dom.todaySummaryToggleIcon = document.getElementById('today-summary-toggle-icon');
+        dom.todayKills = document.getElementById('today-kills');
+        dom.todayBosses = document.getElementById('today-bosses');
+        dom.todayDrops = document.getElementById('today-drops');
+        dom.todayDropBreakdown = document.getElementById('today-drop-breakdown');
+        dom.todayLastTime = document.getElementById('today-last-time');
+        dom.todayTopBosses = document.getElementById('today-top-bosses');
+        dom.todayShareBtn = document.getElementById('today-share-btn');
 
         // === Tab System ===
         dom.bottomNav = document.getElementById('bottom-nav');

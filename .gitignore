@@ -36,3 +36,8 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Temp reference / work folders
+tmp_ref_repo/
+tmp/
+test-results/

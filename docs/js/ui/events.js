@@ -228,13 +228,6 @@
             });
         }
         
-        if (dom.shareNativeBtn) {
-            dom.shareNativeBtn.addEventListener('click', () => {
-                const text = dom.shareTextContent ? dom.shareTextContent.textContent : '';
-                actions.shareBossStatus(text);
-            });
-        }
-
         if (dom.shareModal) {
             dom.shareModal.addEventListener('click', (e) => {
                 if (e.target === dom.shareModal) dom.shareModal.style.display = 'none';
@@ -280,6 +273,14 @@
             dom.actionChannelInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') actions.handleFocusSubmit();
             });
+        }
+
+        // === 今日戰況 ===
+        if (dom.todayShareBtn) {
+            dom.todayShareBtn.addEventListener('click', actions.shareDailyReport);
+        }
+        if (dom.todaySummaryToggle) {
+            dom.todaySummaryToggle.addEventListener('click', actions.toggleTodaySummary);
         }
 
         // === Bottom Nav Tab Switching ===

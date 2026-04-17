@@ -346,7 +346,10 @@
                     valB = bossB ? bossB.name : '';
                     break;
                 case 'channel': valA = a.channel; valB = b.channel; break;
-                case 'hasDrop': valA = a.hasDrop ? 1 : 0; valB = b.hasDrop ? 1 : 0; break;
+                case 'hasDrop':
+                    valA = (a.drops && (a.drops.equip || a.drops.scroll || a.drops.star)) || a.hasDrop ? 1 : 0;
+                    valB = (b.drops && (b.drops.equip || b.drops.scroll || b.drops.star)) || b.hasDrop ? 1 : 0;
+                    break;
                 case 'respawn':
                     valA = new Date(a.killTime).getTime() + (bossA ? bossA.minMinutes * 60000 : 0);
                     valB = new Date(b.killTime).getTime() + (bossB ? bossB.minMinutes * 60000 : 0);
@@ -406,16 +409,16 @@
             }
 
             tr.innerHTML = `
-                <td><div style="display:flex; align-items:center; gap:8px;">
+                <td data-label="Boss"><div style="display:flex; align-items:center; gap:8px;">
                     <div class="mini-boss-img">${boss.name.substring(0,1)}</div>
                     <span>${boss.name}</span>
                 </div></td>
-                <td>${formatTimeDisplay(killDate)}</td>
-                <td><span style="font-weight:700; color:var(--color-primary); font-size:1.1rem;">${entry.channel}</span></td>
-                <td><div style="display:flex; gap:4px; justify-content:center;">${dropHtml}</div></td>
-                <td style="color:var(--color-text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entry.notes || '-'}</td>
-                <td><span class="respawn-range">${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</span></td>
-                <td><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
+                <td data-label="擊殺">${formatTimeDisplay(killDate)}</td>
+                <td data-label="頻道"><span style="font-weight:700; color:var(--color-primary); font-size:1.1rem;">${entry.channel}</span></td>
+                <td data-label="掉寶"><div class="drops-cell">${dropHtml}</div></td>
+                <td data-label="備註" class="notes-cell">${entry.notes || '-'}</td>
+                <td data-label="重生"><span class="respawn-range">${formatTime(minRespawn)} ~ ${formatTime(maxRespawn)}</span></td>
+                <td data-label="操作"><button class="btn btn-danger btn-small btn-icon delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button></td>
             `;
             dom.historyTableBody.appendChild(tr);
         });
@@ -546,37 +549,35 @@
         const { dom } = window.App.UI.DOM;
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
+        const dropdown = dom.bossSelectorDropdown;
+        if (!dropdown) return;
 
-        const dropdowns = [dom.bossSelectorDropdown].filter(Boolean);
-        
-        dropdowns.forEach(dropdown => {
-            dropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
+        dropdown.innerHTML = '<option value="">🔍 快速選擇 Boss...</option>';
 
-            const favBosses = state.favorites.map(id => getBossById(id)).filter(Boolean);
-            const allBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+        const favBosses = state.favorites.map(id => getBossById(id)).filter(Boolean);
+        const allBosses = [...BOSSES_JSON].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
-            if (favBosses.length > 0) {
-                const favGroup = document.createElement('optgroup');
-                favGroup.label = '⭐ 常用 Boss';
-                favBosses.forEach(boss => {
-                    const opt = document.createElement('option');
-                    opt.value = boss.id;
-                    opt.textContent = boss.name;
-                    favGroup.appendChild(opt);
-                });
-                dropdown.appendChild(favGroup);
-            }
-
-            const allGroup = document.createElement('optgroup');
-            allGroup.label = '── 全部 Boss ──';
-            allBosses.forEach(boss => {
+        if (favBosses.length > 0) {
+            const favGroup = document.createElement('optgroup');
+            favGroup.label = '⭐ 常用 Boss';
+            favBosses.forEach(boss => {
                 const opt = document.createElement('option');
                 opt.value = boss.id;
-                opt.textContent = `${boss.name}（${boss.respawn}）`;
-                allGroup.appendChild(opt);
+                opt.textContent = boss.name;
+                favGroup.appendChild(opt);
             });
-            dropdown.appendChild(allGroup);
+            dropdown.appendChild(favGroup);
+        }
+
+        const allGroup = document.createElement('optgroup');
+        allGroup.label = '── 全部 Boss ──';
+        allBosses.forEach(boss => {
+            const opt = document.createElement('option');
+            opt.value = boss.id;
+            opt.textContent = `${boss.name}（${boss.respawn}）`;
+            allGroup.appendChild(opt);
         });
+        dropdown.appendChild(allGroup);
     }
 
     // =============================================
@@ -641,9 +642,86 @@
         });
     }
 
+    // =============================================
+    // 今日戰況 Summary
+    // =============================================
+    function getTodayRecords() {
+        const { state } = window.App.Core.State;
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        return state.killHistory.filter(k => new Date(k.killTime) >= startOfDay);
+    }
+
+    function renderTodaySummary() {
+        const { dom } = window.App.UI.DOM;
+        if (!dom.todaySummary) return;
+
+        const records = getTodayRecords();
+        const now = new Date();
+        if (dom.todaySummaryDate) {
+            dom.todaySummaryDate.textContent = `${now.getMonth() + 1}/${now.getDate()}`;
+        }
+
+        const bossSet = new Set(records.map(r => r.bossId));
+        let equip = 0, scroll = 0, star = 0;
+        records.forEach(r => {
+            if (r.drops) {
+                if (r.drops.equip) equip++;
+                if (r.drops.scroll) scroll++;
+                if (r.drops.star) star++;
+            }
+        });
+        const totalDrops = equip + scroll + star;
+
+        if (dom.todayKills) dom.todayKills.textContent = records.length;
+        if (dom.todayBosses) dom.todayBosses.textContent = bossSet.size;
+        if (dom.todayDrops) dom.todayDrops.textContent = totalDrops;
+        if (dom.todayDropBreakdown) {
+            if (totalDrops === 0) {
+                dom.todayDropBreakdown.innerHTML = '<span style="opacity:0.4;">無</span>';
+            } else {
+                const parts = [];
+                if (equip) parts.push(`<span title="裝備"><span class="material-icons-outlined">shield</span>${equip}</span>`);
+                if (scroll) parts.push(`<span title="卷軸"><span class="material-icons-outlined">description</span>${scroll}</span>`);
+                if (star) parts.push(`<span title="大寶物"><span class="material-icons-outlined">stars</span>${star}</span>`);
+                dom.todayDropBreakdown.innerHTML = parts.join('');
+            }
+        }
+
+        if (dom.todayLastTime) {
+            if (records.length === 0) {
+                dom.todayLastTime.textContent = '--:--';
+            } else {
+                const last = records.reduce((a, b) => new Date(a.killTime) > new Date(b.killTime) ? a : b);
+                dom.todayLastTime.textContent = formatTime(new Date(last.killTime));
+            }
+        }
+
+        if (dom.todayTopBosses) {
+            dom.todayTopBosses.innerHTML = '';
+            if (records.length === 0) {
+                dom.todayTopBosses.innerHTML = '<div class="today-empty">今天尚無紀錄，開始獵 Boss 吧！</div>';
+            } else {
+                const counter = new Map();
+                records.forEach(r => counter.set(r.bossId, (counter.get(r.bossId) || 0) + 1));
+                const ranked = Array.from(counter.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+                ranked.forEach(([bossId, count]) => {
+                    const boss = getBossById(bossId);
+                    if (!boss) return;
+                    const chip = document.createElement('div');
+                    chip.className = 'today-boss-chip';
+                    chip.innerHTML = `<span class="today-boss-abbr">${boss.name.substring(0, 2)}</span><span class="today-boss-name">${boss.name}</span><span class="today-boss-count">×${count}</span>`;
+                    dom.todayTopBosses.appendChild(chip);
+                });
+            }
+        }
+    }
+
     window.App.UI.Render = {
-        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers, 
+        renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers,
         renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderActionBar,
-        renderShareModalOptions
+        renderShareModalOptions, renderTodaySummary, getTodayRecords
     };
 })();

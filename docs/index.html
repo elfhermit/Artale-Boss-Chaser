@@ -34,6 +34,47 @@
 
             <!-- ===== Tab Panel: Boss 列表 ===== -->
             <div class="tab-panel active" id="panel-bosses" data-panel="bosses">
+                <!-- 今日戰況 Summary -->
+                <section class="today-summary" id="today-summary">
+                    <div class="today-summary-header">
+                        <div class="today-summary-title">
+                            <span class="material-icons-outlined">today</span>
+                            <span>今日戰況</span>
+                            <span class="today-summary-date" id="today-summary-date"></span>
+                        </div>
+                        <div class="today-summary-actions">
+                            <button class="btn btn-primary btn-small" id="today-share-btn" title="複製今日戰報">
+                                <span class="material-icons-outlined" style="font-size:15px">content_copy</span>
+                                <span>戰報</span>
+                            </button>
+                            <button class="btn-icon today-summary-toggle" id="today-summary-toggle" title="收合/展開">
+                                <span class="material-icons-outlined" id="today-summary-toggle-icon">expand_less</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="today-summary-body" id="today-summary-body">
+                        <div class="today-stats">
+                            <div class="today-stat">
+                                <div class="today-stat-value" id="today-kills">0</div>
+                                <div class="today-stat-label">擊殺數</div>
+                            </div>
+                            <div class="today-stat">
+                                <div class="today-stat-value" id="today-bosses">0</div>
+                                <div class="today-stat-label">Boss 種類</div>
+                            </div>
+                            <div class="today-stat today-stat-drops">
+                                <div class="today-stat-value" id="today-drops">0</div>
+                                <div class="today-stat-label">爆寶次數</div>
+                                <div class="today-drop-breakdown" id="today-drop-breakdown"></div>
+                            </div>
+                            <div class="today-stat">
+                                <div class="today-stat-value today-stat-time" id="today-last-time">--:--</div>
+                                <div class="today-stat-label">最後紀錄</div>
+                            </div>
+                        </div>
+                        <div class="today-top-bosses" id="today-top-bosses"></div>
+                    </div>
+                </section>
                 <!-- Search & Filter -->
                 <div class="filter-bar">
                     <!-- Boss 下拉快速選擇框 (合併 PC/Mobile) -->
@@ -198,7 +239,7 @@
     <div id="share-modal" class="modal-overlay" style="display:none;">
         <div class="modal-panel">
             <div class="modal-header">
-                <h3><span class="material-icons-outlined" style="vertical-align:middle; margin-right:6px;">share</span>快速分享 Boss 狀態</h3>
+                <h3><span class="material-icons-outlined" style="vertical-align:middle; margin-right:6px;">content_copy</span>複製分享文字</h3>
                 <button id="share-modal-close" class="btn-icon" title="關閉">
                     <span class="material-icons-outlined">close</span>
                 </button>
@@ -206,21 +247,21 @@
             <div class="modal-body">
                 <div class="share-options">
                     <div class="share-format-selector">
-                        <label class="input-label">分享格式</label>
+                        <label class="input-label">格式</label>
                         <div class="drop-type-selector">
                             <label class="drop-chip">
                                 <input type="radio" name="share-format" value="simple" checked>
-                                <span class="chip-content">精簡模式</span>
+                                <span class="chip-content">⚡ 精簡</span>
                             </label>
                             <label class="drop-chip">
                                 <input type="radio" name="share-format" value="detailed">
-                                <span class="chip-content">詳細模式</span>
+                                <span class="chip-content">📋 詳細</span>
                             </label>
                         </div>
                     </div>
                     <div class="share-boss-selector">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <label class="input-label" style="margin: 0;">選擇要分享的 Boss</label>
+                            <label class="input-label" style="margin: 0;">選擇 Boss</label>
                             <button type="button" id="share-select-all-btn" class="btn btn-secondary btn-small">全選 / 全不選</button>
                         </div>
                         <div id="share-boss-list" class="share-boss-list">
@@ -228,15 +269,12 @@
                         </div>
                     </div>
                 </div>
-                <label class="input-label" style="margin-top: 16px;">預覽</label>
+                <label class="input-label" style="margin-top: 16px;">預覽（複製後貼到 LINE / Discord）</label>
                 <pre id="share-text-content" class="share-text-pre"></pre>
             </div>
             <div class="modal-actions">
-                <button id="share-native-btn" class="btn btn-secondary" style="display: none;">
-                    <span class="material-icons-outlined" style="font-size:16px">ios_share</span> 系統分享
-                </button>
                 <button id="share-copy-btn" class="btn btn-primary">
-                    <span class="material-icons-outlined" style="font-size:16px">content_copy</span> 複製到剪貼簿
+                    <span class="material-icons-outlined" style="font-size:16px">content_copy</span> 複製文字
                 </button>
                 <button id="share-close-btn2" class="btn btn-secondary">關閉</button>
             </div>
