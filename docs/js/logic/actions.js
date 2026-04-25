@@ -451,9 +451,23 @@
                     const statusMark = ts.status === 'alive' ? '🟢' : ts.status === 'warning' ? '🟡' : '🔴';
                     const killStr  = formatTime(new Date(record.killTime));
                     const respawnStr = `${formatTime(minRespawn)}~${formatTime(maxRespawn)}`;
+                    
+                    const nowTime = Date.now();
+                    const minMins = Math.ceil((minRespawn.getTime() - nowTime) / 60000);
+                    const maxMins = Math.ceil((maxRespawn.getTime() - nowTime) / 60000);
+                    
+                    let estimateStr = '';
+                    if (minMins > 0) {
+                        estimateStr = `(預計 ${minMins}~${maxMins} 分鐘)`;
+                    } else if (maxMins > 0) {
+                        estimateStr = `(預計 ${maxMins} 分鐘內)`;
+                    } else {
+                        estimateStr = `(可出發)`;
+                    }
+
                     const dropStr = (record.drops && (record.drops.equip || record.drops.scroll || record.drops.star))
                         ? ' 💎' : '';
-                    text += `  ${statusMark} Ch.${String(record.channel).padEnd(4)} ⚔️${killStr}  🕐${respawnStr}${dropStr}\n`;
+                    text += `  ${statusMark} Ch.${String(record.channel).padEnd(4)} ⚔️${killStr}  🕐${respawnStr} ${estimateStr}${dropStr}\n`;
                 });
         });
         text += `\n${sep}\n📲 Artale Boss Chaser PRO`;
