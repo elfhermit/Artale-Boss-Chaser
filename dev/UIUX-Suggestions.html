@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artale Boss Chaser — UI/UX 建議報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: oklch(0.18 0.012 250);
+    --bg-2: oklch(0.22 0.014 250);
+    --bg-3: oklch(0.26 0.014 250);
+    --line: oklch(0.32 0.014 250);
+    --line-soft: oklch(0.28 0.012 250);
+    --fg: oklch(0.96 0.005 250);
+    --fg-2: oklch(0.78 0.012 250);
+    --fg-3: oklch(0.58 0.014 250);
+    --accent: oklch(0.72 0.14 255);
+    --accent-soft: oklch(0.45 0.10 255 / 0.18);
+    --good: oklch(0.78 0.14 150);
+    --warn: oklch(0.82 0.14 85);
+    --bad:  oklch(0.72 0.16 25);
+    --star: oklch(0.84 0.14 80);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+    font-family:"Inter","Noto Sans TC",sans-serif;font-feature-settings:"ss01","cv11";
+    line-height:1.55;-webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",monospace}
+
+  /* ===== Layout ===== */
+  .page{max-width:1180px;margin:0 auto;padding:64px 40px 120px}
+  @media (max-width:720px){.page{padding:36px 20px 80px}}
+
+  /* ===== Header ===== */
+  .doc-header{border-bottom:1px solid var(--line);padding-bottom:36px;margin-bottom:48px}
+  .doc-eyebrow{display:flex;gap:10px;align-items:center;font-size:12px;
+    text-transform:uppercase;letter-spacing:0.16em;color:var(--fg-3);margin-bottom:18px}
+  .doc-eyebrow .dot{width:6px;height:6px;border-radius:99px;background:var(--accent)}
+  h1.doc-title{font-size:clamp(34px,5vw,52px);font-weight:800;line-height:1.05;
+    letter-spacing:-0.02em;margin:0 0 16px}
+  .doc-sub{color:var(--fg-2);font-size:18px;max-width:720px;margin:0 0 24px}
+  .doc-meta{display:flex;gap:24px;flex-wrap:wrap;color:var(--fg-3);font-size:13px}
+  .doc-meta span strong{color:var(--fg-2);font-weight:500}
+
+  /* ===== Section ===== */
+  section.block{margin:80px 0 0}
+  .sec-num{font-family:"JetBrains Mono",monospace;color:var(--fg-3);font-size:13px;letter-spacing:0.06em}
+  h2.sec-title{font-size:30px;font-weight:700;letter-spacing:-0.01em;margin:6px 0 8px}
+  .sec-desc{color:var(--fg-2);max-width:780px;margin:0 0 28px}
+
+  /* ===== TOC ===== */
+  .toc{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:24px}
+  .toc h3{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:0.14em;color:var(--fg-3);font-weight:600}
+  .toc ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:2px 24px}
+  @media (max-width:720px){.toc ol{grid-template-columns:1fr}}
+  .toc li{display:flex;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px dashed var(--line-soft)}
+  .toc li:last-child,.toc li:nth-last-child(2){border-bottom:none}
+  .toc .n{font-family:"JetBrains Mono",monospace;color:var(--fg-3);font-size:12px;width:22px}
+  .toc .t{flex:1}
+  .toc .pill{font-family:"JetBrains Mono",monospace;font-size:10px;padding:2px 7px;border-radius:99px;
+    border:1px solid var(--line);color:var(--fg-3)}
+  .toc .pill.p0{color:var(--bad);border-color:var(--bad)}
+  .toc .pill.p1{color:var(--warn);border-color:var(--warn)}
+  .toc .pill.p2{color:var(--accent);border-color:var(--accent)}
+  .toc .pill.p3{color:var(--fg-3)}
+  .toc a{color:var(--fg);text-decoration:none}
+  .toc a:hover{color:var(--accent)}
+
+  /* ===== Suggestion Card ===== */
+  .sug{margin:48px 0;border:1px solid var(--line);border-radius:14px;background:var(--bg-2);overflow:hidden}
+  .sug-head{padding:20px 24px;display:flex;align-items:flex-start;gap:18px;border-bottom:1px solid var(--line-soft)}
+  .sug-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--fg-3);
+    border:1px solid var(--line);padding:6px 10px;border-radius:8px;flex-shrink:0;font-weight:500}
+  .sug-titles{flex:1;min-width:0}
+  .sug-title{font-size:22px;font-weight:700;margin:0 0 6px;letter-spacing:-0.01em}
+  .sug-tagline{color:var(--fg-2);margin:0;font-size:14px}
+  .sug-tags{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:10px;padding:4px 8px;border-radius:6px;
+    border:1px solid var(--line);color:var(--fg-3);text-transform:uppercase;letter-spacing:0.05em}
+  .tag.p0{color:var(--bad);border-color:oklch(0.72 0.16 25 / 0.6);background:oklch(0.72 0.16 25 / 0.08)}
+  .tag.p1{color:var(--warn);border-color:oklch(0.82 0.14 85 / 0.6);background:oklch(0.82 0.14 85 / 0.08)}
+  .tag.p2{color:var(--accent);border-color:oklch(0.72 0.14 255 / 0.6);background:oklch(0.72 0.14 255 / 0.10)}
+  .tag.p3{color:var(--fg-3)}
+
+  .sug-body{padding:24px;display:grid;grid-template-columns:1fr 1.4fr;gap:32px}
+  @media (max-width:880px){.sug-body{grid-template-columns:1fr}}
+  .sug-text h4{font-size:11px;text-transform:uppercase;letter-spacing:0.14em;
+    color:var(--fg-3);font-weight:600;margin:0 0 10px}
+  .sug-text h4:not(:first-child){margin-top:22px}
+  .sug-text p,.sug-text ul{color:var(--fg-2);font-size:14.5px;margin:0;line-height:1.65}
+  .sug-text ul{padding-left:18px}
+  .sug-text ul li{margin:6px 0}
+  .sug-text strong{color:var(--fg);font-weight:500}
+  .sug-text .kbd{font-family:"JetBrains Mono",monospace;font-size:12px;padding:2px 6px;
+    border-radius:5px;background:var(--bg-3);border:1px solid var(--line);color:var(--fg)}
+
+  /* ===== Mockup frame ===== */
+  .mock{border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden;
+    display:flex;flex-direction:column}
+  .mock-bar{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 12px;background:var(--bg-3);border-bottom:1px solid var(--line);
+    font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--fg-3)}
+  .mock-bar .dots{display:flex;gap:5px}
+  .mock-bar .dots i{width:9px;height:9px;border-radius:99px;background:var(--line);display:block}
+  .mock-body{padding:18px;flex:1;font-size:13px}
+  .mock-label{display:block;font-family:"JetBrains Mono",monospace;font-size:10px;
+    color:var(--fg-3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px}
+  .mock-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mock-grid-2 .col{display:flex;flex-direction:column;gap:8px}
+  .mock-side-label{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--fg-3);
+    text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
+  .mock-side-label.bad::before{content:"✕ ";color:var(--bad)}
+  .mock-side-label.good::before{content:"✓ ";color:var(--good)}
+
+  /* ===== Mockup pieces ===== */
+  /* Boss card */
+  .bc{display:flex;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg-2);font-size:12px;align-items:center}
+  .bc-img{width:40px;height:40px;border-radius:6px;background:repeating-linear-gradient(45deg,oklch(0.32 0.014 250),oklch(0.32 0.014 250) 4px,oklch(0.28 0.012 250) 4px,oklch(0.28 0.012 250) 8px);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-3);font-family:"JetBrains Mono",monospace;font-size:9px}
+  .bc-info{flex:1;min-width:0}
+  .bc-name{font-weight:600;color:var(--fg);font-size:13px}
+  .bc-meta{color:var(--fg-3);font-size:11px;margin-top:2px}
+  .bc-status{display:inline-block;width:8px;height:8px;border-radius:99px;margin-right:5px}
+  .bc-status.alive{background:var(--good);box-shadow:0 0 8px var(--good)}
+  .bc-status.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .bc-status.cool{background:var(--bad)}
+  .countdown{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:13px;text-align:right;letter-spacing:0.02em}
+  .countdown.alive{color:var(--good)}
+  .countdown.warn{color:var(--warn)}
+  .countdown.cool{color:var(--fg-3)}
+  .countdown small{display:block;font-size:9px;color:var(--fg-3);text-transform:uppercase;letter-spacing:0.1em;font-weight:500}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:7px;
+    background:var(--bg-3);border:1px solid var(--line);color:var(--fg);
+    font-size:12px;font-weight:500;cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--accent);color:oklch(0.18 0.012 250);border-color:transparent}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--bad);border-color:oklch(0.72 0.16 25 / 0.4)}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;font-size:11px;
+    background:var(--bg-3);border:1px solid var(--line);color:var(--fg-2);font-family:"JetBrains Mono",monospace}
+  .chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+  /* Phone mock */
+  .phone{width:240px;margin:0 auto;border:8px solid var(--bg-3);border-radius:28px;background:var(--bg);
+    overflow:hidden;height:430px;display:flex;flex-direction:column}
+  .phone-status{height:18px;background:var(--bg-2);font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--fg-3);display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+
+  /* Compare diagram */
+  .compare-arrow{display:flex;align-items:center;justify-content:center;color:var(--fg-3);
+    font-family:"JetBrains Mono",monospace;font-size:11px;padding:0 8px}
+  @media (max-width:880px){.compare-arrow{justify-content:flex-start;padding:6px 0}}
+
+  /* Section wrapper for pain summary */
+  .pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  @media (max-width:880px){.pain-grid{grid-template-columns:1fr 1fr}}
+  @media (max-width:520px){.pain-grid{grid-template-columns:1fr}}
+  .pain-card{padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+  .pain-card .icon{width:28px;height:28px;border-radius:7px;background:var(--accent-soft);
+    color:var(--accent);display:flex;align-items:center;justify-content:center;
+    font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;margin-bottom:12px}
+  .pain-card h5{margin:0 0 6px;font-size:14px;font-weight:600}
+  .pain-card p{margin:0;font-size:12.5px;color:var(--fg-2);line-height:1.55}
+
+  /* Roadmap */
+  .roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+  @media (max-width:880px){.roadmap{grid-template-columns:1fr 1fr}}
+  @media (max-width:520px){.roadmap{grid-template-columns:1fr}}
+  .rm-col{padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+  .rm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
+  .rm-name{font-weight:700;font-size:14px}
+  .rm-tag{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--fg-3)}
+  .rm-col ul{margin:0;padding-left:16px;color:var(--fg-2);font-size:12.5px;line-height:1.7}
+  .rm-col ul li{margin:3px 0}
+  .rm-col.p0{border-color:oklch(0.72 0.16 25 / 0.4)}
+  .rm-col.p0 .rm-tag{color:var(--bad)}
+  .rm-col.p1 .rm-tag{color:var(--warn)}
+  .rm-col.p2 .rm-tag{color:var(--accent)}
+
+  /* divider note */
+  .note{padding:12px 16px;background:var(--bg-3);border-left:3px solid var(--accent);
+    border-radius:0 8px 8px 0;font-size:13px;color:var(--fg-2);margin:18px 0}
+  .note strong{color:var(--fg)}
+
+  /* Specific mockup blocks */
+  .pip-mini{width:220px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px oklch(0 0 0 / 0.4)}
+  .pip-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:5px 6px;border-radius:5px}
+  .pip-row:hover{background:var(--bg-3)}
+  .pip-row .l{display:flex;gap:6px;align-items:center;color:var(--fg)}
+  .pip-row .l .dot{width:6px;height:6px;border-radius:99px}
+
+  /* History row */
+  .hr-row{display:grid;grid-template-columns:1.3fr 0.8fr 0.5fr 0.6fr 0.7fr;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);font-size:11px;align-items:center}
+  .hr-row.head{color:var(--fg-3);font-family:"JetBrains Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em}
+
+  /* mobile timeline alt */
+  .tl-card{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg-2);font-size:11px;margin-bottom:8px}
+  .tl-time{font-family:"JetBrains Mono",monospace;color:var(--fg-3);font-size:10px}
+  .tl-name{font-weight:600;font-size:13px;margin-top:4px}
+  .tl-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+  /* Onboarding mock */
+  .onb{padding:20px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2);text-align:center}
+  .onb-step{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border-radius:6px;text-align:left}
+  .onb-step .step-n{width:22px;height:22px;border-radius:99px;background:var(--accent);color:var(--bg);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;font-family:"JetBrains Mono",monospace}
+  .onb-step.muted .step-n{background:var(--bg-3);color:var(--fg-3)}
+  .onb-step.muted{color:var(--fg-3)}
+
+  /* Lucky channel viz */
+  .lucky-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+  .lucky-cell{aspect-ratio:1;border-radius:3px;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--fg-3)}
+  .lucky-cell.h1{background:oklch(0.72 0.14 255 / 0.25)}
+  .lucky-cell.h2{background:oklch(0.72 0.14 255 / 0.5)}
+  .lucky-cell.h3{background:oklch(0.72 0.14 255 / 0.85);color:var(--bg)}
+  .lucky-cell.star{background:oklch(0.84 0.14 80 / 0.85);color:var(--bg);font-weight:700}
+
+  /* Backup modal */
+  .modal-mini{padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+  .modal-mini h6{margin:0 0 8px;font-size:13px}
+  .modal-mini p{margin:0 0 12px;color:var(--fg-3);font-size:11px}
+  .file-drop{border:1.5px dashed var(--line);border-radius:8px;padding:20px;text-align:center;
+    color:var(--fg-3);font-size:11px;font-family:"JetBrains Mono",monospace}
+
+  /* Notification mock */
+  .notif{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2);box-shadow:0 8px 24px oklch(0 0 0 / 0.3);max-width:280px}
+  .notif-icon{width:32px;height:32px;border-radius:6px;background:var(--warn);color:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;font-size:14px;font-family:"JetBrains Mono",monospace}
+  .notif-body{flex:1;min-width:0}
+  .notif-app{font-size:9px;color:var(--fg-3);text-transform:uppercase;letter-spacing:0.1em;font-family:"JetBrains Mono",monospace}
+  .notif-title{font-size:12px;font-weight:600;margin-top:2px}
+  .notif-desc{font-size:11px;color:var(--fg-2);margin-top:2px}
+
+  /* Cheatsheet */
+  .keys{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .keys .row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:11px;color:var(--fg-2);border-bottom:1px dashed var(--line-soft)}
+  .keys .row .k{display:flex;gap:3px}
+  .keys .row .k span{font-family:"JetBrains Mono",monospace;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg-3);border:1px solid var(--line);color:var(--fg)}
+
+  /* Recent channel chips */
+  .recent-channels{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+  .recent-channels .rc{font-family:"JetBrains Mono",monospace;font-size:11px;padding:3px 9px;
+    border-radius:5px;background:var(--bg-3);border:1px solid var(--line);color:var(--fg-2);cursor:pointer}
+  .recent-channels .rc.hot{border-color:var(--star);color:var(--star)}
+
+  /* Empty state */
+  .empty{padding:30px 20px;text-align:center;border:1.5px dashed var(--line);border-radius:10px}
+  .empty .e-icon{font-size:32px;opacity:0.4;margin-bottom:8px}
+  .empty h6{margin:0 0 6px;font-size:14px}
+  .empty p{margin:0 0 12px;font-size:11px;color:var(--fg-3)}
+
+  hr.div{border:none;border-top:1px solid var(--line);margin:60px 0}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HEADER ============ -->
+  <header class="doc-header">
+    <div class="doc-eyebrow"><span class="dot"></span><span>UI / UX REVIEW</span><span>·</span><span>v1.0</span></div>
+    <h1 class="doc-title">Artale Boss Chaser<br>UI/UX 友善體驗建議</h1>
+    <p class="doc-sub">基於現有專案結構（README、SPEC、index.html、CSS / JS 模組）所做的玩家體驗優化建議。每一條建議皆附「現狀痛點 → 改進方向 → 視覺草案」。</p>
+    <div class="doc-meta">
+      <span><strong>受眾</strong> · MMORPG Boss 獵人</span>
+      <span><strong>平台</strong> · GitHub Pages 靜態網頁</span>
+      <span><strong>範圍</strong> · 純前端 (LocalStorage)</span>
+      <span><strong>項目數</strong> · 10 條改進 + 4 階段路線圖</span>
+    </div>
+  </header>
+
+  <!-- ============ TOC ============ -->
+  <div class="toc">
+    <h3>建議項目目錄</h3>
+    <ol>
+      <li><span class="n">01</span><span class="t"><a href="#s1">資料備份/還原 UI（取代 DevTools）</a></span><span class="pill p0">P0</span></li>
+      <li><span class="n">02</span><span class="t"><a href="#s2">首次使用引導 (Onboarding)</a></span><span class="pill p0">P0</span></li>
+      <li><span class="n">03</span><span class="t"><a href="#s3">手機版歷史紀錄改成卡片時間軸</a></span><span class="pill p1">P1</span></li>
+      <li><span class="n">04</span><span class="t"><a href="#s4">緊湊清單模式視覺再優化</a></span><span class="pill p1">P1</span></li>
+      <li><span class="n">05</span><span class="t"><a href="#s5">桌面通知 + 音效強化</a></span><span class="pill p1">P1</span></li>
+      <li><span class="n">06</span><span class="t"><a href="#s6">頻道輸入：最近輸入 + 智慧建議</a></span><span class="pill p1">P1</span></li>
+      <li><span class="n">07</span><span class="t"><a href="#s7">幸運頻道熱度視覺化 (Heatmap)</a></span><span class="pill p2">P2</span></li>
+      <li><span class="n">08</span><span class="t"><a href="#s8">迷你常駐視窗 (Mini PiP)</a></span><span class="pill p2">P2</span></li>
+      <li><span class="n">09</span><span class="t"><a href="#s9">空狀態與無紀錄引導</a></span><span class="pill p2">P2</span></li>
+      <li><span class="n">10</span><span class="t"><a href="#s10">鍵盤快速鍵 Cheatsheet (?)</a></span><span class="pill p3">P3</span></li>
+    </ol>
+  </div>
+
+  <!-- ============ TOP PAINS ============ -->
+  <section class="block">
+    <div class="sec-num">PART 01 · OVERVIEW</div>
+    <h2 class="sec-title">三大核心痛點</h2>
+    <p class="sec-desc">經過閱讀 README 功能清單、SPEC 資料規格、與實際 <span class="mono">index.html</span> 結構後，目前最影響玩家「友善體驗」的三大方向：</p>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="icon">A</div>
+        <h5>資料風險</h5>
+        <p>所有紀錄只存在 LocalStorage，README 也明說「目前可透過開發者工具」備份 — 90% 的玩家不會用 DevTools，換瀏覽器即全失。</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">B</div>
+        <h5>新手摩擦</h5>
+        <p>第一次打開沒有任何引導，「獵殺專注模式」、「自動跳頻」、「星星=幸運頻道」這些獨特概念需要時間消化。</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">C</div>
+        <h5>手機操作密度</h5>
+        <p>歷史紀錄 7 欄表格在 <span class="mono">375px</span> 寬螢幕會橫向擠壓；卡片清單在 40+ 隻王時需大量捲動。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- ============ S1 BACKUP ============ -->
+  <section class="block" id="s1">
+    <div class="sec-num">SUGGESTION · 01</div>
+  </section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">01</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">資料備份 / 還原 UI</h3>
+        <p class="sug-tagline">把現有的 DevTools 操作搬到設定面板，玩家一鍵匯出 JSON、拖曳檔案還原。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p0">P0 · 必備</span><span class="tag">資料安全</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>SPEC 與 README 中說明「建議定期將資料匯出（目前可透過開發者工具）」。對 MMORPG 玩家而言這完全不可行 — 一旦清快取，幾週擊殺紀錄全失。</p>
+        <h4>建議</h4>
+        <ul>
+          <li><strong>「設定」icon 按鈕</strong> 加在右上角主題切換旁。</li>
+          <li>面板內含 <strong>「匯出 JSON」</strong>、<strong>「匯入 JSON」(拖曳/點擊)</strong>、<strong>「清空所有紀錄」(現有)</strong>。</li>
+          <li>匯出檔名自動化：<span class="mono">artale-boss-2026-04-29.json</span></li>
+          <li>匯入時偵測 schema 版本，並顯示 <strong>「將合併 N 筆 / 取代現有」</strong> 二選一。</li>
+        </ul>
+        <div class="note"><strong>實作成本：</strong> 純前端、約 80 行 JS。<span class="mono">Blob + URL.createObjectURL</span> 即可，無後端依賴。</div>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>settings · backup</span></div>
+        <div class="mock-body">
+          <div class="modal-mini">
+            <h6>資料備份</h6>
+            <p>所有紀錄僅儲存在你的瀏覽器。建議每週備份一次。</p>
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+              <button class="btn primary">↓ 匯出 JSON</button>
+              <span class="chip">最近備份 · 3 天前</span>
+            </div>
+            <h6 style="margin-top:14px">還原資料</h6>
+            <div class="file-drop">拖曳 .json 至此<br>或點擊選擇檔案</div>
+            <div style="margin-top:10px;display:flex;gap:6px">
+              <label style="font-size:11px;color:var(--fg-2)"><input type="radio" checked> 合併</label>
+              <label style="font-size:11px;color:var(--fg-2)"><input type="radio"> 取代</label>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--line-soft);margin:16px 0">
+            <button class="btn danger">⚠ 清空所有紀錄</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S2 ONBOARDING ============ -->
+  <section class="block" id="s2"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">02</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">首次使用引導</h3>
+        <p class="sug-tagline">用 3 步互動式教學介紹「鎖定 Boss → Enter 紀錄 → 自動跳頻」核心循環。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p0">P0 · 必備</span><span class="tag">新手</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>「獵殺專注模式」、「自動跳頻」、「Enter 秒速紀錄」、「星星 = 幸運頻道」是這款工具的差異化亮點，但首次玩家無從得知 — README 雖有教學，但開了網頁不會回去看。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>第一次無紀錄時，自動彈出 3 步驟引導 overlay。</li>
+          <li>每步驟用 <strong>spotlight (打洞遮罩)</strong> 高亮對應 UI 元素，配 1 行說明 + 「下一步」。</li>
+          <li>右上角永久保留 <span class="kbd">?</span> 圖示，可重看引導 + 鍵盤快速鍵。</li>
+          <li>首次完成後，第一筆紀錄完成自動 toast：<strong>「太棒了！系統已自動跳到下一頻道，繼續按 Enter 即可秒速紀錄」</strong></li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>first-run · onboarding</span></div>
+        <div class="mock-body">
+          <div class="onb">
+            <div style="display:flex;justify-content:center;gap:5px;margin-bottom:14px">
+              <i style="width:20px;height:3px;background:var(--accent);border-radius:2px"></i>
+              <i style="width:20px;height:3px;background:var(--line);border-radius:2px"></i>
+              <i style="width:20px;height:3px;background:var(--line);border-radius:2px"></i>
+            </div>
+            <div style="font-size:11px;color:var(--fg-3);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;margin-bottom:6px">STEP 01 / 03</div>
+            <h6 style="margin:0 0 8px;font-size:16px">點擊任一張 Boss 卡片</h6>
+            <p style="margin:0 0 16px;font-size:12px;color:var(--fg-2)">下方會展開「獵殺專注面板」，所有操作集中在那裡。</p>
+            <div style="text-align:left">
+              <div class="onb-step"><div class="step-n">1</div><div>選擇要打的 Boss</div></div>
+              <div class="onb-step muted"><div class="step-n">2</div><div>輸入起始頻道，按 Enter</div></div>
+              <div class="onb-step muted"><div class="step-n">3</div><div>系統自動跳頻 → 連續紀錄</div></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;justify-content:center">
+              <button class="btn ghost">略過</button>
+              <button class="btn primary">下一步 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S3 MOBILE HISTORY ============ -->
+  <section class="block" id="s3"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">03</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">手機版歷史紀錄改卡片時間軸</h3>
+        <p class="sug-tagline">7 欄表格在 375px 螢幕會橫向擠壓；改用卡片時間軸維持資訊密度。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p1">P1 · 短期</span><span class="tag">手機</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p><span class="mono">&lt;table&gt;</span> 在 <code class="kbd">index.html</code> 是 7 欄（Boss、時間、頻道、掉寶、備註、預計重生、操作）。手機橫向滾動體驗差，玩家邊打怪邊查不友善。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>桌面 ≥ 880px 維持表格。手機切換成 <strong>時間軸卡片</strong>。</li>
+          <li>每張卡片：左側時間（mm:ss 大字）+ 右側 Boss 名 + 頻道 + 掉寶 chip。</li>
+          <li>整張可橫向 swipe → 露出「編輯／刪除」（iOS 列表手勢慣例）。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>mobile · history</span></div>
+        <div class="mock-body" style="display:flex;justify-content:center;background:var(--bg-2)">
+          <div class="phone">
+            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
+            <div style="padding:10px 12px;flex:1;overflow:hidden">
+              <div style="font-size:11px;color:var(--fg-3);font-family:'JetBrains Mono',monospace;margin-bottom:8px">今日 · 2026-04-29</div>
+              <div class="tl-card">
+                <div class="tl-time">14:23 · 2 分前</div>
+                <div class="tl-name">紅寶王 <span style="color:var(--star)">★</span></div>
+                <div class="tl-tags">
+                  <span class="chip mono">Ch.142</span>
+                  <span class="chip" style="color:var(--accent);border-color:var(--accent)">裝備</span>
+                  <span class="chip" style="color:var(--star);border-color:var(--star)">幸運</span>
+                </div>
+              </div>
+              <div class="tl-card">
+                <div class="tl-time">14:18</div>
+                <div class="tl-name">蘑菇王</div>
+                <div class="tl-tags"><span class="chip mono">Ch.141</span></div>
+              </div>
+              <div class="tl-card">
+                <div class="tl-time">14:15</div>
+                <div class="tl-name">仙人娃娃</div>
+                <div class="tl-tags"><span class="chip mono">Ch.140</span><span class="chip">卷軸</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S4 COMPACT LIST ============ -->
+  <section class="block" id="s4"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">04</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">緊湊清單模式視覺再優化</h3>
+        <p class="sug-tagline">README 已有「切換檢視」功能，但清單模式仍可再進一步：對齊欄位 + 倒數視覺化。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p1">P1 · 短期</span><span class="tag">資訊密度</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>已支援 <span class="mono">view-mode-btn</span>（切換檢視）。但卡片內部資訊（狀態燈、倒數、頻道、最後紀錄）視覺層級偏平，掃讀慢。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>清單模式：<strong>固定欄位</strong>（圖示 / 名稱 / 狀態燈 / 倒數 mm:ss / 最近頻道），等寬 mono 字體，垂直對齊。</li>
+          <li>倒數附 <strong>細條進度條</strong> — 視覺看出剩多少。</li>
+          <li>一眼掃 12 隻王，比卡片省 60% 高度。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>compact · list-view</span></div>
+        <div class="mock-body">
+          <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 0.8fr 0.7fr;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--fg-3);text-transform:uppercase;letter-spacing:0.1em">
+            <div></div><div>Boss</div><div>狀態</div><div>倒數</div><div>頻道</div>
+          </div>
+          <!-- rows -->
+          <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 0.8fr 0.7fr;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);align-items:center;font-size:12px">
+            <div class="bc-img" style="width:24px;height:24px;font-size:7px">IMG</div>
+            <div>紅寶王 <span class="mono" style="color:var(--fg-3);font-size:10px">23~30m</span></div>
+            <div><span class="bc-status alive"></span> 可擊殺</div>
+            <div class="mono" style="color:var(--good)">+02:14</div>
+            <div class="mono">142</div>
+          </div>
+          <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 0.8fr 0.7fr;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);align-items:center;font-size:12px">
+            <div class="bc-img" style="width:24px;height:24px;font-size:7px">IMG</div>
+            <div>蘑菇王 <span class="mono" style="color:var(--fg-3);font-size:10px">15~20m</span></div>
+            <div><span class="bc-status warn"></span> 即將重生</div>
+            <div class="mono" style="color:var(--warn)">01:42</div>
+            <div class="mono">98</div>
+          </div>
+          <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 0.8fr 0.7fr;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);align-items:center;font-size:12px">
+            <div class="bc-img" style="width:24px;height:24px;font-size:7px">IMG</div>
+            <div>仙人娃娃</div>
+            <div><span class="bc-status cool"></span> 冷卻中</div>
+            <div class="mono" style="color:var(--fg-3)">12:05</div>
+            <div class="mono">71</div>
+          </div>
+          <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 0.8fr 0.7fr;gap:8px;padding:8px 10px;align-items:center;font-size:12px">
+            <div class="bc-img" style="width:24px;height:24px;font-size:7px">IMG</div>
+            <div>樹妖王</div>
+            <div><span class="bc-status cool"></span> 冷卻中</div>
+            <div class="mono" style="color:var(--fg-3)">28:30</div>
+            <div class="mono">--</div>
+          </div>
+          <div style="margin-top:14px;padding:10px;background:var(--bg-2);border-radius:6px;font-size:11px;color:var(--fg-3);text-align:center">↑ 同樣高度可顯示 4 隻 Boss → 卡片版只能 1.5 隻</div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S5 NOTIFICATIONS ============ -->
+  <section class="block" id="s5"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">05</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">桌面通知 + 音效強化</h3>
+        <p class="sug-tagline">玩家常切到遊戲視窗，音效不夠 — 用 Browser Notification API 跳系統通知。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p1">P1 · 短期</span><span class="tag">即時性</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>專案已有 <span class="mono">sound-toggle-btn</span> 音效。但玩家切到全螢幕遊戲後，網頁的音效會被忽略 / 蓋掉。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>新增 <strong>「桌面通知」</strong> 選項（Notification API 需使用者授權）。</li>
+          <li>2 分鐘預警時跳系統通知，標題：<strong>「紅寶王 · 即將重生」</strong>，內文：<strong>「最早於 1:42 後出現 / 上次頻道 142」</strong>。</li>
+          <li>點擊通知 → 自動 focus 此頁，並鎖定該 Boss 進入「獵殺專注模式」。</li>
+          <li>音效部分：可選 3 種音色（Ding / Bell / Drum），避免長時間使用聽到膩。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>desktop · system-notification</span></div>
+        <div class="mock-body" style="background:var(--bg-3);min-height:180px;display:flex;align-items:flex-start;justify-content:flex-end;padding:24px">
+          <div class="notif">
+            <div class="notif-icon">!</div>
+            <div class="notif-body">
+              <div class="notif-app">ARTALE BOSS CHASER</div>
+              <div class="notif-title">紅寶王 · 即將重生</div>
+              <div class="notif-desc">最早於 01:42 後 · 上次頻道 142</div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button class="btn" style="padding:4px 10px;font-size:10px">前往紀錄</button>
+                <button class="btn ghost" style="padding:4px 10px;font-size:10px">略過</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S6 CHANNEL SUGGESTION ============ -->
+  <section class="block" id="s6"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">06</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">頻道輸入：最近輸入 + 智慧建議</h3>
+        <p class="sug-tagline">1–3000 個頻道輸入框很空曠；補一排「最近用過 / 幸運頻道」chip。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p1">P1 · 短期</span><span class="tag">效率</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>頻道輸入支援 1–3000 + 自動 +1。但玩家若要跳到「上次出貨的頻道」，得手動打進去。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>專注面板的頻道輸入框下方加一排 chip。</li>
+          <li>顯示 <strong>最近 3 個</strong> 輸入過的頻道 + <strong>該 Boss 的幸運頻道 (Top 2)</strong>。</li>
+          <li>點 chip 直接填入。幸運頻道 chip 用金色邊框視覺區分。</li>
+          <li>長按某 chip → 「設為起始頻道」。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>action-bar · channel-input</span></div>
+        <div class="mock-body">
+          <div style="padding:14px;background:var(--bg-2);border-radius:8px">
+            <div style="font-size:11px;color:var(--fg-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.1em">紅寶王 · 頻道</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+              <button class="btn">−</button>
+              <input value="142" class="mono" style="flex:1;padding:10px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--fg);font-size:24px;font-weight:700;text-align:center;font-family:'JetBrains Mono',monospace">
+              <button class="btn">+</button>
+            </div>
+            <div style="font-size:9px;color:var(--fg-3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">最近 / 幸運</div>
+            <div class="recent-channels">
+              <span class="rc">141</span>
+              <span class="rc">98</span>
+              <span class="rc">71</span>
+              <span class="rc hot">★ 142</span>
+              <span class="rc hot">★ 218</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+              <span class="chip">🛡 裝備</span>
+              <span class="chip active">📜 卷軸</span>
+              <span class="chip">★ 星星</span>
+              <button class="btn primary" style="margin-left:auto">⚡ 紀錄 · Enter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S7 LUCKY HEATMAP ============ -->
+  <section class="block" id="s7"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">07</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">幸運頻道熱度視覺化</h3>
+        <p class="sug-tagline">把每隻 Boss 的「星星」紀錄畫成 1–3000 頻道的熱力圖，一眼看哪個頻道最容易出貨。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p2">P2 · 體驗</span><span class="tag">資料洞察</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>「星星 / 幸運頻道」目前只在歷史紀錄裡用 ★ 標示。玩家難以一眼看出「這隻王在 200~250 頻道特別容易出貨」這類規律。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>專注面板裡，下方加一個 <strong>「頻道熱度」</strong> 摺疊區。</li>
+          <li>1–3000 頻道用 30×100 格網格呈現（可選 100 格一段聚合）。</li>
+          <li>顏色深淺對應「擊殺次數 / 掉寶率」，金色點代表星星紀錄。</li>
+          <li>滑鼠 hover 顯示：<strong>「頻道 142 · 擊殺 8 次 · ★ 3 次（37%）」</strong>。</li>
+        </ul>
+        <div class="note"><strong>玩家視角：</strong> 這把工具從「紀錄器」升級為「策略工具」 — 找出個人運氣榜的關鍵差異化功能。</div>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>boss-detail · lucky-heatmap</span></div>
+        <div class="mock-body">
+          <div style="font-size:11px;color:var(--fg-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.1em">紅寶王 · 頻道 100~199 (聚合 10/格)</div>
+          <div class="lucky-grid">
+            <div class="lucky-cell">100</div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell h3"></div>
+            <div class="lucky-cell star">★</div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell star">★</div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+            <div class="lucky-cell h2"></div>
+            <div class="lucky-cell h3"></div>
+            <div class="lucky-cell star">★</div>
+            <div class="lucky-cell h1"></div>
+            <div class="lucky-cell"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg-3)">
+            <span>少 ←</span>
+            <div style="display:flex;gap:3px">
+              <i style="width:14px;height:10px;background:var(--bg-3);display:block"></i>
+              <i style="width:14px;height:10px;background:oklch(0.72 0.14 255 / 0.25);display:block"></i>
+              <i style="width:14px;height:10px;background:oklch(0.72 0.14 255 / 0.5);display:block"></i>
+              <i style="width:14px;height:10px;background:oklch(0.72 0.14 255 / 0.85);display:block"></i>
+              <i style="width:14px;height:10px;background:var(--star);display:block"></i>
+            </div>
+            <span>→ 多 / 幸運</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S8 PIP ============ -->
+  <section class="block" id="s8"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">08</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">迷你常駐視窗 (Mini PiP)</h3>
+        <p class="sug-tagline">玩家邊打怪邊看，需要極簡的「總是置頂」小視窗。用 Document Picture-in-Picture API。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p2">P2 · 體驗</span><span class="tag">多工</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>玩家通常邊玩遊戲邊看網頁，瀏覽器整視窗占空間。Chrome / Edge 已支援 <span class="mono">documentPictureInPicture API</span>，可彈出常駐迷你視窗。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>右上角加 <strong>「常駐」icon (open_in_new)</strong>。</li>
+          <li>點擊彈出 240×320 的浮動視窗，只顯示 <strong>「即將重生」狀態的 Boss 倒數列表</strong>。</li>
+          <li>整窗 click 透傳到主頁 → 點 Boss 主視窗鎖定該王。</li>
+          <li>Fallback：不支援的瀏覽器 → 用 <span class="mono">window.open</span> 開普通小視窗，跨頁透過 BroadcastChannel 同步資料。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>mini-pip · always-on-top</span></div>
+        <div class="mock-body" style="background:repeating-linear-gradient(45deg,oklch(0.16 0.012 250),oklch(0.16 0.012 250) 8px,oklch(0.18 0.012 250) 8px,oklch(0.18 0.012 250) 16px);min-height:240px;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px">
+          <div class="pip-mini">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)">
+              <span style="font-size:11px;font-weight:600">即將重生 (3)</span>
+              <span class="mono" style="font-size:9px;color:var(--fg-3)">14:23</span>
+            </div>
+            <div class="pip-row">
+              <div class="l"><i class="dot" style="background:var(--warn)"></i><span>蘑菇王</span></div>
+              <span class="mono" style="color:var(--warn)">01:42</span>
+            </div>
+            <div class="pip-row">
+              <div class="l"><i class="dot" style="background:var(--warn)"></i><span>仙人娃娃</span></div>
+              <span class="mono" style="color:var(--warn)">01:55</span>
+            </div>
+            <div class="pip-row">
+              <div class="l"><i class="dot" style="background:var(--good)"></i><span>紅寶王</span></div>
+              <span class="mono" style="color:var(--good)">+02:14</span>
+            </div>
+            <div style="font-size:9px;color:var(--fg-3);text-align:center;margin-top:6px;font-family:'JetBrains Mono',monospace">點擊 Boss 鎖定 →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S9 EMPTY STATE ============ -->
+  <section class="block" id="s9"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">09</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">空狀態與無紀錄引導</h3>
+        <p class="sug-tagline">第一次打開沒紀錄時，「今日戰況」全 0 + 歷史空表格 = 失敗感。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p2">P2 · 體驗</span><span class="tag">情感</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>現狀</h4>
+        <p>無紀錄時：今日戰況全部 <span class="mono">0</span>、歷史紀錄空表格、常用 Boss 提示文字。視覺很空又無引導性。</p>
+        <h4>建議</h4>
+        <ul>
+          <li>無紀錄時，「今日戰況」直接隱藏，改顯示「歡迎」橫幅。</li>
+          <li>歷史頁面空狀態 → 大圖示 + 引導：「還沒有任何紀錄。先回 Boss 列表選一隻王開始吧 →」</li>
+          <li>常用 Boss 空狀態 → 動畫指引箭頭 (CSS) 指向某張卡片的 ☆。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>history · empty-state</span></div>
+        <div class="mock-body">
+          <div class="empty">
+            <div class="e-icon">📜</div>
+            <h6>還沒有任何擊殺紀錄</h6>
+            <p>先到 Boss 列表選一隻目標<br>按 Enter 即可秒速紀錄第一筆</p>
+            <button class="btn primary">→ 前往 Boss 列表</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ S10 CHEATSHEET ============ -->
+  <section class="block" id="s10"></section>
+  <article class="sug">
+    <header class="sug-head">
+      <div class="sug-num">10</div>
+      <div class="sug-titles">
+        <h3 class="sug-title">鍵盤快速鍵 Cheatsheet</h3>
+        <p class="sug-tagline">這是熟練玩家的工具 — 完整鍵盤操作可以大幅提升效率，但要先讓他們發現。</p>
+      </div>
+      <div class="sug-tags"><span class="tag p3">P3 · 拋光</span><span class="tag">進階</span></div>
+    </header>
+    <div class="sug-body">
+      <div class="sug-text">
+        <h4>建議</h4>
+        <ul>
+          <li>按 <span class="kbd">?</span> 彈出快速鍵 cheatsheet (modal)。</li>
+          <li>新增更多快速鍵：<span class="kbd">/</span> 跳到搜尋、<span class="kbd">L</span> 切換清單模式、<span class="kbd">1-9</span> 鎖定常用 Boss、<span class="kbd">N</span> 下一個即將重生、<span class="kbd">Esc</span> 取消鎖定。</li>
+          <li>專注面板：<span class="kbd">↑/↓</span> 加減頻道、<span class="kbd">Enter</span> 紀錄、<span class="kbd">D</span> 切換掉寶。</li>
+          <li>右下角永久顯示「按 ? 看快速鍵」hint，3 秒後淡出。</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span>shortcuts · cheatsheet (?)</span></div>
+        <div class="mock-body">
+          <div style="font-size:11px;color:var(--fg-3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">全域</div>
+          <div class="keys">
+            <div class="row"><span>搜尋</span><div class="k"><span>/</span></div></div>
+            <div class="row"><span>清單模式</span><div class="k"><span>L</span></div></div>
+            <div class="row"><span>下一個重生</span><div class="k"><span>N</span></div></div>
+            <div class="row"><span>取消鎖定</span><div class="k"><span>Esc</span></div></div>
+            <div class="row"><span>切換主題</span><div class="k"><span>T</span></div></div>
+            <div class="row"><span>桌面通知</span><div class="k"><span>D</span></div></div>
+          </div>
+          <div style="font-size:11px;color:var(--fg-3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin:14px 0 10px">獵殺專注</div>
+          <div class="keys">
+            <div class="row"><span>紀錄擊殺</span><div class="k"><span>Enter</span></div></div>
+            <div class="row"><span>頻道+1</span><div class="k"><span>↑</span></div></div>
+            <div class="row"><span>頻道-1</span><div class="k"><span>↓</span></div></div>
+            <div class="row"><span>切換裝備</span><div class="k"><span>E</span></div></div>
+            <div class="row"><span>切換卷軸</span><div class="k"><span>S</span></div></div>
+            <div class="row"><span>標星星</span><div class="k"><span>★</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ ROADMAP ============ -->
+  <section class="block">
+    <div class="sec-num">PART 03 · ROADMAP</div>
+    <h2 class="sec-title">建議執行路線圖</h2>
+    <p class="sec-desc">優先級基於「對玩家友善體驗的影響 × 實作成本」評估。所有建議皆可在純前端靜態網頁完成（GitHub Pages 限制）。</p>
+
+    <div class="roadmap">
+      <div class="rm-col p0">
+        <div class="rm-head"><div class="rm-name">P0 · 立即</div><div class="rm-tag">~1 週</div></div>
+        <ul>
+          <li>資料備份/還原 UI</li>
+          <li>首次使用引導</li>
+        </ul>
+      </div>
+      <div class="rm-col p1">
+        <div class="rm-head"><div class="rm-name">P1 · 短期</div><div class="rm-tag">~2 週</div></div>
+        <ul>
+          <li>手機卡片時間軸</li>
+          <li>緊湊清單再優化</li>
+          <li>桌面通知</li>
+          <li>頻道智慧建議</li>
+        </ul>
+      </div>
+      <div class="rm-col p2">
+        <div class="rm-head"><div class="rm-name">P2 · 體驗</div><div class="rm-tag">~3 週</div></div>
+        <ul>
+          <li>幸運頻道熱力圖</li>
+          <li>迷你 PiP 視窗</li>
+          <li>空狀態優化</li>
+        </ul>
+      </div>
+      <div class="rm-col p3">
+        <div class="rm-head"><div class="rm-name">P3 · 拋光</div><div class="rm-tag">~1 週</div></div>
+        <ul>
+          <li>鍵盤快速鍵 + cheatsheet</li>
+          <li>音色多樣化</li>
+          <li>動畫微互動</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:30px">
+      <strong>關於隊伍同步：</strong> DESIGN_REVIEW.md 已合理註明「目前是架設於 github 上的靜態網頁，無法處理需要後端資源的功能」。若未來考慮，可探索 <span class="mono">WebRTC P2P</span> 或 <span class="mono">Firebase free tier</span> — 但建議先完成上述 P0–P2，本機體驗到位後再延伸雲端。
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer style="margin-top:80px;padding-top:32px;border-top:1px solid var(--line);color:var(--fg-3);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <span>Artale Boss Chaser · UI/UX Review v1.0</span>
+    <span class="mono">Generated · 2026-04-29</span>
+  </footer>
+
+</div>
+</body>
+</html>

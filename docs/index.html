@@ -25,6 +25,15 @@
                         <button class="feature-btn" id="sound-toggle-btn" title="切換音效提示">
                             <span class="material-icons-outlined" id="sound-toggle-icon">volume_off</span>
                         </button>
+                        <button class="feature-btn" id="pip-btn" title="開啟迷你常駐視窗">
+                            <span class="material-icons-outlined">picture_in_picture_alt</span>
+                        </button>
+                        <button class="feature-btn" id="help-btn" title="重看引導 / 快速鍵 (?)">
+                            <span class="material-icons-outlined">help_outline</span>
+                        </button>
+                        <button class="feature-btn" id="settings-btn" title="設定 / 備份還原">
+                            <span class="material-icons-outlined">settings</span>
+                        </button>
                     </div>
                     <button class="icon-btn" id="theme-toggle-btn" title="切換主題">
                         <span class="material-icons-outlined" id="theme-icon">dark_mode</span>
@@ -211,6 +220,33 @@
                 </div>
             </div>
 
+            <!-- Recent / Lucky Channel Chips (P1-06) -->
+            <div class="action-channel-chips-wrap" id="action-channel-chips-wrap" style="display:none;">
+                <div class="action-chips-label">最近 / 幸運</div>
+                <div id="action-channel-chips" class="recent-channels"></div>
+            </div>
+
+            <!-- Lucky Channel Heatmap (P2-07) -->
+            <details id="action-heatmap" class="action-heatmap">
+                <summary>
+                    <span class="material-icons-outlined" style="font-size:16px; vertical-align:middle">grid_on</span>
+                    頻道熱度（依擊殺紀錄）
+                </summary>
+                <div class="heatmap-controls">
+                    <div class="heatmap-segments" id="heatmap-segments"></div>
+                </div>
+                <div id="heatmap-container" class="heatmap-container"></div>
+                <div class="heatmap-legend">
+                    <span>少</span>
+                    <i class="legend-step l0"></i>
+                    <i class="legend-step l1"></i>
+                    <i class="legend-step l2"></i>
+                    <i class="legend-step l3"></i>
+                    <i class="legend-step star"></i>
+                    <span>多 / 幸運 ★</span>
+                </div>
+            </details>
+
             <!-- Target Boss Recent History Mini List -->
             <div class="action-history-wrapper">
                 <div id="action-history-list" class="action-history-list">
@@ -280,6 +316,141 @@
             </div>
         </div>
     </div>
+
+    <!-- Settings Modal (P0-01 + P1-05) -->
+    <div id="settings-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3><span class="material-icons-outlined" style="vertical-align:middle; margin-right:6px;">settings</span>設定</h3>
+                <button id="settings-modal-close" class="btn-icon" title="關閉">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Backup -->
+                <section class="settings-section">
+                    <h4>資料備份</h4>
+                    <p class="settings-desc">所有紀錄僅儲存在你的瀏覽器。建議每週備份一次。</p>
+                    <div class="settings-row">
+                        <button class="btn btn-primary" id="export-data-btn">
+                            <span class="material-icons-outlined" style="font-size:16px">file_download</span> 匯出 JSON
+                        </button>
+                        <span class="settings-meta" id="last-backup-meta"></span>
+                    </div>
+                </section>
+
+                <!-- Restore -->
+                <section class="settings-section">
+                    <h4>還原資料</h4>
+                    <div id="import-drop-zone" class="file-drop">
+                        拖曳 .json 至此<br>或點擊選擇檔案
+                        <input type="file" id="import-file-input" accept="application/json,.json" style="display:none">
+                    </div>
+                    <div class="settings-row" style="margin-top:8px;">
+                        <label class="radio-label"><input type="radio" name="import-mode" value="merge" checked> 合併（保留現有 + 加入新紀錄）</label>
+                        <label class="radio-label"><input type="radio" name="import-mode" value="replace"> 取代（清空後完全還原）</label>
+                    </div>
+                </section>
+
+                <!-- Notifications -->
+                <section class="settings-section">
+                    <h4>通知與音效</h4>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settings-desktop-notification">
+                        <span>啟用桌面通知（重生前 2 分鐘）</span>
+                    </label>
+                    <div class="settings-row">
+                        <label>音效類型
+                            <select id="settings-sound-type">
+                                <option value="ding">Ding（純音）</option>
+                                <option value="bell">Bell（鐘聲）</option>
+                                <option value="drum">Drum（鼓聲）</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-secondary btn-small" id="settings-test-sound">
+                            <span class="material-icons-outlined" style="font-size:14px">play_arrow</span> 測試音效
+                        </button>
+                        <button class="btn btn-secondary btn-small" id="settings-test-notification">
+                            <span class="material-icons-outlined" style="font-size:14px">notifications</span> 測試通知
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Onboarding -->
+                <section class="settings-section">
+                    <h4>導覽</h4>
+                    <button class="btn btn-secondary" id="settings-restart-onboarding">
+                        <span class="material-icons-outlined" style="font-size:16px">tour</span> 重看新手引導
+                    </button>
+                </section>
+
+                <!-- Danger -->
+                <section class="settings-section">
+                    <h4 style="color:var(--color-danger)">危險區</h4>
+                    <button class="btn btn-danger" id="settings-clear-all">
+                        <span class="material-icons-outlined" style="font-size:16px">warning</span> 清空所有紀錄
+                    </button>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cheatsheet Modal (P3-10) -->
+    <div id="cheatsheet-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3><span class="material-icons-outlined" style="vertical-align:middle; margin-right:6px;">keyboard</span>鍵盤快速鍵</h3>
+                <button id="cheatsheet-close" class="btn-icon" title="關閉">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="cheatsheet-section">
+                    <h4>全域</h4>
+                    <div class="keys-grid">
+                        <div class="key-row"><span>顯示快速鍵</span><kbd>?</kbd></div>
+                        <div class="key-row"><span>聚焦搜尋框</span><kbd>/</kbd></div>
+                        <div class="key-row"><span>切換清單模式</span><kbd>L</kbd></div>
+                        <div class="key-row"><span>跳到下一個即將重生</span><kbd>N</kbd></div>
+                        <div class="key-row"><span>取消鎖定</span><kbd>Esc</kbd></div>
+                        <div class="key-row"><span>切換主題</span><kbd>T</kbd></div>
+                    </div>
+                </div>
+                <div class="cheatsheet-section">
+                    <h4>獵殺專注（鎖定 Boss 後）</h4>
+                    <div class="keys-grid">
+                        <div class="key-row"><span>紀錄擊殺</span><kbd>Enter</kbd> / <kbd>K</kbd></div>
+                        <div class="key-row"><span>頻道 +1</span><kbd>↑</kbd> / <kbd>→</kbd></div>
+                        <div class="key-row"><span>頻道 -1</span><kbd>↓</kbd> / <kbd>←</kbd></div>
+                        <div class="key-row"><span>切換裝備掉寶</span><kbd>1</kbd></div>
+                        <div class="key-row"><span>切換卷軸掉寶</span><kbd>2</kbd></div>
+                        <div class="key-row"><span>切換星星 (幸運)</span><kbd>3</kbd></div>
+                        <div class="key-row"><span>直接設頻道 1~9</span><kbd>1</kbd>~<kbd>9</kbd> (未鎖定)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Overlay (P0-02) -->
+    <div id="onboarding-overlay" class="onboarding-overlay" style="display:none;">
+        <div class="onboarding-spotlight" id="onboarding-spotlight"></div>
+        <div class="onboarding-card" id="onboarding-card">
+            <div class="onb-progress">
+                <i class="onb-dot active"></i><i class="onb-dot"></i><i class="onb-dot"></i>
+            </div>
+            <div class="onb-step-num" id="onb-step-num">STEP 01 / 03</div>
+            <h4 id="onb-title">點擊任一張 Boss 卡片</h4>
+            <p id="onb-desc">下方會展開「獵殺專注面板」，所有操作集中在那裡。</p>
+            <div class="onb-actions">
+                <button class="btn btn-secondary btn-small" id="onb-skip">略過</button>
+                <button class="btn btn-primary btn-small" id="onb-next">下一步 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard hint (auto fade) (P3-10) -->
+    <div id="kbd-hint" class="kbd-hint">按 <kbd>?</kbd> 看快速鍵</div>
 
     <!-- 引入 JavaScript (Sequential Loading for file:// compatibility) -->
     <script src="js/namespace.js"></script>

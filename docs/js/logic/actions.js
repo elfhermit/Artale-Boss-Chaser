@@ -83,6 +83,25 @@
         if (dom.actionDropStar) dom.actionDropStar.checked = false;
 
         showToast(`紀錄已新增：${getBossById(bossId).name} Ch.${safeChannel}`, { timeout: 1400 });
+
+        // Refresh recent-channel chips and heatmap for the focused boss
+        if (state.focusedBossId === bossId) {
+            const R = window.App.UI.Render;
+            if (R.renderRecentChannelChips) R.renderRecentChannelChips(bossId);
+            if (R.renderHeatmap) R.renderHeatmap(bossId);
+        }
+
+        // First-kill celebration (P0-02)
+        const { saveSettings } = window.App.Core.State;
+        if (!state.settings.firstKillCelebrated) {
+            saveSettings({ firstKillCelebrated: true, onboarded: true });
+            // Close onboarding overlay if open
+            const ov = document.getElementById('onboarding-overlay');
+            if (ov) ov.style.display = 'none';
+            setTimeout(() => {
+                showToast('🎉 太棒了！系統已自動跳到下一頻道，繼續按 Enter 即可秒速紀錄', { timeout: 3500 });
+            }, 600);
+        }
         
         // Feedback animation on the history table row if it exists
         setTimeout(() => {
@@ -135,6 +154,14 @@
                     dom.actionChannelInput.select();
                 }
             }, 100);
+
+            // Render chip and heatmap
+            const R = window.App.UI.Render;
+            if (R.renderRecentChannelChips) R.renderRecentChannelChips(state.focusedBossId);
+            if (R.renderHeatmap) R.renderHeatmap(state.focusedBossId);
+        } else {
+            // Clear chips/heatmap when unlocked
+            if (dom.actionChannelChipsWrap) dom.actionChannelChipsWrap.style.display = 'none';
         }
     }
 
@@ -518,6 +545,288 @@
         _copyToClipboard(generateDailyReport(), '今日戰報已複製 📋 貼到 LINE / Discord 分享吧！');
     }
 
+    // ============================================================
+    // P0-01 · Backup / Restore
+    // ============================================================
+    function exportData() {
+        const { getAllPersistData, saveSettings } = window.App.Core.State;
+        try {
+            const payload = getAllPersistData();
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const d = new Date();
+            const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            a.href = url;
+            a.download = `artale-boss-${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+            saveSettings({ lastBackupAt: new Date().toISOString() });
+            updateLastBackupMeta();
+            showToast('已匯出 JSON 備份', { timeout: 1800 });
+        } catch (e) {
+            showToast('匯出失敗：' + e.message, { timeout: 2500 });
+        }
+    }
+
+    function updateLastBackupMeta() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        if (!dom.lastBackupMeta) return;
+        const t = state.settings.lastBackupAt;
+        if (!t) { dom.lastBackupMeta.textContent = '尚未備份'; return; }
+        const d = new Date(t);
+        dom.lastBackupMeta.textContent = `最近備份：${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function importDataFromFile(file) {
+        if (!file) return;
+        const { applyImportData } = window.App.Core.State;
+        const { dom } = window.App.UI.DOM;
+        let mode = 'merge';
+        if (dom.importModeRadios) {
+            dom.importModeRadios.forEach(r => { if (r.checked) mode = r.value; });
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const payload = JSON.parse(e.target.result);
+                const result = applyImportData(payload, mode);
+                if (result.mode === 'merge') {
+                    showToast(`已合併 ${result.added} 筆紀錄，重新載入...`, { timeout: 1500 });
+                } else {
+                    showToast('已取代為備份內容，重新載入...', { timeout: 1500 });
+                }
+                setTimeout(() => { location.reload(); }, 1000);
+            } catch (err) {
+                showToast('匯入失敗：' + err.message, { timeout: 3000 });
+            }
+        };
+        reader.onerror = () => showToast('讀取檔案失敗', { timeout: 2000 });
+        reader.readAsText(file);
+    }
+
+    function openSettings() {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        if (!dom.settingsModal) return;
+        if (dom.settingsDesktopNotification) dom.settingsDesktopNotification.checked = !!state.settings.desktopNotification;
+        if (dom.settingsSoundType) dom.settingsSoundType.value = state.settings.soundType || 'ding';
+        updateLastBackupMeta();
+        dom.settingsModal.style.display = 'flex';
+    }
+
+    function closeSettings() {
+        const { dom } = window.App.UI.DOM;
+        if (dom.settingsModal) dom.settingsModal.style.display = 'none';
+    }
+
+    // ============================================================
+    // P0-02 · Onboarding
+    // ============================================================
+    const ONB_STEPS = [
+        {
+            target: '#boss-monitoring-list',
+            title: '點擊任一張 Boss 卡片',
+            desc: '畫面下方會展開「獵殺專注面板」，所有操作集中在那裡。'
+        },
+        {
+            target: '#action-bar',
+            title: '輸入頻道，按 Enter 紀錄',
+            desc: '頻道下方有「最近 / 幸運」chip，可一鍵填入。Enter 即送出。',
+            requiresLock: true
+        },
+        {
+            target: '#action-auto-inc',
+            title: '系統會自動 +1 跳到下一頻道',
+            desc: '勾選「自動+1」後，紀錄完直接前往下一頻道，連按 Enter 秒速跑頻。'
+        }
+    ];
+    let onbStep = 0;
+
+    function startOnboarding(forceRestart) {
+        const { state, saveSettings } = window.App.Core.State;
+        const { dom } = window.App.UI.DOM;
+        if (!dom.onboardingOverlay) return;
+        if (!forceRestart && state.settings.onboarded) return;
+        if (!forceRestart && state.killHistory.length > 0) {
+            // user already has data; mark as onboarded silently
+            saveSettings({ onboarded: true });
+            return;
+        }
+        onbStep = 0;
+        dom.onboardingOverlay.style.display = 'flex';
+        renderOnboardingStep();
+    }
+
+    function renderOnboardingStep() {
+        const { dom } = window.App.UI.DOM;
+        const step = ONB_STEPS[onbStep];
+        if (!step) { finishOnboarding(); return; }
+
+        if (dom.onbStepNum) dom.onbStepNum.textContent = `STEP ${String(onbStep+1).padStart(2,'0')} / 03`;
+        if (dom.onbTitle) dom.onbTitle.textContent = step.title;
+        if (dom.onbDesc) dom.onbDesc.textContent = step.desc;
+        if (dom.onbDots && dom.onbDots.length) {
+            dom.onbDots.forEach((d, i) => d.classList.toggle('active', i <= onbStep));
+        }
+        if (dom.onbNext) dom.onbNext.textContent = onbStep === ONB_STEPS.length - 1 ? '完成 ✓' : '下一步 →';
+
+        // Position spotlight on target
+        const tgt = document.querySelector(step.target);
+        if (tgt && dom.onboardingSpotlight) {
+            const rect = tgt.getBoundingClientRect();
+            const pad = 8;
+            const top = Math.max(0, rect.top - pad);
+            const left = Math.max(0, rect.left - pad);
+            const width = rect.width + pad * 2;
+            const height = rect.height + pad * 2;
+            dom.onboardingSpotlight.style.top = top + 'px';
+            dom.onboardingSpotlight.style.left = left + 'px';
+            dom.onboardingSpotlight.style.width = width + 'px';
+            dom.onboardingSpotlight.style.height = height + 'px';
+        }
+    }
+
+    function nextOnboardingStep() {
+        onbStep++;
+        if (onbStep >= ONB_STEPS.length) {
+            finishOnboarding();
+        } else {
+            renderOnboardingStep();
+        }
+    }
+
+    function finishOnboarding() {
+        const { dom } = window.App.UI.DOM;
+        const { saveSettings } = window.App.Core.State;
+        if (dom.onboardingOverlay) dom.onboardingOverlay.style.display = 'none';
+        saveSettings({ onboarded: true });
+    }
+
+    // ============================================================
+    // P3-10 · Cheatsheet
+    // ============================================================
+    function openCheatsheet() {
+        const { dom } = window.App.UI.DOM;
+        if (dom.cheatsheetModal) dom.cheatsheetModal.style.display = 'flex';
+    }
+    function closeCheatsheet() {
+        const { dom } = window.App.UI.DOM;
+        if (dom.cheatsheetModal) dom.cheatsheetModal.style.display = 'none';
+    }
+
+    // ============================================================
+    // P2-08 · Mini PiP
+    // ============================================================
+    let pipWindow = null;
+    let pipTimer = null;
+
+    function _renderPipContent(doc) {
+        const { state } = window.App.Core.State;
+        const { calculateTimerState, formatDuration } = window.App.Core.Utils;
+        const BOSSES = window.App.Data.Bosses;
+        const list = [];
+        BOSSES.forEach(boss => {
+            const records = state.killHistory.filter(k => k.bossId === boss.id);
+            if (records.length === 0) return;
+            let best = null;
+            records.forEach(r => {
+                const ts = calculateTimerState(boss, r.killTime);
+                if (!best || ts.secondsToMin < best.secondsToMin) best = { ts, boss, channel: r.channel };
+            });
+            if (best && best.ts.status !== 'cooldown') list.push(best);
+        });
+        list.sort((a,b) => a.ts.secondsToMin - b.ts.secondsToMin);
+        const top = list.slice(0, 8);
+
+        const root = doc.getElementById('pip-root');
+        if (!root) return;
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        let html = `<div class="pip-mini">
+          <div class="pip-head"><span class="pip-title">即將重生 (${top.length})</span><span class="pip-clock">${hh}</span></div>`;
+        if (top.length === 0) {
+            html += '<div class="pip-empty">目前沒有即將重生的 Boss</div>';
+        } else {
+            top.forEach(item => {
+                const cls = item.ts.status === 'alive' ? 'good' : 'warn';
+                const t = item.ts.status === 'alive' ? '可擊殺' : formatDuration(item.ts.secondsToMin);
+                html += `<div class="pip-row" data-boss-id="${item.boss.id}">
+                  <span class="pip-l"><i class="pip-dot ${cls}"></i>${item.boss.name} <em>Ch.${item.channel}</em></span>
+                  <span class="pip-time ${cls}">${t}</span>
+                </div>`;
+            });
+        }
+        html += '<div class="pip-foot">點擊鎖定 →</div></div>';
+        root.innerHTML = html;
+        root.querySelectorAll('.pip-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const id = row.dataset.bossId;
+                try { window.focus(); } catch (e) {}
+                selectBoss(id);
+            });
+        });
+    }
+
+    async function togglePip() {
+        if (pipWindow && !pipWindow.closed) {
+            try { pipWindow.close(); } catch (e) {}
+            return;
+        }
+
+        const setupContent = (doc) => {
+            // Copy stylesheets so PiP content matches main theme
+            try {
+                Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).forEach(node => {
+                    doc.head.appendChild(node.cloneNode(true));
+                });
+            } catch (e) {}
+            doc.body.innerHTML = '<div id="pip-root"></div>';
+            doc.body.style.margin = '0';
+            doc.body.style.background = 'var(--color-bg, #121212)';
+            doc.body.style.color = 'var(--color-text-primary, #e0e0e0)';
+            doc.body.classList.add(document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode');
+            _renderPipContent(doc);
+            pipTimer = setInterval(() => {
+                if (!pipWindow || pipWindow.closed) { clearInterval(pipTimer); return; }
+                _renderPipContent(doc);
+            }, 1000);
+        };
+
+        if ('documentPictureInPicture' in window) {
+            try {
+                pipWindow = await window.documentPictureInPicture.requestWindow({ width: 260, height: 360 });
+                pipWindow.addEventListener('pagehide', () => {
+                    clearInterval(pipTimer); pipTimer = null; pipWindow = null;
+                });
+                setupContent(pipWindow.document);
+                return;
+            } catch (e) {
+                console.warn('Document PiP failed, falling back to window.open', e);
+            }
+        }
+
+        // Fallback: window.open
+        pipWindow = window.open('', 'abt-pip', 'width=280,height=380,resizable=yes,alwaysRaised=yes');
+        if (!pipWindow) {
+            showToast('瀏覽器封鎖了彈出視窗', { timeout: 2000 });
+            return;
+        }
+        pipWindow.document.title = 'Artale Boss · 迷你';
+        const checkClose = setInterval(() => {
+            if (pipWindow.closed) {
+                clearInterval(checkClose);
+                clearInterval(pipTimer); pipTimer = null; pipWindow = null;
+            }
+        }, 500);
+        setupContent(pipWindow.document);
+    }
+
+    // ============================================================
+    // Original toggleTodaySummary
+    // ============================================================
     function toggleTodaySummary() {
         const { dom } = window.App.UI.DOM;
         if (!dom.todaySummary) return;
@@ -535,6 +844,11 @@
         toggleViewMode, toggleSound, toggleSmartSort,
         toggleFavorite, generateShareText, generateDailyReport, openShareModal, shareBossStatus,
         shareDailyReport, toggleTodaySummary,
-        switchTab
+        switchTab,
+        // New
+        exportData, importDataFromFile, openSettings, closeSettings, updateLastBackupMeta,
+        startOnboarding, nextOnboardingStep, finishOnboarding,
+        openCheatsheet, closeCheatsheet,
+        togglePip
     };
 })();

@@ -71,29 +71,98 @@
         return Array.from(out).sort((a, b) => a - b).filter(n => n >= 1 && n <= 3000);
     }
 
-    function playNotificationSound() {
+    function playNotificationSound(type) {
+        type = type || (window.App && window.App.Core.State && window.App.Core.State.state.settings.soundType) || 'ding';
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = ctx.createOscillator();
-            const gainNode = ctx.createGain();
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            const ctx = new Ctx();
+            const now = ctx.currentTime;
 
-            oscillator.connect(gainNode);
-            gainNode.connect(ctx.destination);
-
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 880; // A5
-            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
-
-            oscillator.start();
-            oscillator.stop(ctx.currentTime + 0.5);
+            if (type === 'bell') {
+                // Bell: harmonic-rich double tone
+                [880, 1320].forEach((f, i) => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = f;
+                    osc.connect(g); g.connect(ctx.destination);
+                    g.gain.setValueAtTime(0.001, now);
+                    g.gain.exponentialRampToValueAtTime(0.12, now + 0.02 + i * 0.06);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+                    osc.start(now); osc.stop(now + 1.0);
+                });
+            } else if (type === 'drum') {
+                // Drum: low sine + quick decay
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.18);
+                osc.connect(g); g.connect(ctx.destination);
+                g.gain.setValueAtTime(0.25, now);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+                osc.start(now); osc.stop(now + 0.3);
+            } else {
+                // Ding (default): single sine ping
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 880;
+                osc.connect(g); g.connect(ctx.destination);
+                g.gain.setValueAtTime(0.12, now);
+                g.gain.exponentialRampToValueAtTime(0.00001, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
         } catch (e) {
             console.warn("Audio play failed", e);
         }
     }
 
+    function isDesktopNotificationSupported() {
+        return typeof window !== 'undefined' && 'Notification' in window;
+    }
+
+    function requestDesktopNotification() {
+        if (!isDesktopNotificationSupported()) return Promise.resolve('unsupported');
+        if (Notification.permission === 'granted') return Promise.resolve('granted');
+        if (Notification.permission === 'denied') return Promise.resolve('denied');
+        try {
+            return Notification.requestPermission();
+        } catch (e) {
+            return Promise.resolve('error');
+        }
+    }
+
+    function showDesktopNotification(title, body, onClick) {
+        if (!isDesktopNotificationSupported()) return null;
+        if (Notification.permission !== 'granted') return null;
+        try {
+            const n = new Notification(title, { body, tag: 'artale-boss', renotify: true });
+            if (typeof onClick === 'function') {
+                n.onclick = function () {
+                    try { window.focus(); } catch (e) {}
+                    try { onClick(); } catch (e) {}
+                    n.close();
+                };
+            }
+            return n;
+        } catch (e) { return null; }
+    }
+
+    function relativeTimeFromNow(date) {
+        const now = new Date();
+        const diff = (now - date) / 1000;
+        if (diff < 60) return '剛剛';
+        if (diff < 3600) return `${Math.floor(diff / 60)} 分前`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前`;
+        return `${Math.floor(diff / 86400)} 天前`;
+    }
+
     // Export
     window.App.Core.Utils = {
-        pad, formatTimeDisplay, formatTime, formatDuration, getBossById, calculateTimerState, parseChannelList, playNotificationSound
+        pad, formatTimeDisplay, formatTime, formatDuration, getBossById, calculateTimerState, parseChannelList,
+        playNotificationSound, requestDesktopNotification, showDesktopNotification, isDesktopNotificationSupported,
+        relativeTimeFromNow
     };
 })();

@@ -76,7 +76,27 @@
         todayDropBreakdown: null,
         todayLastTime: null,
         todayTopBosses: null,
-        todayShareBtn: null
+        todayShareBtn: null,
+
+        // === New: Settings / Onboarding / Cheatsheet / PiP ===
+        settingsBtn: null, settingsModal: null, settingsModalClose: null,
+        exportDataBtn: null, importFileInput: null, importDropZone: null,
+        importModeRadios: null, lastBackupMeta: null,
+        settingsDesktopNotification: null, settingsSoundType: null,
+        settingsTestSound: null, settingsTestNotification: null,
+        settingsRestartOnboarding: null, settingsClearAll: null,
+
+        helpBtn: null, onboardingOverlay: null, onboardingCard: null,
+        onboardingSpotlight: null, onbNext: null, onbSkip: null,
+        onbStepNum: null, onbTitle: null, onbDesc: null, onbDots: null,
+
+        cheatsheetModal: null, cheatsheetClose: null, kbdHint: null,
+
+        pipBtn: null,
+
+        // Action bar additions
+        actionChannelChipsWrap: null, actionChannelChips: null,
+        actionHeatmap: null, heatmapContainer: null, heatmapSegments: null
     };
 
     function initDOM() {
@@ -157,6 +177,49 @@
         dom.bottomNav = document.getElementById('bottom-nav');
         dom.tabButtons = document.querySelectorAll('.bottom-nav-btn');
         dom.tabPanels = document.querySelectorAll('.tab-panel');
+
+        // === Settings Modal ===
+        dom.settingsBtn = document.getElementById('settings-btn');
+        dom.settingsModal = document.getElementById('settings-modal');
+        dom.settingsModalClose = document.getElementById('settings-modal-close');
+        dom.exportDataBtn = document.getElementById('export-data-btn');
+        dom.importFileInput = document.getElementById('import-file-input');
+        dom.importDropZone = document.getElementById('import-drop-zone');
+        dom.importModeRadios = document.querySelectorAll('input[name="import-mode"]');
+        dom.lastBackupMeta = document.getElementById('last-backup-meta');
+        dom.settingsDesktopNotification = document.getElementById('settings-desktop-notification');
+        dom.settingsSoundType = document.getElementById('settings-sound-type');
+        dom.settingsTestSound = document.getElementById('settings-test-sound');
+        dom.settingsTestNotification = document.getElementById('settings-test-notification');
+        dom.settingsRestartOnboarding = document.getElementById('settings-restart-onboarding');
+        dom.settingsClearAll = document.getElementById('settings-clear-all');
+
+        // === Onboarding ===
+        dom.helpBtn = document.getElementById('help-btn');
+        dom.onboardingOverlay = document.getElementById('onboarding-overlay');
+        dom.onboardingCard = document.getElementById('onboarding-card');
+        dom.onboardingSpotlight = document.getElementById('onboarding-spotlight');
+        dom.onbNext = document.getElementById('onb-next');
+        dom.onbSkip = document.getElementById('onb-skip');
+        dom.onbStepNum = document.getElementById('onb-step-num');
+        dom.onbTitle = document.getElementById('onb-title');
+        dom.onbDesc = document.getElementById('onb-desc');
+        dom.onbDots = dom.onboardingCard ? dom.onboardingCard.querySelectorAll('.onb-dot') : [];
+
+        // === Cheatsheet ===
+        dom.cheatsheetModal = document.getElementById('cheatsheet-modal');
+        dom.cheatsheetClose = document.getElementById('cheatsheet-close');
+        dom.kbdHint = document.getElementById('kbd-hint');
+
+        // === PiP ===
+        dom.pipBtn = document.getElementById('pip-btn');
+
+        // === Action bar additions ===
+        dom.actionChannelChipsWrap = document.getElementById('action-channel-chips-wrap');
+        dom.actionChannelChips = document.getElementById('action-channel-chips');
+        dom.actionHeatmap = document.getElementById('action-heatmap');
+        dom.heatmapContainer = document.getElementById('heatmap-container');
+        dom.heatmapSegments = document.getElementById('heatmap-segments');
     }
 
     // Export

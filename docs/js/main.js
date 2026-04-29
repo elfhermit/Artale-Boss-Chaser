@@ -29,6 +29,13 @@
         // V2: Show default tab on mobile
         initMobileDefaults();
 
+        // First-run onboarding (P0-02)
+        try {
+            const { startOnboarding } = window.App.Logic.Actions;
+            // Defer slightly so layout settles before computing spotlight position
+            setTimeout(() => startOnboarding(false), 400);
+        } catch (e) {}
+
         console.log("Boss 獵人儀表板 (Pro) V2 — Mobile-First Refactored — 已啟動");
     }
 

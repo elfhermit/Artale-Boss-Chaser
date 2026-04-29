@@ -292,6 +292,188 @@
                 }
             });
         }
+
+        // ==========================================================
+        // Settings Modal (P0-01 + P1-05)
+        // ==========================================================
+        if (dom.settingsBtn) {
+            dom.settingsBtn.addEventListener('click', actions.openSettings);
+        }
+        if (dom.settingsModalClose) {
+            dom.settingsModalClose.addEventListener('click', actions.closeSettings);
+        }
+        if (dom.settingsModal) {
+            dom.settingsModal.addEventListener('click', (e) => {
+                if (e.target === dom.settingsModal) actions.closeSettings();
+            });
+        }
+        if (dom.exportDataBtn) {
+            dom.exportDataBtn.addEventListener('click', actions.exportData);
+        }
+        if (dom.importDropZone) {
+            dom.importDropZone.addEventListener('click', () => {
+                if (dom.importFileInput) dom.importFileInput.click();
+            });
+            ['dragenter', 'dragover'].forEach(ev =>
+                dom.importDropZone.addEventListener(ev, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    dom.importDropZone.classList.add('drag-active');
+                })
+            );
+            ['dragleave', 'drop'].forEach(ev =>
+                dom.importDropZone.addEventListener(ev, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    dom.importDropZone.classList.remove('drag-active');
+                })
+            );
+            dom.importDropZone.addEventListener('drop', (e) => {
+                const f = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+                if (f) actions.importDataFromFile(f);
+            });
+        }
+        if (dom.importFileInput) {
+            dom.importFileInput.addEventListener('change', (e) => {
+                const f = e.target.files && e.target.files[0];
+                if (f) actions.importDataFromFile(f);
+                e.target.value = '';
+            });
+        }
+        if (dom.settingsDesktopNotification) {
+            dom.settingsDesktopNotification.addEventListener('change', async (e) => {
+                const { saveSettings } = window.App.Core.State;
+                const { requestDesktopNotification } = window.App.Core.Utils;
+                if (e.target.checked) {
+                    const perm = await requestDesktopNotification();
+                    if (perm === 'granted') {
+                        saveSettings({ desktopNotification: true });
+                        actions.showToast('已啟用桌面通知', { timeout: 1500 });
+                    } else {
+                        e.target.checked = false;
+                        saveSettings({ desktopNotification: false });
+                        actions.showToast(perm === 'denied' ? '通知權限已被封鎖，請至瀏覽器設定開啟' : '此瀏覽器不支援通知', { timeout: 2500 });
+                    }
+                } else {
+                    saveSettings({ desktopNotification: false });
+                }
+            });
+        }
+        if (dom.settingsSoundType) {
+            dom.settingsSoundType.addEventListener('change', (e) => {
+                const { saveSettings } = window.App.Core.State;
+                saveSettings({ soundType: e.target.value });
+            });
+        }
+        if (dom.settingsTestSound) {
+            dom.settingsTestSound.addEventListener('click', () => {
+                const { state } = window.App.Core.State;
+                const { playNotificationSound } = window.App.Core.Utils;
+                playNotificationSound(state.settings.soundType);
+            });
+        }
+        if (dom.settingsTestNotification) {
+            dom.settingsTestNotification.addEventListener('click', async () => {
+                const { showDesktopNotification, requestDesktopNotification } = window.App.Core.Utils;
+                const perm = await requestDesktopNotification();
+                if (perm === 'granted') {
+                    showDesktopNotification('Artale Boss Chaser', '這是一則測試通知 ✅', null);
+                } else {
+                    actions.showToast('未取得通知權限', { timeout: 2000 });
+                }
+            });
+        }
+        if (dom.settingsRestartOnboarding) {
+            dom.settingsRestartOnboarding.addEventListener('click', () => {
+                actions.closeSettings();
+                actions.startOnboarding(true);
+            });
+        }
+        if (dom.settingsClearAll) {
+            dom.settingsClearAll.addEventListener('click', () => {
+                actions.closeSettings();
+                actions.clearAllHistory();
+            });
+        }
+
+        // ==========================================================
+        // Onboarding (P0-02)
+        // ==========================================================
+        if (dom.helpBtn) {
+            dom.helpBtn.addEventListener('click', () => actions.startOnboarding(true));
+        }
+        if (dom.onbNext) dom.onbNext.addEventListener('click', actions.nextOnboardingStep);
+        if (dom.onbSkip) dom.onbSkip.addEventListener('click', actions.finishOnboarding);
+
+        // ==========================================================
+        // Cheatsheet (P3-10)
+        // ==========================================================
+        if (dom.cheatsheetClose) dom.cheatsheetClose.addEventListener('click', actions.closeCheatsheet);
+        if (dom.cheatsheetModal) {
+            dom.cheatsheetModal.addEventListener('click', (e) => {
+                if (e.target === dom.cheatsheetModal) actions.closeCheatsheet();
+            });
+        }
+
+        // ==========================================================
+        // PiP (P2-08)
+        // ==========================================================
+        if (dom.pipBtn) dom.pipBtn.addEventListener('click', actions.togglePip);
+
+        // ==========================================================
+        // Recent / Lucky channel chips (P1-06)
+        // ==========================================================
+        if (dom.actionChannelChips) {
+            let pressTimer = null;
+            dom.actionChannelChips.addEventListener('click', (e) => {
+                const btn = e.target.closest('.rc');
+                if (!btn) return;
+                const ch = parseInt(btn.dataset.channel);
+                if (!isNaN(ch)) {
+                    actions.setChannel(ch);
+                    if (dom.actionChannelInput) dom.actionChannelInput.focus();
+                }
+            });
+            dom.actionChannelChips.addEventListener('pointerdown', (e) => {
+                const btn = e.target.closest('.rc');
+                if (!btn) return;
+                pressTimer = setTimeout(() => {
+                    const ch = parseInt(btn.dataset.channel);
+                    if (!isNaN(ch)) {
+                        const { saveLastChannel } = window.App.Core.State;
+                        saveLastChannel(ch);
+                        actions.showToast(`已設為起始頻道：Ch.${ch}`, { timeout: 1500 });
+                    }
+                    pressTimer = null;
+                }, 600);
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+                dom.actionChannelChips.addEventListener(ev, () => {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                })
+            );
+        }
+
+        // ==========================================================
+        // Resize: re-render history when crossing breakpoint
+        // ==========================================================
+        let _lastMobile = null;
+        window.addEventListener('resize', () => {
+            const { isMobileWidth } = window.App.UI.Render;
+            const m = isMobileWidth();
+            if (_lastMobile !== null && _lastMobile !== m) {
+                window.App.UI.Render.renderHistoryTable();
+            }
+            _lastMobile = m;
+        });
+
+        // ==========================================================
+        // Auto-fade keyboard hint
+        // ==========================================================
+        if (dom.kbdHint) {
+            setTimeout(() => {
+                dom.kbdHint.classList.add('fade-out');
+                setTimeout(() => { if (dom.kbdHint) dom.kbdHint.style.display = 'none'; }, 500);
+            }, 4000);
+        }
     }
 
     function toggleTheme() {
@@ -341,6 +523,64 @@
                 const ch = dom.actionChannelInput ? (parseInt(dom.actionChannelInput.value) || 1) : 1;
                 actions.recordKillQuick(state.focusedBossId, ch, { autoinc: true, viaKeyboard: true });
             }
+            return;
+        }
+
+        // ===== New shortcuts (P3-10) =====
+        // ? -> cheatsheet (Shift+/ on US keyboards yields '?')
+        if (!isTyping && e.key === '?') {
+            e.preventDefault();
+            actions.openCheatsheet();
+            return;
+        }
+        // / -> focus search
+        if (!isTyping && e.key === '/') {
+            e.preventDefault();
+            if (dom.searchInput) {
+                dom.searchInput.focus();
+                dom.searchInput.select();
+            }
+            return;
+        }
+        // L -> toggle view mode
+        if (!isTyping && (e.key === 'l' || e.key === 'L')) {
+            actions.toggleViewMode();
+            return;
+        }
+        // T -> toggle theme
+        if (!isTyping && (e.key === 't' || e.key === 'T')) {
+            toggleTheme();
+            return;
+        }
+        // N -> jump to next-respawning boss
+        if (!isTyping && (e.key === 'n' || e.key === 'N')) {
+            const { calculateTimerState } = window.App.Core.Utils;
+            const BOSSES = window.App.Data.Bosses;
+            let target = null, minSec = Infinity;
+            BOSSES.forEach(boss => {
+                const records = state.killHistory.filter(k => k.bossId === boss.id);
+                if (!records.length) return;
+                records.forEach(r => {
+                    const ts = calculateTimerState(boss, r.killTime);
+                    if (ts.secondsToMin > 0 && ts.secondsToMin < minSec) {
+                        minSec = ts.secondsToMin; target = boss.id;
+                    }
+                });
+            });
+            if (target) actions.selectBoss(target);
+            else actions.showToast('沒有即將重生的 Boss', { timeout: 1500 });
+            return;
+        }
+        // Esc -> unlock
+        if (!isTyping && e.key === 'Escape') {
+            // close modals first
+            if (dom.cheatsheetModal && dom.cheatsheetModal.style.display === 'flex') { actions.closeCheatsheet(); return; }
+            if (dom.settingsModal && dom.settingsModal.style.display === 'flex') { actions.closeSettings(); return; }
+            if (dom.shareModal && dom.shareModal.style.display === 'flex') { dom.shareModal.style.display = 'none'; return; }
+            if (state.focusedBossId) {
+                actions.selectBoss(null);
+            }
+            return;
         }
     }
 

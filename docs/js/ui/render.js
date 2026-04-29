@@ -311,10 +311,47 @@
         });
     }
 
+    function isMobileWidth() {
+        return window.matchMedia && window.matchMedia('(max-width: 880px)').matches;
+    }
+
     function renderHistoryTable() {
         const { dom } = window.App.UI.DOM;
         const { state } = window.App.Core.State;
         const BOSSES_JSON = window.App.Data.Bosses;
+
+        // P2-09 · empty state when no records at all
+        const tableContainer = document.querySelector('#kill-history-section .table-container');
+        let emptyEl = document.getElementById('history-empty-state');
+        if (state.killHistory.length === 0) {
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (dom.historyPagination) dom.historyPagination.style.display = 'none';
+            if (!emptyEl) {
+                emptyEl = document.createElement('div');
+                emptyEl.id = 'history-empty-state';
+                emptyEl.className = 'empty-state';
+                emptyEl.innerHTML = `
+                    <div class="empty-icon">📜</div>
+                    <h4>還沒有任何擊殺紀錄</h4>
+                    <p>先到 Boss 列表選一隻目標<br>按 Enter 即可秒速紀錄第一筆</p>
+                    <button class="btn btn-primary" id="empty-goto-bosses">→ 前往 Boss 列表</button>
+                `;
+                const section = document.getElementById('kill-history-section');
+                if (section) section.appendChild(emptyEl);
+                const goto = emptyEl.querySelector('#empty-goto-bosses');
+                if (goto) goto.addEventListener('click', () => {
+                    window.App.Logic.Actions.switchTab('bosses');
+                });
+            } else {
+                emptyEl.style.display = '';
+            }
+            renderPaginationControls(0, 0);
+            return;
+        } else {
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (tableContainer) tableContainer.style.display = '';
+            if (dom.historyPagination) dom.historyPagination.style.display = '';
+        }
 
         // 1. 決定要顯示哪些資料
         let displayData = [...state.killHistory];
@@ -380,6 +417,63 @@
         if (state.currentPage > totalPages) state.currentPage = totalPages;
         const start = (state.currentPage - 1) * state.pageSize;
         const pageItems = displayData.slice(start, start + state.pageSize);
+
+        // P1-03 · Mobile: render timeline cards instead of table
+        const mobileMode = isMobileWidth();
+        let timelineEl = document.getElementById('history-timeline');
+        const tableEl = document.getElementById('kill-history-table');
+        if (mobileMode) {
+            if (tableEl) tableEl.style.display = 'none';
+            if (!timelineEl) {
+                timelineEl = document.createElement('div');
+                timelineEl.id = 'history-timeline';
+                timelineEl.className = 'history-timeline';
+                const section = document.getElementById('kill-history-section');
+                const tc = section ? section.querySelector('.table-container') : null;
+                if (tc) tc.appendChild(timelineEl); else if (section) section.appendChild(timelineEl);
+            }
+            timelineEl.style.display = '';
+            timelineEl.innerHTML = '';
+            const { formatTime, relativeTimeFromNow } = window.App.Core.Utils;
+            pageItems.forEach(entry => {
+                const boss = getBossById(entry.bossId);
+                if (!boss) return;
+                const killDate = new Date(entry.killTime);
+                const card = document.createElement('div');
+                card.className = 'tl-card';
+                card.dataset.historyId = entry.id;
+                let dropChips = '';
+                if (entry.drops) {
+                    if (entry.drops.equip) dropChips += '<span class="tl-chip tl-chip-equip">🛡 裝備</span>';
+                    if (entry.drops.scroll) dropChips += '<span class="tl-chip tl-chip-scroll">📜 卷軸</span>';
+                    if (entry.drops.star) dropChips += '<span class="tl-chip tl-chip-star">★ 幸運</span>';
+                }
+                card.innerHTML = `
+                    <div class="tl-row-top">
+                        <div class="tl-time">${formatTime(killDate)} · <span class="tl-rel">${relativeTimeFromNow(killDate)}</span></div>
+                        <button class="tl-delete delete-btn" title="刪除"><span class="material-icons-outlined" style="font-size:16px;">delete</span></button>
+                    </div>
+                    <div class="tl-name">${boss.name}${entry.drops && entry.drops.star ? ' <span class="tl-star">★</span>' : ''}</div>
+                    <div class="tl-tags">
+                        <span class="tl-chip tl-chip-ch">Ch.${entry.channel}</span>
+                        ${dropChips}
+                    </div>
+                `;
+                card.querySelector('.tl-delete').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.App.Logic.Actions.deleteHistoryEntry(entry.id);
+                });
+                card.addEventListener('click', () => {
+                    window.App.Logic.Actions.loadEntryToForm(entry);
+                });
+                timelineEl.appendChild(card);
+            });
+            renderPaginationControls(total, totalPages);
+            return;
+        } else {
+            if (tableEl) tableEl.style.display = '';
+            if (timelineEl) timelineEl.style.display = 'none';
+        }
 
         pageItems.forEach(entry => {
             const boss = getBossById(entry.bossId);
@@ -477,29 +571,38 @@
 
     function updateAllTimers() {
         const { state, saveSoundEnabled } = window.App.Core.State;
-        const { playNotificationSound, calculateTimerState } = window.App.Core.Utils;
+        const { playNotificationSound, calculateTimerState, showDesktopNotification } = window.App.Core.Utils;
         const BOSSES_JSON = window.App.Data.Bosses;
 
         BOSSES_JSON.forEach(boss => {
             updateBossCard(boss.id);
 
-            // Check Audio Alert
-            if (state.soundEnabled) {
-                const records = state.killHistory.filter(k => k.bossId === boss.id);
-                let minSeconds = Infinity;
-                records.forEach(r => {
-                    const ts = calculateTimerState(boss, r.killTime);
-                    if (ts.secondsToMin < minSeconds) minSeconds = ts.secondsToMin;
-                });
+            // Check Audio / Desktop Alert
+            const records = state.killHistory.filter(k => k.bossId === boss.id);
+            if (records.length === 0) return;
+            let minSeconds = Infinity;
+            let bestChannel = null;
+            records.forEach(r => {
+                const ts = calculateTimerState(boss, r.killTime);
+                if (ts.secondsToMin < minSeconds) { minSeconds = ts.secondsToMin; bestChannel = r.channel; }
+            });
 
-                if (minSeconds < 120 && minSeconds > 0) {
-                    if (!state.alertedBosses.has(boss.id)) {
-                        playNotificationSound();
-                        state.alertedBosses.add(boss.id);
+            if (minSeconds < 120 && minSeconds > 0) {
+                if (!state.alertedBosses.has(boss.id)) {
+                    if (state.soundEnabled) {
+                        playNotificationSound(state.settings.soundType);
                     }
-                } else if (minSeconds > 120) {
-                    state.alertedBosses.delete(boss.id);
+                    if (state.settings.desktopNotification && document.hidden) {
+                        showDesktopNotification(
+                            `${boss.name} · 即將重生`,
+                            `最早於 ${Math.ceil(minSeconds/60)} 分後出現 · 上次頻道 ${bestChannel}`,
+                            () => window.App.Logic.Actions.selectBoss(boss.id)
+                        );
+                    }
+                    state.alertedBosses.add(boss.id);
                 }
+            } else if (minSeconds > 120) {
+                state.alertedBosses.delete(boss.id);
             }
         });
 
@@ -719,9 +822,131 @@
         }
     }
 
+    // ============================================================
+    // P1-06 · Recent / Lucky channel chips
+    // ============================================================
+    function renderRecentChannelChips(bossId) {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        if (!dom.actionChannelChips || !dom.actionChannelChipsWrap) return;
+        if (!bossId) { dom.actionChannelChipsWrap.style.display = 'none'; return; }
+
+        const records = state.killHistory.filter(k => k.bossId === bossId);
+        if (records.length === 0) { dom.actionChannelChipsWrap.style.display = 'none'; return; }
+
+        // Recent: last 3 unique channels
+        const recent = [];
+        const seen = new Set();
+        records.slice().sort((a,b) => new Date(b.killTime) - new Date(a.killTime)).forEach(r => {
+            if (recent.length < 3 && !seen.has(r.channel)) { recent.push(r.channel); seen.add(r.channel); }
+        });
+
+        // Lucky: top 2 channels by star count
+        const starCounter = new Map();
+        records.forEach(r => {
+            if (r.drops && r.drops.star) starCounter.set(r.channel, (starCounter.get(r.channel) || 0) + 1);
+        });
+        const lucky = Array.from(starCounter.entries()).sort((a,b) => b[1] - a[1]).slice(0, 2).map(e => e[0]);
+
+        const allChips = [];
+        recent.forEach(ch => allChips.push({ ch, hot: false }));
+        lucky.forEach(ch => { if (!recent.includes(ch)) allChips.push({ ch, hot: true }); });
+
+        if (allChips.length === 0) { dom.actionChannelChipsWrap.style.display = 'none'; return; }
+
+        dom.actionChannelChipsWrap.style.display = '';
+        dom.actionChannelChips.innerHTML = allChips.map(c =>
+            `<button type="button" class="rc${c.hot ? ' hot' : ''}" data-channel="${c.ch}">${c.hot ? '★ ' : ''}${c.ch}</button>`
+        ).join('');
+    }
+
+    // ============================================================
+    // P2-07 · Lucky channel heatmap
+    // ============================================================
+    let _heatmapSegment = 0; // 0: 1-1000, 1: 1001-2000, 2: 2001-3000
+
+    function renderHeatmap(bossId) {
+        const { dom } = window.App.UI.DOM;
+        const { state } = window.App.Core.State;
+        if (!dom.heatmapContainer) return;
+
+        const records = state.killHistory.filter(k => k.bossId === bossId);
+
+        // Render segment switcher
+        if (dom.heatmapSegments) {
+            dom.heatmapSegments.innerHTML = '';
+            ['1-1000', '1001-2000', '2001-3000'].forEach((label, i) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'heatmap-seg-btn' + (i === _heatmapSegment ? ' active' : '');
+                btn.textContent = label;
+                btn.addEventListener('click', () => {
+                    _heatmapSegment = i;
+                    renderHeatmap(bossId);
+                });
+                dom.heatmapSegments.appendChild(btn);
+            });
+        }
+
+        // Aggregate per 100 channels
+        const segStart = _heatmapSegment * 1000 + 1;
+        const segEnd = (_heatmapSegment + 1) * 1000;
+        const buckets = []; // 10 buckets * 100 channels each
+        for (let i = 0; i < 10; i++) {
+            const from = segStart + i * 100;
+            const to = from + 99;
+            buckets.push({ from, to, kills: 0, stars: 0 });
+        }
+        records.forEach(r => {
+            if (r.channel < segStart || r.channel > segEnd) return;
+            const idx = Math.floor((r.channel - segStart) / 100);
+            if (buckets[idx]) {
+                buckets[idx].kills++;
+                if (r.drops && r.drops.star) buckets[idx].stars++;
+            }
+        });
+
+        const maxKills = Math.max(1, ...buckets.map(b => b.kills));
+        dom.heatmapContainer.innerHTML = '';
+        const grid = document.createElement('div');
+        grid.className = 'lucky-grid';
+        buckets.forEach(b => {
+            const cell = document.createElement('div');
+            const pct = b.starRate = b.kills ? (b.stars / b.kills) : 0;
+            let cls = 'l0';
+            if (b.kills > 0) {
+                const ratio = b.kills / maxKills;
+                if (ratio > 0.66) cls = 'l3';
+                else if (ratio > 0.33) cls = 'l2';
+                else cls = 'l1';
+            }
+            if (b.stars > 0) cls = 'star';
+            cell.className = `lucky-cell ${cls}`;
+            cell.title = `頻道 ${b.from}~${b.to} · 擊殺 ${b.kills} 次 · ★ ${b.stars} 次（${Math.round(pct*100)}%）`;
+            cell.innerHTML = b.stars > 0 ? '★' : (b.kills > 0 ? String(b.kills) : '');
+            cell.dataset.from = b.from;
+            cell.addEventListener('click', () => {
+                if (dom.actionChannelInput) {
+                    dom.actionChannelInput.value = b.from;
+                    dom.actionChannelInput.focus();
+                }
+            });
+            grid.appendChild(cell);
+        });
+        dom.heatmapContainer.appendChild(grid);
+
+        // Range labels
+        const labels = document.createElement('div');
+        labels.className = 'heatmap-axis';
+        labels.innerHTML = `<span>${segStart}</span><span>${segEnd}</span>`;
+        dom.heatmapContainer.appendChild(labels);
+    }
+
     window.App.UI.Render = {
         renderBossCards, updateBossCard, updateCardVisibility, renderHistoryTable, updateSortIcons, updateAllTimers,
         renderFavoriteChips, renderBossSelectorDropdown, updateFilterCounts, renderActionBar,
-        renderShareModalOptions, renderTodaySummary, getTodayRecords
+        renderShareModalOptions, renderTodaySummary, getTodayRecords,
+        renderRecentChannelChips, renderHeatmap, renderTargetHistory,
+        isMobileWidth
     };
 })();
